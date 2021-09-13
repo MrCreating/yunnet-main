@@ -1,0 +1,3 @@
+User-Agent: *
+Sitemap: https://yunnet.ru/sitemap.xml
+Allow: /
