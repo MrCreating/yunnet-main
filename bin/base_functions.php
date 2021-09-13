@@ -177,7 +177,12 @@ function get_dev_language ($connection)
 // get DB connection class
 function get_database_connection ()
 {
-	return new PDO("mysql:host=localhost;dbname=users", "root", "iA22021981_");
+	if (isset($_SERVER['dbConnection']) && $_SERVER['dbConnection'] instanceof PDO)
+		return $_SERVER['dbConnection'];
+
+	return new PDO("mysql:host=localhost;dbname=users", "root", "iA22021981_", [
+		PDO::ATTR_PERSISTENT => true
+	]);
 }
 
 // checks the mobile access

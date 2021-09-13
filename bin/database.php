@@ -71,7 +71,9 @@ class DataBaseConnection
 		{
 			try
 			{
-				$this->currentConnection = new PDO("mysql:host=localhost;dbname=users", $username, $password);
+				$this->currentConnection = new PDO("mysql:host=localhost;dbname=users", $username, $password, [
+					PDO::ATTR_PERSISTENT => true
+				]);
 
 				$_SERVER["dbConnection"] = $this->currentConnection;
 			} catch (PDOException $e)
