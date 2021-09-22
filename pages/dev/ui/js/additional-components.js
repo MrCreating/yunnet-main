@@ -57,6 +57,7 @@ class POSTData {
 		return this.#resultData;
 	}
 }
+
 unt.actions = new Object({
 	dialog: function (header, title, fullScreen = false, asImportantWindow = false) {
 		return new Promise(function (resolve) {
@@ -188,7 +189,242 @@ unt.actions = new Object({
 	})
 });
 
+unt.parsers = new Object({
+	online: function (user) {
+		if (user.is_banned) return unt.settings.lang.getValue("user_banned");
+		if (user.account_type === "bot") return unt.settings.lang.getValue("bot");
+		if (user.online.is_online) return unt.settings.lang.getValue("online");
+		if (user.online.hidden_online) return unt.settings.lang.getValue("hidden_online");
+
+		let timeString = unt.parsers.time(user.online.last_online_time);
+		if (timeString === '') return unt.settings.lang.getValue("offline");
+		
+		return unt.settings.lang.getValue("was_online").replace("(а)", (user.gender === 2 ? "а" : "")) + " " + timeString;
+	},
+	time: function (timestamp, withOutDate = false, withOutHours = false) {
+		if (withOutHours && withOutDate) {
+			withOutDate = !withOutDate;
+		}
+
+		if (!timestamp) return "";
+		let time = new Date(Number(timestamp) * 1000);
+
+		let fullYear = String(time.getFullYear());
+		let fullMonth = ((time.getMonth() + 1) < 10) ? ("0" + String(time.getMonth() + 1)) : (String(time.getMonth() + 1));
+		let fullDay = ((time.getDate()) < 10) ? ("0" + String(time.getDate())) : (String(time.getDate()));
+
+		let fullHours = ((time.getHours()) < 10) ? ("0" + String(time.getHours())) : (String(time.getHours()));
+		let fullMinutes =  ((time.getMinutes()) < 10) ? ("0" + String(time.getMinutes())) : (String(time.getMinutes()));
+
+		let resultedString = '';
+		if (!withOutDate) resultedString += (fullDay + '.' + fullMonth + '.' + fullYear);
+		if (!withOutHours) resultedString += (', ' + fullHours + ':' + fullMinutes);
+
+		return resultedString;
+	}
+});
+
+unt.icons = new Object({
+	profileStatus: '<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-5h2v5zm4 0h-2v-3h2v3zm0-5h-2v-2h2v2zm4 5h-2V7h2v10z"/></svg>',
+	edit: '<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>',
+	logout: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none"/><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>',
+	pin: '<svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="15" viewBox="0 0 24 24" width="15"><g><rect fill="none" height="24" width="24"/></g><g><path d="M16,9V4l1,0c0.55,0,1-0.45,1-1v0c0-0.55-0.45-1-1-1H7C6.45,2,6,2.45,6,3v0 c0,0.55,0.45,1,1,1l1,0v5c0,1.66-1.34,3-3,3h0v2h5.97v7l1,1l1-1v-7H19v-2h0C17.34,12,16,10.66,16,9z" fill-rule="evenodd"/></g></svg>',
+	cookies: '<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd"><svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 77.000000 77.000000" preserveAspectRatio="xMidYMid meet"><g style="fill: var(--svg-fill-color, black);" transform="translate(0.000000,77.000000) scale(0.100000,-0.100000)" stroke="none"><path d="M296 760 c-59 -15 -153 -69 -186 -107 -40 -45 -89 -143 -99 -198 -12 -62 13 -208 44 -260 34 -59 117 -132 183 -163 48 -22 72 -26 147 -27 80 0 97 3 155 31 82 39 124 75 167 141 63 99 79 218 42 325 -38 113 -97 179 -206 230 -69 33 -178 45 -247 28z m64 -210 c25 -25 25 -45 -1 -71 -27 -27 -75 -15 -79 21 -5 35 1 51 23 60 32 13 35 12 57 -10z m250 -200 c25 -25 25 -45 -1 -71 -27 -27 -75 -15 -79 21 -5 35 1 51 23 60 32 13 35 12 57 -10z m-300 -50 c25 -25 25 -45 -1 -71 -27 -27 -75 -15 -79 21 -5 35 1 51 23 60 32 13 35 12 57 -10z"/></g></svg>',
+	biteCookies: '<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd"><svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 80.000000 77.000000" preserveAspectRatio="xMidYMid meet"><g style="fill: var(--svg-fill-color, black);" transform="translate(0.000000,77.000000) scale(0.100000,-0.100000)" stroke="none"><path d="M290 754 c-139 -38 -253 -159 -279 -299 -10 -54 9 -186 35 -241 25 -53 119 -145 175 -172 153 -74 353 -40 465 80 52 56 100 151 109 221 7 44 6 47 -16 47 -70 0 -163 85 -175 162 -5 30 -11 38 -27 38 -64 0 -157 82 -172 151 -8 34 -28 36 -115 13z m70 -204 c25 -25 25 -45 -1 -71 -27 -27 -75 -15 -79 21 -5 35 1 51 23 60 32 13 35 12 57 -10z m250 -200 c25 -25 25 -45 -1 -71 -27 -27 -75 -15 -79 21 -5 35 1 51 23 60 32 13 35 12 57 -10z m-300 -50 c25 -25 25 -45 -1 -71 -27 -27 -75 -15 -79 21 -5 35 1 51 23 60 32 13 35 12 57 -10z"/></g></svg>',
+	paletteAnimated: '<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20"><path d="M0 0h24v24H0z" fill="none"></path><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"></path><g><circle r="2" cx="6.3" cy="10" fill="#ffee00" id="circle-1"><animate id="circle-1" attributeName="fill"  attributeType="XML" values="#fff59d;#fff176;#ffeb3b;#fff59d" dur="2.9s" repeatCount="indefinite"/></circle><circle r="2" cx="9.7" cy="7" fill="#ff0000" id="circle-2"><animate id="circle-2" attributeName="fill" attributeType="XML" values="#ef9a9a;#ef5350;#f44336;#ef9a9a" dur="2.9s" repeatCount="indefinite"/></circle><circle r="2" cx="14.3" cy="6.7" fill="#4dff00" id="circle-3"><animate id="circle-3" attributeName="fill" attributeType="XML" values="#bbdefb;#90caf9;#42a5f5;#bbdefb" dur="2.9s" repeatCount="indefinite"/></circle><circle r="2" cx="17.3" cy="10" fill="#00aeff" id="circle-4"><animate id="circle-4" attributeName="fill" attributeType="XML" values="f8bbd0;f48fb1;ec407a;f8bbd0;" dur="2.9s" repeatCount="indefinite"/></circle></g></svg>',
+	downArrow: '<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg>',
+	forbidden: '<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>',
+	message: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none"/><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>',
+	add_friend: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none"/><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>',
+});
+
 unt.components = new Object({
+	alertBanner: function (icon, header, alertionText) {
+		let alertBannerCard = document.createElement('div');
+		alertBannerCard.classList.add('card');
+		alertBannerCard.style.marginBottom = 0;
+
+		let alertContainer = document.createElement('div');
+		alertBannerCard.appendChild(alertContainer);
+		alertContainer.classList.add('valign-wrapper');
+		alertContainer.style.padding = '30px';
+
+		let iconDiv = document.createElement('div');
+		iconDiv.innerHTML = icon;
+		iconDiv.getElementsByTagName('svg')[0].width.baseVal.value = 72;
+		iconDiv.getElementsByTagName('svg')[0].height.baseVal.value = 72;
+		alertContainer.appendChild(iconDiv);
+
+		let informationContainer = document.createElement('div');
+		alertContainer.appendChild(informationContainer);
+		informationContainer.classList.add('halign-wrapper');
+		informationContainer.style.marginLeft = '15px';
+
+		let headerText = document.createElement('b');
+		headerText.style.fontSize = '130%';
+		informationContainer.appendChild(headerText);
+		headerText.innerText = header;
+
+		let alertionTextDiv = document.createElement('div');
+		informationContainer.appendChild(alertionTextDiv);
+		alertionTextDiv.innerText = alertionText;
+
+		return alertBannerCard;
+	},
+	floatingActionButton: function (icon, description, fixed = false) {
+		let floatingButton = document.createElement('div');
+		if (fixed)
+			floatingButton.classList.add('fixed-action-btn');
+
+		floatingButton.classList.add('tooltipped');
+		floatingButton.setAttribute('data-position', 'left');
+		floatingButton.setAttribute('data-tooltip', description);
+
+		let button = document.createElement('a');
+		button.classList = ['btn-floating btn-large red waves-effect waves-light'];
+		floatingButton.appendChild(button);
+
+		let iconContainer = document.createElement('i');
+		button.appendChild(iconContainer);
+		iconContainer.innerHTML = icon;
+		iconContainer.style.marginTop = '6%';
+		iconContainer.getElementsByTagName('svg')[0].style.fill = 'white';
+
+		return floatingButton;
+	},
+	downfallingOptionsMenu: function (icon, title) {
+		let resultedElement = document.createElement('ul');
+		resultedElement.classList.add('collapsible');
+		resultedElement.classList.add('waves-effect');
+		resultedElement.style.width = '100%';
+		resultedElement.style.marginBottom = 0;
+
+		let someElement = document.createElement('li');
+		resultedElement.appendChild(someElement);
+
+		let headerDiv = document.createElement('div');
+		someElement.appendChild(headerDiv);
+		headerDiv.classList.add('collapsible-header');
+		headerDiv.innerHTML = icon;
+
+		let titleContainer = document.createElement('div');
+		titleContainer.innerText = title;
+		headerDiv.appendChild(titleContainer);
+		titleContainer.style.marginLeft = '15px';
+
+		let bodyCol = document.createElement('div');
+		bodyCol.classList.add('collapsible-body');
+		someElement.appendChild(bodyCol);
+
+		let itemsCollection = document.createElement('div');
+		itemsCollection.classList.add('collection');
+		bodyCol.appendChild(itemsCollection);
+
+		resultedElement.addOption = function (title, onClickHandler) {
+			let aElement = document.createElement('a');
+			aElement.innerText = title;
+			aElement.classList.add('collection-item');
+			aElement.addEventListener('click', function (event) {
+				if (onClickHandler)
+					return onClickHandler(event, aElement);
+			});
+
+			itemsCollection.appendChild(aElement);
+			return resultedElement;
+		}
+
+		return resultedElement;
+	},
+	cardButton: function (icon, title, onClickHandler) {
+		let resultedElement = document.createElement('ul');
+		resultedElement.classList.add('collapsible');
+		resultedElement.classList.add('waves-effect');
+		resultedElement.style.width = '100%';
+		resultedElement.style.marginBottom = 0;
+
+		let someElement = document.createElement('li');
+		resultedElement.appendChild(someElement);
+
+		let headerDiv = document.createElement('div');
+		someElement.appendChild(headerDiv);
+		headerDiv.classList.add('collapsible-header');
+		headerDiv.innerHTML = icon;
+
+		let titleContainer = document.createElement('div');
+		titleContainer.innerText = title;
+		headerDiv.appendChild(titleContainer);
+		titleContainer.style.marginLeft = '15px';
+
+		resultedElement.addEventListener('click', function () {
+			if (onClickHandler)
+				return onClickHandler(event, resultedElement);
+		});
+
+		return resultedElement;
+	},
+	image: function (attachmentObject, classList, width, height) {
+		let image = document.createElement('img');
+		image.src = attachmentObject ? attachmentObject.photo.url.main : 'https://dev.yunnet.ru/images/default.png';
+		image.classList = classList;
+		image.width = Number(width);
+		image.height = Number(height);
+		image.style.cursor = 'pointer';
+		image.addEventListener('click', function (event) {
+			return unt.actions.dialog('A', 'Soon?', false, true);
+		});
+
+		return image;
+	},
+	textField: function (hintTitle) {
+		let inputDiv = document.createElement('div');
+		inputDiv.classList.add('input-field');
+
+		let inputId = getRandomInt(-99999999999, 9999999999) + '_inp';
+
+		let input = document.createElement('input');
+		inputDiv.appendChild(input);
+		input.type = 'text';
+		input.id = inputId;
+
+		let label = document.createElement('label');
+		inputDiv.appendChild(label);
+		label.setAttribute('for', inputId);
+		label.innerText = hintTitle;
+
+		inputDiv.setText = function (text) {
+			if (!text) text = '';
+			if (!text.isEmpty())
+				label.classList.add('active');
+			else
+				label.classList.remove('active');
+
+			input.value = text;
+
+			return inputDiv;
+		}
+
+		inputDiv.getInput = function () {
+			return input;
+		}
+
+		inputDiv.getText = function () {
+			return input.value;
+		}
+
+		inputDiv.disable = function () {
+			input.setAttribute('disabled', true);
+
+			return inputDiv;
+		}
+
+		inputDiv.enable = function () {
+			input.removeAttribute('disabled');
+
+			return inputDiv;
+		}
+
+		return inputDiv;
+	},
 	initDefaultForm: function () {
 		return new Promise(function (resolve, reject) {
 			document.body.addEventListener('drop', function (event) {
@@ -222,6 +458,69 @@ unt.components = new Object({
 
 			unt.settings.users.get().then(function (user) {
 				unt.settings.users.current = user;
+				unt.settings.users.current.edit = {
+					status: function () {
+						let win = unt.components.windows.createImportantWindow({
+						    title: unt.settings.lang.getValue('edit_status')
+						});
+
+						let winMenu = win.getMenu();
+						return new Promise(function (resolve) {
+							win.show();
+
+							let cardArea = document.createElement('div');
+							winMenu.appendChild(cardArea);
+							cardArea.style.padding = '10px';
+
+							let textField = unt.components.textField(unt.settings.lang.getValue('edit_status')).setText(unt.settings.users.current.status);
+							cardArea.appendChild(textField);
+							textField.style.margin = '14px';
+
+							let buttonsDiv = document.createElement('div');
+							buttonsDiv.style.width = '100%';
+							buttonsDiv.style.textAlign = 'end';
+							buttonsDiv.style.padding = '0 9px 9px 0';
+							winMenu.appendChild(buttonsDiv);
+
+							let okButton = document.createElement('a');
+							okButton.classList = ['btn btn-flat waves-effect'];
+							okButton.innerText = 'OK';
+							buttonsDiv.appendChild(okButton);
+							okButton.addEventListener('click', function () {
+								if (unt.settings.users.current.status == textField.getText().trim()) return;
+
+								okButton.classList.add('disabled');
+								textField.disable();
+
+								return unt.tools.Request({
+									url: '/id' + unt.settings.users.current.user_id,
+									method: 'POST',
+									data: (new POSTData()).append('action', 'set_new_status').append('new_status', textField.getText().trim()).build(),
+									success: function (response) {
+										okButton.classList.remove('disabled');
+										textField.enable();
+										try {
+											response = JSON.parse(response);
+											if (response.success) {
+												win.close();
+
+												return resolve(textField.getText().trim());
+											}
+										} catch (e) {	
+											return unt.toast({html: unt.settings.lang.getValue('upload_error')});
+										}
+									},
+									error: function () {
+										okButton.classList.remove('disabled');
+										textField.enable();
+
+										return unt.toast({html: unt.settings.lang.getValue('upload_error')});
+									}
+								});
+							});
+						});
+					}
+				};
 
 				throw new Error('User pass');
 			}).catch(function (err) {
@@ -244,6 +543,102 @@ unt.components = new Object({
 				}
 			})
 		});
+	},
+	loaderElement: function (determinate = false) {
+		if (determinate) {
+			let loader = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+
+			loader.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+			loader.setAttribute('viewBox', '0 0 100 100');
+
+			let circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+			loader.appendChild(circle);
+
+			circle.setAttribute('cx', '50');
+			circle.setAttribute('cy', '50');
+			circle.setAttribute('r', '45');
+
+			circle.style.maxWidth = '100px';
+			circle.style.fill = 'transparent';
+			circle.style.stroke = 'var(--unt-loader-color, #42a5f5)';
+			circle.style.strokeWidth = '10px';
+			circle.style.borderStyle = 'dashed';
+			circle.style.strokeLinecap = 'round';
+			circle.style.transformOrigin = '50% 50%';
+			circle.style.strokeDasharray = '283';
+			circle.style.strokeDashoffset = '0';
+
+			loader.style.overflow = 'visible';
+
+			loader.hide = function () {
+				return loader.style.display = 'none';
+			};
+			loader.show = function () {
+				return loader.style.display = '';
+			};
+			loader.setArea = function (area) {
+				if (isNaN(Number(area))) return false;
+				if (Number(area) <= 0) return false;
+
+				return loader.style.width = (area + 'px');
+			};
+
+			loader.setProgress = function (percent = 0) {
+				if (isNaN(Number(percent))) return false;
+				if (percent > 100 || percent < 0) return false;
+
+				let newStrokeOffset = Number(Number(circle.style.strokeDasharray) - (Number(circle.style.strokeDasharray) * Number(percent))/100);
+
+				return circle.style.strokeDashoffset = newStrokeOffset;
+			}
+
+			loader.setColor = function (color) {
+				circle.style.stroke = color;
+
+				return loader;
+			}
+
+			loader.setArea(40);
+
+			return loader;
+		} else {
+			let profileLoader = document.createElement("div");
+			profileLoader.hide = function () {
+				this.style.display = 'none';
+
+				return this;
+			};
+			profileLoader.show = function () {
+				this.style.display = '';
+
+				return this;
+			}
+			profileLoader.setArea = function (area) {
+				let svg = profileLoader.getElementsByTagName('svg')[0];
+
+				if (svg) {
+					svg.width.baseVal.value = Number(area);
+					svg.height.baseVal.value = Number(area);
+
+					return true;
+				}
+
+				return null;
+			}
+
+			profileLoader.setColor = function (color) {
+				let svg = profileLoader.getElementsByTagName('path')[0];
+
+				if (svg)
+					svg.style.fill = color;
+
+				return profileLoader;
+			}
+
+			profileLoader.innerHTML = '<svg width="40" height="40" viewBox="0 0 50 50"><path id="loader_ui_spin" transform="rotate(61.2513 25 25)" d="M25,5A20.14,20.14,0,0,1,45,22.88a2.51,2.51,0,0,0,2.49,2.26h0A2.52,2.52,0,0,0,50,22.33a25.14,25.14,0,0,0-50,0,2.52,2.52,0,0,0,2.5,2.81h0A2.51,2.51,0,0,0,5,22.88,20.14,20.14,0,0,1,25,5Z" style="fill: var(--unt-loader-color, #42a5f5);"><animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.4s" repeatCount="indefinite"></animateTransform></path></svg>';
+
+			return profileLoader;
+		}
 	},
 	windows: new Object({
 		createWindow: function (params = {}) {
@@ -544,7 +939,7 @@ unt.components = new Object({
 
 			let logoWrapper = document.createElement('div');
 			navContainer.appendChild(logoWrapper);
-			logoWrapper.style = 'width: 250px';
+			logoWrapper.style = 'width: 25%';
 
 			let logoContainer = document.createElement('div');
 			logoWrapper.appendChild(logoContainer);
@@ -626,7 +1021,6 @@ unt.components = new Object({
 	},
 	buildDefaultPageForm: function () {
 		let mainDiv = document.createElement('div');
-		mainDiv.style.height = '100%';
 		document.body.appendChild(mainDiv);
 
 		unt.components.mainBlock = mainDiv;
@@ -759,6 +1153,9 @@ unt.components = new Object({
 
 				unt.components.buildMenuItemsTable(unt.settings.current.theming.menu_items, collectionUl);
 
+				resultedMenuPlaceholder.style.paddingLeft = '7px';
+				resultedMenuPlaceholder.style.paddingRight = '7px';
+
 				return resultedMenuPlaceholder;
 			} else {
 				let resultedMenuPlaceholder = document.createElement('div');
@@ -766,6 +1163,9 @@ unt.components = new Object({
 				resultedMenuPlaceholder.style.padding = 0;
 				resultedMenuPlaceholder.style.height = '100%';
 				menuContainer.appendChild(resultedMenuPlaceholder);
+
+				resultedMenuPlaceholder.style.paddingLeft = '7px';
+				resultedMenuPlaceholder.style.paddingRight = '7px';
 
 				return resultedMenuPlaceholder;
 			}
@@ -956,10 +1356,38 @@ unt.settings = new Object({
 			return (unt.settings.lang.current[value] || '');
 		},
 	}),
+
 	users: new Object({
 		current: null,
 		users: {},
-		get: function (userId = 0) {
+		resolve: function (screen_name, fields = '*') {
+			return new Promise(function (resolve, reject) {
+				return unt.tools.Request({
+					url: '/flex',
+					method: 'POST',
+					data: (new POSTData()).append('action', 'get_user_data_by_link').append('screen_name', screen_name).build(),
+					success: function (response) {
+						try {
+							response = JSON.parse(response);
+							if (response.error)
+								return reject(new TypeError('User not found'));
+
+							return unt.settings.users.get(response.id, fields).then(function (user) {
+								return resolve(user);
+							}).catch(function (err) {
+								return reject(err);
+							})
+						} catch (e) {
+							return reject(null);
+						}
+					},
+					error: function (error) {
+						return reject(error);
+					}
+				});
+			})
+		},
+		get: function (userId = 0, fields = '*') {
 			return new Promise(function (resolve, reject) {
 				if (unt.settings.users.users[userId])
 					return resolve(unt.settings.users.users[userId]);
@@ -967,7 +1395,7 @@ unt.settings = new Object({
 				return unt.tools.Request({
 					url: '/flex',
 					method: 'POST',
-					data: (new POSTData()).append('action', 'get_user_data').append('id', (Number(userId) || 0)).build(),
+					data: (new POSTData()).append('action', 'get_user_data').append('fields', '*').append('id', (Number(userId) || 0)).build(),
 					success: function (response) {
 						try {
 							response = JSON.parse(response);

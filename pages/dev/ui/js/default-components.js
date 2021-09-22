@@ -23,6 +23,15 @@ HTMLCollection.prototype.forEach = function (callback) {
   }
 }
 
+HTMLElement.prototype.hide = function () {
+  this.style.display = 'none';
+  return this;
+}
+HTMLElement.prototype.show = function () {
+  this.style.display = '';
+  return this;
+}
+
 String.prototype.linkify = function() {
   let tmpString = this.replace(new RegExp('&gt;', 'g'), '>');
 
@@ -7433,4 +7442,4 @@ String.prototype.isURL = function () {
     '(\\?[;&a-z\\d%_.~+=-]*)?'+
     '(\\#[-a-z\\d_]*)?$','i');
   return !!pattern.test(this);
-}
+} 

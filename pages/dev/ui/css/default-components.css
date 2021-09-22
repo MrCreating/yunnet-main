@@ -2357,36 +2357,56 @@ table span.badge {
 }
 
 .row .col.s1 {
-    width: 8.3333333333%;
+    width: 8%;
     margin-left: auto;
     left: auto;
     right: auto
 }
 
 .row .col.s2 {
-    width: 16.6666666667%;
+    width: 17%;
     margin-left: auto;
     left: auto;
     right: auto
 }
 
 .row .col.s3 {
-    width: 250px;
+    width: 25%;
+    margin-left: auto;
+    left: auto;
+    right: auto
+}
+
+.row .col.s4 {
+    width: 35%;
+    margin-left: auto;
+    left: auto;
+    right: auto
+}
+
+.row .col.s5 {
+    width: 42%;
+    margin-left: auto;
+    left: auto;
+    right: auto
 }
 
 .row .col.s6 {
-    width: 500px;
+    width: 50%;
+    margin-left: auto;
+    left: auto;
+    right: auto
 }
 
 .row .col.s7 {
-    width: 58.3333333333%;
+    width: 58%;
     margin-left: auto;
     left: auto;
     right: auto
 }
 
 .row .col.s8 {
-    width: 66.6666666667%;
+    width: 67%;
     margin-left: auto;
     left: auto;
     right: auto
@@ -2400,14 +2420,14 @@ table span.badge {
 }
 
 .row .col.s10 {
-    width: 83.3333333333%;
+    width: 83%;
     margin-left: auto;
     left: auto;
     right: auto
 }
 
 .row .col.s11 {
-    width: 91.6666666667%;
+    width: 92%;
     margin-left: auto;
     left: auto;
     right: auto

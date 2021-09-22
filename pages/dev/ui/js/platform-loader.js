@@ -8,6 +8,16 @@ unt.actions.linkWorker.go = function (url = window.location.href, writeToLocalHi
 	if (!resultedUrl.startsWith('/'))
 		return (window.location.href = url);
 
+	unt.components.menuElement ? unt.components.menuElement.innerHTML = '' : '';
+	unt.actions.wall.currentId = null;
+	if (writeToLocalHistory) {
+		let pageInfoObject = {id: this.history.length, url: url};
+		this.history.push(pageInfoObject);
+		history.pushState(pageInfoObject, document.title, resultedUrl);
+
+		this.currentPage = pageInfoObject;
+	}
+
 	switch (resultedUrl) {
 		case '/':
 			unt.settings.users.current ? unt.pages.news(internalData) : unt.pages.auth(internalData);
@@ -58,13 +68,7 @@ unt.actions.linkWorker.go = function (url = window.location.href, writeToLocalHi
 		break;
 	}
 
-	if (writeToLocalHistory) {
-		let pageInfoObject = {id: this.history.length, url: url};
-		this.history.push(pageInfoObject);
-		history.pushState(pageInfoObject, document.title, resultedUrl);
-
-		this.currentPage = pageInfoObject;
-	}
+	unt.components.navPanel ? unt.components.navPanel.setTitle(document.title) : '';
 
 	return this.define();
 }
@@ -75,6 +79,7 @@ window.addEventListener('DOMContentLoaded', function (event) {
 		spinner.style.display = '';
 
 	let loader = document.getElementById('load');
+	unt.actions.currentMobile = unt.tools.isMobile();
 
 	return unt.components.initDefaultForm().then(function () {
 		spinner.style.display = 'none';
@@ -88,9 +93,31 @@ window.addEventListener('DOMContentLoaded', function (event) {
 
 			if (loader)
 				return loader.remove();
-		}, 1000);
+		}, 500);
 	});
 });
+
+window.addEventListener('resize', function () {
+	if (unt.tools.isMobile() && !unt.actions.currentMobile) {
+		if (document.body.redirecting) return;
+
+		document.body.innerHTML = '';
+		document.body.redirecting = true;
+
+		setTimeout(function () {
+			unt.toast({html: 'Redirecting to mobile...'});
+
+			return setTimeout(function () {
+				return window.location.reload();
+			}, 1000);
+		}, 500);
+	}
+	if (!unt.tools.isMobile() && unt.actions.currentMobile) {
+		return window.location.reload();
+	}
+
+	unt.AutoInit();
+})
 
 window.addEventListener('popstate', function handleBackPressed (event) {
 	event.preventDefault();
