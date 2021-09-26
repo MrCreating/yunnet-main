@@ -5,3 +5,14 @@ html, body {
 body {
 	background-color: #eeeeee !important;
 }
+
+.important-window {
+	display: none;
+	opacity: 0;
+	height: 100%;
+	flex-direction: column;
+}
+
+.main-menu {
+	opacity: 1;
+}

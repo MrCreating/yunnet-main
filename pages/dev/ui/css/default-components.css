@@ -7572,11 +7572,6 @@ input[type=range]::-ms-thumb {
     overflow: auto
 }
 
-.hidesc html {
-    height: 100%;
-    overflow: auto
-}
-
 textarea {
     border: none;
     scroll-x: hidden;
@@ -7767,76 +7762,8 @@ html, body {
     border-bottom: 1px solid red !important;
 }
 
-subtext_m {
-    color: #e4d6d6;
-    font-size: 85%;
-    display: block;
-}
-
-.selected {
-    background-color: rgb(145, 145, 145) !important;
-}
-
 .full_section {
     padding: 20px;
-}
-
-.notification {
-    padding: 20px;
-    min-width: 20px;
-    max-width: 400px;
-    width: auto;
-    height: auto;
-    position: fixed;
-    bottom: 50px;
-    left: 50px;
-    min-height: 50px;
-    opacity: 0.8;
-    background-color: #BDBDBD;
-    color: white;
-}
-
-.box-text {
-    overflow: hidden;
-    max-height: 250px;
-    word-break: break-word;
-    white-space: normal;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.credentials {
-    margin-left: 10px;
-}
-
-.attachments_line_1 {
-    width: 100%
-}
-.attachments_line_2 {
-    width: 100%
-}
-.attachments_line_3 {
-    width: 100%
-}
-
-.attachment_tile {
-    height: 100%;
-    max-width: 100%;
-    width: auto;
-    border: none;
-    background-color: transparent;
-    padding-left: 2px;
-    padding-right: 2px;
-    object-fit: cover;
-}
-
-.photo-viewer {
-    width: 100%;
-    height: 100%;
-    position: fixed;
-    background-color: black;
-    z-index: 12000;
-    display: none;
 }
 
 .upper {
@@ -7863,31 +7790,8 @@ subtext_m {
     margin-top: 28%;
 }
 
-.collapsible-center {
-    margin-left: 10px;
-    margin-bottom: 5px;
-}
-
-.endful-div {
-    text-align: end; 
-    margin-left: 15px
-}
-
-.right-div {
-    text-align: end;
-    width: 100%
-}
-
-.alink-name {
-    color: var(--unt-links-color, black) !important;
-}
-
 .full-width {
     width: 100%;
-}
-
-.data-right {
-    text-align: -webkit-right;
 }
 
 .project-logo {
@@ -7914,37 +7818,10 @@ subtext_m {
     overflow-y: hidden;
 }
 
-.comment-text-hidden {
-    display: -webkit-box;
-    -webkit-line-clamp: 4;
-    -webkit-box-orient: vertical;
-    overflow-y: hidden;
-}
-
 .disabled {
     fill: grey;
 }
 
-code div:before {
-    text-align: end;
-    width: 45px;
-    counter-increment: line;
-    content: counter(line);
-    display: inline-block;
-    border-right: 1px solid #ddd;
-    padding: 0 .5em;
-    margin-right: .5em;
-    color: #888
-}
-
 svg {
     fill: var(--svg-fill-color, black);
-}
-
-.materialert {
-    background-color: var(--unt-notifications-background-color) !important;
-}
-
-.not_like_stroke {
-    stroke: var(--unt-unlike-color, black) !important;
 }

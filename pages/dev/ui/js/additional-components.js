@@ -236,9 +236,101 @@ unt.icons = new Object({
 	forbidden: '<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>',
 	message: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none"/><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>',
 	add_friend: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none"/><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>',
+	failed: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-3.1L7.1 5.69C8.45 4.63 10.15 4 12 4c4.42 0 8 3.58 8 8 0 1.85-.63 3.55-1.69 4.9z"/></svg>'
 });
 
 unt.components = new Object({
+	wall: new Object({
+		post: function (wallPostObject, isFullWindow = false) {
+			let element = document.createElement('div');
+			element.classList.add('card');
+			element.classList.add('waves-effect');
+			element.boundObject = wallPostObject;
+			element.style.padding = '20px';
+			element.style.width = '100%';
+			element.style.marginBottom = 0;
+
+			let ownerInfoDiv = document.createElement('div');
+			element.appendChild(ownerInfoDiv);
+			ownerInfoDiv.classList.add('valign-wrapper');
+
+			let photoDiv = document.createElement('div');
+			ownerInfoDiv.appendChild(photoDiv);
+			photoDiv.style.marginRight = '15px';
+
+			let userImage = document.createElement('img');
+			userImage.classList.add('circle');
+			userImage.classList.add('unselectable');
+			userImage.width = userImage.height = 42;
+			photoDiv.appendChild(userImage);
+
+			let credentialsDiv = document.createElement('div');
+			credentialsDiv.classList.add('unselectable');
+			ownerInfoDiv.appendChild(credentialsDiv);
+			credentialsDiv.classList.add('halign-wrapper');
+
+			let usernameDiv = document.createElement('a');
+			credentialsDiv.appendChild(usernameDiv);
+			usernameDiv.innerText = '...';
+			usernameDiv.style.color = 'black';
+			usernameDiv.style.fontWeight = 'bold';
+			usernameDiv.style.fontSize = '110%';
+
+			let postTimeDiv = document.createElement('div');
+			credentialsDiv.appendChild(postTimeDiv);
+			postTimeDiv.innerText = unt.parsers.time(wallPostObject.time);
+
+			unt.settings.users.get(wallPostObject.owner_id).then(function (entity) {
+				userImage.src = entity.photo_url;
+				usernameDiv.innerText = entity.account_type === 'bot' ? entity.name : (entity.first_name + ' ' + entity.last_name);
+				usernameDiv.setAttribute('target', '_blank');
+				usernameDiv.href = '/' + (entity.screen_name ? entity.screen_name : (entity.account_type === 'user' ? ("id" + entity.user_id) : ("bot" + entity.bot_id)));
+			}).catch(function (err) {
+				usernameDiv.innerText = unt.settings.lang.getValue('deleted_account');
+				photoDiv.hide();
+			});
+
+			if (wallPostObject.text && !wallPostObject.text.isEmpty()) {
+				element.appendChild(document.createElement('br'));
+
+				let postTextDiv = document.createElement('div');
+				postTextDiv.classList.add('post_data');
+				postTextDiv.innerHTML = nl2br(htmlspecialchars(wallPostObject.text ? wallPostObject.text : '').linkify());
+				element.appendChild(postTextDiv);
+
+				if (!isFullWindow) {
+					postTextDiv.addEventListener('click', function (event) {
+						if (unt.tools.isMobile()) {
+							return unt.actions.linkWorker.go('/wall' + wallPostObject.owner_id + '_' + wallPostObject.id, true, wallPostObject);
+						} else {
+
+						}
+					})
+				}
+
+				if (wallPostObject.text.length > 300) {
+					let showFullPostButton = document.createElement('a');
+					element.appendChild(showFullPostButton);
+					showFullPostButton.innerText = unt.settings.lang.getValue('show_more');
+					showFullPostButton.style.color = 'red';
+					showFullPostButton.style.cursor = 'pointer';
+					showFullPostButton.style.fontWeight = 'bold';
+
+					showFullPostButton.addEventListener('click', function (event) {
+						if (postTextDiv.classList.contains('post_data')) {
+							postTextDiv.classList.remove('post_data');
+							showFullPostButton.innerText = unt.settings.lang.getValue('hide') + '...';
+						} else {
+							postTextDiv.classList.add('post_data');
+							showFullPostButton.innerText = unt.settings.lang.getValue('show_more');
+						}
+					});
+				}
+			}
+
+			return element;
+		}
+	}),
 	alertBanner: function (icon, header, alertionText) {
 		let alertBannerCard = document.createElement('div');
 		alertBannerCard.classList.add('card');
@@ -770,9 +862,7 @@ unt.components = new Object({
 			}
 
 			let windowElement = document.createElement('div');
-			windowElement.style.height = '100%';
-			windowElement.style.flexDirection = 'column';
-			windowElement.style.display = 'none';
+			windowElement.classList.add('important-window');
 
 			let navigationDiv = document.createElement('div');
 			navigationDiv.classList.add('navbar-fixed');
@@ -821,15 +911,50 @@ unt.components = new Object({
 			}
 
 			function showWindow () {
-				unt.components.mainBlock.style.display = 'none';
-				windowElement.style.display = 'flex';
 				document.body.appendChild(windowElement);
+				unt.mmm({
+					targets: '.main-menu',
+					opacity: '0',
+					duration: 200,
+					easing: 'easeOutCirc',
+					begin: function () {
+						unt.components.mainBlock.style.display = '';
+						windowElement.style.display = 'none';
+					},
+					complete: function () {
+						unt.components.mainBlock.style.display = 'none';
+
+						unt.mmm({
+							targets: '.important-window',
+							opacity: '1',
+							duration: 250,
+							easing: 'easeInCirc',
+							begin: function () {
+								windowElement.style.display = 'flex';
+							}
+						});
+					}
+				});
 			}
 
 			function closeWindow () {
-				unt.components.mainBlock.style.display = '';
-				windowElement.style.display = 'none';
-				windowElement.remove();
+				unt.mmm({
+					targets: '.important-window',
+					opacity: '0',
+					duration: 250,
+					easing: 'easeOutCirc',
+					complete: function () {
+						windowElement.remove();
+						unt.components.mainBlock.style.display = '';
+
+						unt.mmm({
+							targets: '.main-menu',
+							opacity: '1',
+							duration: 200,
+							easing: 'easeInCirc'
+						});
+					}
+				});
 			}
 
 			function setTitle (title) {
@@ -992,15 +1117,59 @@ unt.components = new Object({
 			partialActionsContainer.classList.add('right');
 			partialActions.appendChild(partialActionsContainer);
 
-			let settingsIcon = document.createElement('a');
-			settingsIcon.href = '/settings';
-			partialActionsContainer.appendChild(settingsIcon);
-			settingsIcon.style.cursor = 'pointer';
-			settingsIcon.classList = ['tooltipped valign-wrapper'];
-			settingsIcon.setAttribute('data-position', 'bottom');
-			settingsIcon.setAttribute('data-tooltip', unt.settings.lang.getValue('settings'));
-			settingsIcon.style.marginRight = '15px';
-			settingsIcon.innerHTML = '<i><svg class="unt_icon" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24" viewBox="0 0 24 24" width="24"><g><path d="M0,0h24v24H0V0z" fill="none"></path><path fill="white" d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"></path></g></svg></i>'
+			let userInfoActionContainer = document.createElement('a');
+			userInfoActionContainer.classList.add('dropdown-trigger');
+			userInfoActionContainer.style.cursor = 'pointer';
+			userInfoActionContainer.classList.add('unselectable');
+			userInfoActionContainer.classList.add('valign-wrapper');
+			userInfoActionContainer.style.width = '100%';
+			partialActionsContainer.appendChild(userInfoActionContainer);
+
+			let userImage = document.createElement('img');
+			userInfoActionContainer.appendChild(userImage);
+			userImage.classList.add('circle');
+			userImage.width = userImage.height = 28;
+			userImage.src = unt.settings.users.current.photo_url;
+
+			let userCredentials = document.createElement('div');
+			userCredentials.style.marginLeft = '15px';
+			userCredentials.innerText = unt.settings.users.current.first_name + ' ' + unt.settings.users.current.last_name;
+			userInfoActionContainer.appendChild(userCredentials);
+
+			let arrowButton = document.createElement('i');
+			userInfoActionContainer.appendChild(arrowButton);
+			arrowButton.innerHTML = unt.icons.downArrow;
+			arrowButton.style.marginLeft = arrowButton.style.marginRight = '10px';
+			arrowButton.getElementsByTagName('svg')[0].style.fill = 'white';
+			arrowButton.getElementsByTagName('svg')[0].style.marginTop = '13px';
+
+			let ulDropdownContent = document.createElement('ul');
+			ulDropdownContent.classList.add('dropdown-content');
+			ulDropdownContent.id = 'actionsId';
+			userInfoActionContainer.setAttribute('data-target', ulDropdownContent.id);
+			partialActionsContainer.appendChild(ulDropdownContent);
+
+			let userInfoContent = document.createElement('li');
+			ulDropdownContent.appendChild(userInfoContent);
+
+			let currentUserProfileLink = document.createElement('a');
+			userInfoContent.appendChild(currentUserProfileLink);
+			currentUserProfileLink.href = '/' + (unt.settings.users.current.screen_name ? unt.settings.users.current.screen_name : ('id' + unt.settings.users.current.user_id));
+
+			let infoDiv = document.createElement('div');
+			infoDiv.classList.add('valign-wrapper');
+			currentUserProfileLink.appendChild(infoDiv);
+
+			let userImageDrop = document.createElement('img');
+			infoDiv.appendChild(userImageDrop);
+			userImageDrop.classList.add('circle');
+			userImageDrop.width = userImage.height = 28;
+			userImageDrop.src = unt.settings.users.current.photo_url;
+			userImageDrop.style.marginRight = '15px';
+
+			let userCredentialsInfo = document.createElement('div');
+			userCredentialsInfo.innerText = unt.settings.users.current.first_name + ' ' + unt.settings.users.current.last_name;
+			infoDiv.appendChild(userCredentialsInfo);
 
 			navFixed.setTitle = function (title) {
 				currentPage.innerText = title;
@@ -1021,6 +1190,7 @@ unt.components = new Object({
 	},
 	buildDefaultPageForm: function () {
 		let mainDiv = document.createElement('div');
+		mainDiv.classList.add('main-menu');
 		document.body.appendChild(mainDiv);
 
 		unt.components.mainBlock = mainDiv;
@@ -1125,7 +1295,7 @@ unt.components = new Object({
 				collectionUl.style.margin = 0;
 				collectionUl.style.padding = 0;
 
-				let li = document.createElement('li');
+				/*let li = document.createElement('li');
 				collectionUl.appendChild(li);
 				li.classList.add('collection-item');
 				li.classList.add('waves-effect');
@@ -1149,7 +1319,7 @@ unt.components = new Object({
 
 				let b = document.createElement('b');
 				credDiv.appendChild(b);
-				b.innerText = (unt.settings.users.current.first_name + ' ' + unt.settings.users.current.last_name);
+				b.innerText = (unt.settings.users.current.first_name + ' ' + unt.settings.users.current.last_name);*/
 
 				unt.components.buildMenuItemsTable(unt.settings.current.theming.menu_items, collectionUl);
 
@@ -1189,8 +1359,6 @@ unt.components = new Object({
 		links = ['/', '/notifications', '/friends', '/messages', '/groups', '/archive', '/audios', '/settings'];
 
 		currentMenuItems.forEach(function (itemId) {
-			if (!unt.tools.isMobile() && itemId === 8) return;
-
 			if (unt.settings.users.current && unt.settings.users.current.is_banned) return;
 
 			let menuItemIndex = itemId - 1;

@@ -1,6 +1,6 @@
 unt.actions.linkWorker.go = function (url = window.location.href, writeToLocalHistory = true, internalData = null) {
-	let splittedUrl = String(url).split(window.location.host);
-	let resultedUrl = splittedUrl[1] ? splittedUrl[1] : (splittedUrl[0] ? splittedUrl[0] : '/');
+	let splittedUrl = String(url).split(window.location.host)
+	let resultedUrl = (splittedUrl[1] ? splittedUrl[1] : (splittedUrl[0] ? splittedUrl[0] : '/'));
 
 	if (unt.actions.linkWorker.currentPage && url === unt.actions.linkWorker.currentPage.url)
 		return;
@@ -18,7 +18,8 @@ unt.actions.linkWorker.go = function (url = window.location.href, writeToLocalHi
 		this.currentPage = pageInfoObject;
 	}
 
-	switch (resultedUrl) {
+	let resultedUrlWithOutParams = resultedUrl.split('?')[0];
+	switch (resultedUrlWithOutParams) {
 		case '/':
 			unt.settings.users.current ? unt.pages.news(internalData) : unt.pages.auth(internalData);
 		break;

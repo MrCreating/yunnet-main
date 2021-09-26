@@ -5,6 +5,60 @@ unt.pages = new Object({
 	banned: function (internalData) {},
 	news: function (internalData) {
 		document.title = unt.settings.lang.getValue('news');
+		let menu = unt.components.menuElement;
+
+		let untNewsContainer = document.createElement('div');
+		menu.appendChild(untNewsContainer);
+
+		let newsDiv = document.createElement('div');
+		untNewsContainer.appendChild(newsDiv);
+
+		let actionsDiv = document.createElement('div');
+		untNewsContainer.appendChild(actionsDiv);
+
+		if (!unt.tools.isMobile()) {
+			untNewsContainer.classList.add('row');
+			newsDiv.classList = ['col s8'];
+
+			actionsDiv.classList = ['col s4'];
+			actionsDiv.style.paddingLeft = 0;
+		}
+
+		if (unt.tools.isMobile()) {
+			actionsDiv.appendChild(unt.components.floatingActionButton(unt.icons.edit, unt.settings.lang.getValue('write_a_post'), true));
+		} else {
+			actionsDiv.appendChild(unt.components.cardButton(unt.icons.edit, unt.settings.lang.getValue('write_a_post'), new Function()));
+		}
+
+		let newsLoadCard = document.createElement('div');
+		newsLoadCard.classList.add('valign-wrapper');
+		newsLoadCard.classList.add('card');
+		newsDiv.appendChild(newsLoadCard);
+
+		let loader = unt.components.loaderElement();
+		loader.style.padding = '20px';
+		newsLoadCard.appendChild(loader);
+
+		let loaderText = document.createElement('div');
+		newsLoadCard.appendChild(loaderText);
+		loaderText.innerText = unt.settings.lang.getValue('loading');
+		return unt.actions.wall.getNews().then(function (posts) {
+			newsLoadCard.hide();
+
+			if (posts.length <= 0)
+				return profileContent.appendChild(unt.components.alertBanner(unt.icons.failed, unt.settings.lang.getValue('no_posts'), unt.settings.lang.getValue('no_posts_t')));
+				
+			newsDiv.hide();
+			posts.forEach(function (post) {
+				newsDiv.appendChild(unt.components.wall.post(post));
+			});
+
+			return newsDiv.show();
+		}).catch(function (err) {
+			newsDiv.show();
+
+			return newsDiv.appendChild(unt.components.alertBanner(unt.icons.failed, unt.settings.lang.getValue('upload_error'), unt.settings.lang.getValue('unknown_error')));
+		});
 	},
 	messages: function (internalData) {
 		document.title = unt.settings.lang.getValue('messages');
@@ -27,6 +81,47 @@ unt.pages = new Object({
 	},
 	settings: function (internalData) {
 		document.title = unt.settings.lang.getValue('settings');
+		let menu = unt.components.menuElement;
+
+		let categories = ['main', 'security', 'privacy'];
+		let catMenus = [];
+
+		if (!unt.tools.isMobile()) {
+			let tabsUl = document.createElement('ul');
+			tabsUl.classList.add('tabs');
+			tabsUl.classList.add('card');
+			tabsUl.style.marginTop = 0;
+			tabsUl.classList.add('tabs-fixed-width');
+			tabsUl.style.marginTop = '5px';
+			menu.appendChild(tabsUl);
+
+			categories.forEach(function (category) {
+				let li = document.createElement('li');
+				li.classList.add('tab');
+
+				let a = document.createElement('a');
+				a.href = '/settings?section=' + category;
+				a.classList.add('unselectable');
+				a.style.cursor = 'pointer';
+				li.appendChild(a);
+				a.innerText = unt.settings.lang.getValue(category);
+				tabsUl.appendChild(li);
+
+				let categoryMenuElement = document.createElement('div');
+				categoryMenuElement.hide();
+				categoryMenuElement.classList.add('settings-category');
+
+				menu.appendChild(categoryMenuElement);
+				/*a.addEventListener('click', function () {
+					menu.querySelectorAll('.tab').forEach(function (tabItem) {
+						tabItem.classList.remove('active');
+					});
+					li.classList.add('active');
+				});*/
+			});
+		} else {
+
+		}
 	},
 	edit: function (internalData) {
 		document.title = unt.settings.lang.getValue('edit');
@@ -128,7 +223,7 @@ unt.pages = new Object({
 				let writeButton = unt.components.floatingActionButton(unt.icons.edit, unt.settings.lang.getValue('write_a_post'));
 				writeButton.style.position = 'absolute';
 				writeButton.style.right = 0;
-				writeButton.style.zIndex = 998;
+				writeButton.style.zIndex = 996;
 				writeButton.style.marginRight = '20px';
 				mainData.appendChild(writeButton);
 			}
@@ -173,7 +268,29 @@ unt.pages = new Object({
 			} else if (!user.can_access_closed) {
 				profileContent.appendChild(unt.components.alertBanner(unt.icons.forbidden, unt.settings.lang.getValue('closed_profile'), unt.settings.lang.getValue('closed_profile_message')));
 			} else {
-				// get posts
+				let loader = unt.components.loaderElement();
+				profileContent.appendChild(loader);
+				loader.classList.add('center');
+				loader.style.marginTop = '20px';
+
+				let postsDiv = document.createElement('div');
+				postsDiv.hide();
+				profileContent.appendChild(postsDiv);
+
+				unt.actions.wall.getPosts(unt.actions.wall.currentId).then(function (posts) {
+					loader.hide();
+
+					if (posts.length <= 0)
+						return profileContent.appendChild(unt.components.alertBanner(unt.icons.failed, unt.settings.lang.getValue('no_posts'), unt.settings.lang.getValue('no_posts_t')));
+				
+					posts.forEach(function (post) {
+						postsDiv.appendChild(unt.components.wall.post(post));
+					});
+
+					return postsDiv.show();
+				}).catch(function (err) {
+					return profileContent.appendChild(unt.components.alertBanner(unt.icons.failed, unt.settings.lang.getValue('upload_error'), unt.settings.lang.getValue('unknown_error')));
+				});
 			}
 
 			actionsDiv.appendChild(actionsMenu);

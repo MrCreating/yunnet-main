@@ -562,5 +562,6 @@
   "redirect_url_not_given": "The link for sending data (redirect_url) is not specified or invalid, we remain on the current page.",
   "access_granted": "You have provided access to your account.",
   "return_to_auth": "Back to login start?",
-  "use_new_design": "Use a new design"
+  "use_new_design": "Use a new design",
+  "unknown_error": "An unknown error has occurred. You may not be connected to the Internet, or the access rights have changed after you synchronized the interface. Alternatively, try refreshing the page..."
 }

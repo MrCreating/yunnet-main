@@ -330,7 +330,7 @@ const settings = {
                                 return pages.elements.alert(settings.lang.getValue('after_registration')).then(function (response) {
                                     return pages.elements.confirm('', settings.lang.getValue('reg_privacy_warning'), function (response) {
                                         if (response) {
-                                            let win = window.open('https://yunnet.ru/register', 'yunNet.', 'resizable,scrollbars,status');
+                                            let win = window.open('/register', 'yunNet.', 'resizable,scrollbars,status');
 
                                             let cancelled = false;
 
@@ -523,7 +523,7 @@ const settings = {
             data.append('action', 'logout');
 
             let x = _xmlHttpGet();
-            x.open('POST', 'https://yunnet.ru/settings');
+            x.open('POST', '/settings');
 
             x.withCredentials = true;
             x.onreadystatechange = function () {
@@ -1354,7 +1354,7 @@ const account = {
                 }
             }
 
-            x.open('POST', 'https://yunnet.ru/login');
+            x.open('POST', '/login');
             x.send(data);
         });
     }
