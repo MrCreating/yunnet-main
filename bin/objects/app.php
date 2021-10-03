@@ -1,22 +1,18 @@
 <?php
 
+require_once __DIR__ . '/../parsers/attachments.php';
+require_once __DIR__ . '/token.php';
+
 /**
  * Declares App object
 */
-
-if (!class_exists('Entity'))
-	require __DIR__ . '/entites.php';
-if (!class_exists('AttachmentsParser'))
-	require __DIR__ . '/Attachment.php';
-if (!class_exists('Token'))
-	require __DIR__ . '/token.php';
 
 class App
 {
 	protected $id            = 0;
 	protected $creation_time = 0;
 
-	private $owner             = NULL;
+	private $owner_id          = NULL;
 	private $isValid           = NULL;
 	private $directAuthEnabled = NULL;
 
@@ -47,8 +43,8 @@ class App
 			$this->creation_time     = intval($data['creation_time']);
 			$this->description       = strval($data["description"]);
 
-			$this->owner = intval($data['owner_id']) > 0 ? new User(intval($data['owner_id'])) : new Bot(intval($data['owner_id']));
-			$this->photo = $data['photo_path'] !== '' ? (new AttachmentsParser())->resolveFromQuery($data['photo_path']) : NULL;
+			$this->owner_id = intval($data['owner_id']);
+			$this->photo    = $data['photo_path'] !== '' ? (new AttachmentsParser())->resolveFromQuery($data['photo_path']) : NULL;
 		}
 	}
 
@@ -104,9 +100,9 @@ class App
 		return $this->title;
 	}
 
-	public function getOwner ()
+	public function getOwnerId (): int
 	{
-		return $this->owner;
+		return $this->owner_id;
 	}
 
 	public function setTitle (string $title): App
@@ -140,7 +136,7 @@ class App
 	{
 		return [
 			'id'            => $this->getId(),
-			'owner_id'      => $this->getOwner()->getId(),
+			'owner_id'      => $this->getOwnerId(),
 			'title'         => $this->getTitle(),
 			'photo_url'     => ($this->getPhoto() ? $this->getPhoto()->getLink() : (DEFAULT_SCRIPTS_URL . '/images/default.png')),
 			'description'   => $this->getDescription(),
@@ -151,7 +147,7 @@ class App
 	public function apply (): bool
 	{
 		$current_user_id  = intval($_SESSION['user_id']);
-		$current_owner_id = intval($this->getOwner()->getId());
+		$current_owner_id = intval($this->getOwnerId());
 
 		if ($current_user_id !== $current_owner_id)
 			return false;
@@ -198,7 +194,7 @@ class App
 	public function delete (): bool
 	{
 		$current_user_id  = intval($_SESSION['user_id']);
-		$current_owner_id = intval($this->getOwner()->getId());
+		$current_owner_id = intval($this->getOwnerId());
 
 		if ($current_user_id !== $current_owner_id)
 			return false;

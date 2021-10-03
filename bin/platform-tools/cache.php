@@ -32,7 +32,7 @@ class Cache
 
 	public function putItem ($name, $value): Cache
 	{
-		$this->currentCacheServer->set($this->currentCacheName . '/' . $name, strval($value));
+		$this->currentCacheServer->set($this->currentCacheName . '/' . $name, strval($value), 3600);
 
 		return $this;
 	}

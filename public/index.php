@@ -28,7 +28,7 @@ if (!in_array($to, $subdomains))
 // defines a page and loads the core context
 define('REQUESTED_PAGE', $requested_page);
 
-require __DIR__ . '/../bin/base_functions.php';
+require_once __DIR__ . '/../bin/base_functions.php';
 
 // checking domains.
 switch ($to)

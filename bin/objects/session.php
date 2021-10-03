@@ -1,13 +1,12 @@
 <?php
 
-if (!class_exists('Entity'))
-	require __DIR__ . '/entity.php';
-if (!function_exists('get_cache'))
-	require __DIR__ . '/../base_functions.php';
+require_once __DIR__ . '/user.php';
+require_once __DIR__ . '/bot.php';
 
 /**
  * Session class. Valid for tokens and auth.
 */
+
 class Session
 {
 	private $bound_user = NULL;
@@ -60,7 +59,7 @@ class Session
 		return $this->session_id;
 	}
 
-	public function getCurrentUser ()
+	public function getCurrentUser (): Entity
 	{
 		return $this->bound_user;
 	}
@@ -166,7 +165,7 @@ class Session
 	}
 
 	// static actions
-	public static function start (int $user_id)
+	public static function start (int $user_id): ?Session
 	{
 		session_start();
 
@@ -202,7 +201,7 @@ class Session
 			return $session;
 		}
 
-		return false;
+		return NULL;
 	}
 
 	public static function getList (): array

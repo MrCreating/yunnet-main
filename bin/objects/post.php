@@ -1,15 +1,11 @@
 <?php
 
+require_once __DIR__ . '/attachment.php';
+require_once __DIR__ . '/../parsers/attachments.php';
+
 /**
  * Post class
 */
-
-if (!function_exists('can_comment'))
-	require __DIR__ . '/../functions/wall.php';
-if (!class_exists('AttachmentsParser'))
-	require __DIR__ . "/attachment.php";
-if (!class_exists('Comment'))
-	require __DIR__ . '/comment.php';
 
 class Post extends Attachment
 {
@@ -18,7 +14,6 @@ class Post extends Attachment
 	private $creation_time = 0;
 	private $owner_id      = 0;
 
-	private $type    = 'wall';
 	private $text    = '';
 
 	private $attachments    = [];
@@ -27,7 +22,6 @@ class Post extends Attachment
 	private $likes = 0;
 
 	private $liked = false;
-	private $can_comment = false;
 	private $is_pinned = false;
 
 	private $event = null;
@@ -66,8 +60,6 @@ class Post extends Attachment
 				$this->owner_id      = intval($data['owner_id']);
 				$this->text          = iconv('UTF-8', 'UTF-8//IGNORE', strval($data['text']));
 				$this->is_pinned     = boolval($data['is_pinned']);
-
-				$this->can_comment   = boolval(can_comment($connection, intval($_SESSION['user_id']), $this->getWallId()));
 
 				$this->comments_count = intval($res->fetch(PDO::FETCH_ASSOC)["COUNT(DISTINCT local_id)"]);
 				if (!is_empty($data['event']))
@@ -132,9 +124,14 @@ class Post extends Attachment
 		return $this->creation_time;
 	}
 
+	public function getType (): string
+	{
+		return "wall";
+	}
+
 	public function getCredentials (): string
 	{
-		return $this->type . $this->getWallId() . '_' . $this->getPostId();
+		return $this->getType() . $this->getWallId() . '_' . $this->getPostId();
 	}
 
 	public function getText (): string
@@ -178,7 +175,7 @@ class Post extends Attachment
 
 	public function canComment (): bool
 	{
-		return $this->can_comment;
+		return false;
 	}
 
 	public function isPinned (): bool

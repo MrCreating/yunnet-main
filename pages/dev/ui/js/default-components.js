@@ -13,6 +13,10 @@ String.prototype.isEmpty = function () {
     return false;
 };
 
+String.prototype.insertAt = function (a, e) {
+  return this.slice(0, a) + e + this.slice(a);
+};
+
 HTMLCollection.prototype.forEach = function (callback) {
   if (typeof callback !== 'function') throw new TypeError(callback + ' is not a function');
 

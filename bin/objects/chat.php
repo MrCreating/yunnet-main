@@ -1,18 +1,13 @@
 <?php
 
+require_once __DIR__ . '/../event_manager.php';
+require_once __DIR__ . '/user.php';
+require_once __DIR__ . '/bot.php';
+
 /**
  * Chat class.
  * Repesenta dual-chats and multichats
 */
-
-if (!class_exists('DataBaseConnection'))
-	require __DIR__ . '/../database.php';
-if (!class_exists('EventEmitter'))
-	require __DIR__ . '/../event_manager.php';
-if (!class_exists('Entity'))
-	require __DIR__ . '/entities.php';
-if (!class_exists('Data'))
-	require __DIR__ . '/../bin/data.php';
 
 class Chat extends EventEmitter
 {
@@ -167,9 +162,8 @@ class Chat extends EventEmitter
 				{
 					$with = new Bot($user_id);
 
-					$can_write_to_bot = $with->getSettings()->getValues()->privacy->can_write_messages;
-
-					if ($can_write_to_bot === 2 && ($with->getOwner()->getId() !== $user_id)) return false;
+					$can_write_to_bot = $with->getSettings()->getSettingsGroup('privacy')->getGroupValue('can_write_messages');
+					if ($can_write_to_bot === 2 && ($with->getOwnerId() !== $user_id)) return false;
 
 					return true;
 				} else
@@ -186,7 +180,7 @@ class Chat extends EventEmitter
 
 						//if ($with->isBlocked() || $with->inBlacklist()) return false;
 
-						$can_write_to_user = $with->getSettings()->getValues()->privacy->can_write_messages;
+						$can_write_to_user = $with->getSettings()->getSettingsGroup('privacy')->getGroupValue('can_write_messages');
 
 						if ($can_write_to_user === NULL || $can_write_to_user === 0) return true;
 						if ($can_write_to_user === 1/* && $with->isFriend()*/) return true;
@@ -423,94 +417,6 @@ class Chat extends EventEmitter
 
 	// get chats list
 	public static function getList (int $offset, int $count): array
-	{}
-}
-
-/**
- * Permissions class
- * Represents the chat permissions
-*/
-class Permissions
-{
-	public function __construct (Chat $chat)
-	{}
-
-	public function getValue (string $name): int
-	{}
-
-	public function setValue (string $name, int $newValue): bool
-	{}
-}
-
-/**
- * Message class
- * Represents the message object
-*/
-class Message
-{
-	private $owner   = NULL;
-	private $localId = NULL;
-	private $text    = NULL;
-	private $atts    = NULL;
-	private $fwd     = NULL;
-
-	// for service messages
-	private $event = NULL;
-
-	private $isValid = false;
-
-	private $currentConnection = NULL;
-
-	public function __construct (Chat $chat, int $localMessageId, bool $ignoreDeletion = false)
-	{
-		$this->currentConnection = new DataBaseConnection();
-		if ($chat->valid())
-		{
-			$uid = $chat->getUID();
-
-			$res = $this->currentConnection->getPDOObject()->prepare("SELECT local_chat_id, is_edited, time, text, event, new_src, new_title, owner_id, to_id, reply, attachments FROM messages.chat_engine_1 WHERE ".($ignoreDeletion ? "" : "deleted_for_all != 1 AND ")."uid = ? AND local_chat_id = ? ORDER BY local_chat_id DESC LIMIT 1;");
-			
-			if ($res->execute([strval($uid), strval($localMessageId)]))
-			{
-				$data = $res->fetch(PDO::FETCH_ASSOC);
-				if ($data)
-				{
-					
-				}
-			}
-		}
-	}
-
-	public function getOwner (): Entity
-	{}
-
-	public function getText (): string
-	{}
-
-	public function getAttachments (): array
-	{}
-
-	public function getFWD (): array
-	{}
-
-	public function setText (string $text): Message
-	{}
-
-	public function setAttachments (array $newAttachments): Message
-	{}
-
-	public function setFWD (array $fwd): Message
-	{}
-
-	public function apply (): int
-	{}
-
-	public function valid (): bool
-	{
-		return $this->isValid;
-	}
-
-	public function toArray (): array
 	{}
 }
 

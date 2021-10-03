@@ -3345,7 +3345,7 @@ const pages = {
 	},
 	profile: function () {
 		if (settings.users.current)
-			if (settings.users.current.is_banned) return pages.unauth.banned();
+			if (settings.users.	current.is_banned) return pages.unauth.banned();
 
 		function doAction (action, currentUserId) {
 			let data = new FormData();

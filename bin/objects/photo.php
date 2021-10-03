@@ -1,7 +1,10 @@
 <?php
 
-if (!class_exists('Attachment'))
-	require __DIR__ . '/attachment.php';
+require_once __DIR__ . '/attachment.php';
+
+/**
+ * Photo class
+*/
 
 class Photo extends Attachment
 {
@@ -93,7 +96,7 @@ class Photo extends Attachment
 
 	public function getCredentials (): string
 	{
-		return 'photo' . $this->owner_id . '_' . $this->id . '_' . $this->access_key;
+		return $this->getType() . $this->getOwnerId() . '_' . $this->getId() . '_' . $this->getAccessKey();
 	}
 
 	public function getWidth (): int
@@ -114,6 +117,11 @@ class Photo extends Attachment
 	public function getId (): int
 	{
 		return $this->id;
+	}
+
+	public function getType (): string
+	{
+		return "photo";
 	}
 
 	public function getAccessKey (): string

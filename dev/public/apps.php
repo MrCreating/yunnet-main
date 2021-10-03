@@ -70,7 +70,7 @@ if (isset($_POST['action']))
 			if ($token_info['owner_id'] < 0)
 			{
 				$bot = new Bot(intval($token_info['owner_id'])*-1);
-				if (!$bot->valid() || $bot->getOwner()->getId() !== $context->getCurrentUser()->getId())
+				if (!$bot->valid() || $bot->getOwnerId() !== $context->getCurrentUser()->getId())
 					die(json_encode(array('error'=>1)));
 			} else if ($token_info['owner_id'] !== $context->getCurrentUser()->getId())
 			{
@@ -97,7 +97,7 @@ if (isset($_POST['action']))
 			if ($token_info['owner_id'] < 0)
 			{
 				$bot = new Bot(intval($token_info['owner_id'])*-1);
-				if (!$bot->valid() || $bot->getOwner()->getId() !== $context->getCurrentUser()->getId())
+				if (!$bot->valid() || $bot->getOwnerId() !== $context->getCurrentUser()->getId())
 					die(json_encode(array('error'=>1)));
 			} else if ($token_info['owner_id'] !== $context->getCurrentUser()->getId())
 			{
@@ -126,7 +126,7 @@ if (isset($_POST['action']))
 
 		case 'get_tokens':
 			$app = new App(intval($_POST['app_id']));
-			if (!$app->valid() || ($app->getOwner()->getId() !== $context->getCurrentUser()->getId()))
+			if (!$app->valid() || ($app->getOwnerId() !== $context->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
 			if (!function_exists('get_tokens_list'))
@@ -153,7 +153,7 @@ if (isset($_POST['action']))
 				require __DIR__ . '/../../bin/objects/apps.php';
 			
 			$app = new App(intval($_POST['app_id']));
-			if (!$app->valid() || ($app->getOwner()->getId() !== $context->getCurrentUser()->getId()))
+			if (!$app->valid() || ($app->getOwnerId() !== $context->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
 			if (!$app->setTitle($_POST["new_title"])->apply())
@@ -167,7 +167,7 @@ if (isset($_POST['action']))
 				require __DIR__ . '/../../bin/objects/apps.php';
 			
 			$app = new App(intval($_POST['app_id']));
-			if (!$app->valid() || ($app->getOwner()->getId() !== $context->getCurrentUser()->getId()))
+			if (!$app->valid() || ($app->getOwnerId() !== $context->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
 			die(json_encode(array('success'=>intval($app->delete()))));
@@ -182,7 +182,7 @@ if (isset($_POST['action']))
 				require __DIR__ . '/../../bin/objects/apps.php';
 
 			$app = new App(intval($_POST['app_id']));
-			if (!$app->valid() || ($app->getOwner()->getId() !== $context->getCurrentUser()->getId()))
+			if (!$app->valid() || ($app->getOwnerId() !== $context->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
 			$photo = (new AttachmentsParser())->getObject($photo);
@@ -201,7 +201,7 @@ if (isset($_POST['action']))
 				require __DIR__ . '/../../bin/objects/apps.php';
 
 			$app = new App(intval($_POST['app_id']));
-			if (!$app->valid() || ($app->getOwner()->getId() !== $context->getCurrentUser()->getId()))
+			if (!$app->valid() || ($app->getOwnerId() !== $context->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
 			$result = $app->setPhoto(NULL)->apply();

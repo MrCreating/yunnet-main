@@ -1,15 +1,13 @@
 <?php
 
-if (!function_exists('get_database_connection'))
-	require __DIR__ . '/../../base_functions.php';
-if (!class_exists('AttachmentsParser'))
-	require __DIR__ . '/attachment.php';
+require_once __DIR__ . '/attachment.php';
+require_once __DIR__ . '/../parasers/attachments.php';
 
 /**
- * Comment object
+ * Comments for posts representation
 */
 
-class Comment
+class Comment extends Attachment
 {
 	private $owner_id = 0;
 	private $local_id = 0;
@@ -70,9 +68,14 @@ class Comment
 		return intval($this->time);
 	}
 
+	public function getType (): string
+	{
+		return "comment";
+	}
+
 	public function getCredentials (): string
 	{
-		return 'comment' . $this->getOwnerId() . '_' . $this->getLocalId();
+		return $this->getType() . $this->getOwnerId() . '_' . $this->getLocalId();
 	}
 
 	public function toArray (): array

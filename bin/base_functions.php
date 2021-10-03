@@ -12,23 +12,12 @@ define('DEFAULT_ATTACHMENTS_URL', 'https://d-1.yunnet.ru');
 define('DEFAULT_SCRIPTS_URL', 'https://dev.yunnet.ru');
 define('DEFAULT_THEMES_URL', 'https://themes.yunnet.ru');
 
-if (!class_exists('DataBaseConnection'))
-	require __DIR__ . '/database.php';
-if (!class_exists('Data'))
-	require __DIR__ . '/data.php';
-if (!class_exists('EventEmitter'))
-	require __DIR__ . '/event_manager.php';
-
-if (!class_exists('Entity'))
-	require __DIR__ . '/objects/entities.php';
-if (!class_exists('Attachment'))
-	require __DIR__ . '/objects/attachment.php';
-if (!class_exists('Photo'))
-	require __DIR__ . '/objects/photo.php';
-if (!class_exists('Poll'))
-	require __DIR__ . '/objects/poll.php';
-if (!class_exists('Post'))
-	require __DIR__ . '/objects/post.php';
+require_once __DIR__ . '/database.php';
+require_once __DIR__ . '/data.php';
+require_once __DIR__ . '/event_manager.php';
+require_once __DIR__ . '/objects/user.php';
+require_once __DIR__ . '/objects/bot.php';
+require_once __DIR__ . '/parsers/attachments.php';
 
 function context ()
 {
@@ -181,7 +170,7 @@ function get_database_connection ()
 		return $_SERVER['dbConnection'];
 
 	return new PDO("mysql:host=localhost;dbname=users", "root", "iA22021981_", [
-		PDO::ATTR_PERSISTENT => true
+		PDO::ATTR_PERSISTENT => false
 	]);
 }
 

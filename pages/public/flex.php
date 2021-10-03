@@ -107,9 +107,9 @@ if ($action === "get_settings")
 	if ($context->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
 
 	// check the settings
-	$settings = $context->getCurrentUser()->getSettings()->getValues();
+	$settings = $context->getCurrentUser()->getSettings()->toArray();
 
-	// prepared response
+	/*// prepared response
 	$result = [
 		'account' => [
 			'language'  => strval($settings->lang),
@@ -136,9 +136,9 @@ if ($action === "get_settings")
 			'js_allowed'    => themes_js_allowed($connection, $context->getCurrentUser()->getId()),
 			'current_theme' => get_current_theme_credentials($connection, $context->getCurrentUser()->getId())
 		]
-	];	
+	]*/
 
-	die(json_encode($result));
+	die(json_encode($settings));
 }
 
 /**

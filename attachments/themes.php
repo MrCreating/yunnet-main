@@ -27,7 +27,7 @@ header('Access-Control-Allow-Credentials: true');
 $connection = get_database_connection();
 $theme      = (new AttachmentsParser())->getObject($selected_theme);
 
-if (!$theme || ($theme->isPrivate() && $theme->getOwner()->getId() !== intval($_SESSION['user_id']) && !$theme->isDefault()))
+if (!$theme || ($theme->isPrivate() && $theme->getOwnerId() !== intval($_SESSION['user_id']) && !$theme->isDefault()))
 {
 	header("Content-Type: application/json"); http_response_code(404); die('[]');
 }
@@ -44,7 +44,7 @@ foreach ($params as $index => $item) {
 $mode = strtolower($request["mode"]);
 switch ($mode) {
 	case 'export':
-		if ($theme->getOwner()->getId() !== intval($_SESSION['user_id']))
+		if ($theme->getOwnerId() !== intval($_SESSION['user_id']))
 			die(json_encode(array('error' => array('error_code' => 302, 'error_message' => 'You do not have access to import this theme'))));
 
 		$fileData = $theme->createUTH();

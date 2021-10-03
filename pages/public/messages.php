@@ -1,4 +1,5 @@
 <?php
+
 require __DIR__ . "/../../bin/objects/message.php";
 require __DIR__ . '/../../bin/functions/messages.php';
 require __DIR__ . '/../../bin/functions/users.php';

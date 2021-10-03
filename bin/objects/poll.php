@@ -1,11 +1,10 @@
 <?php
 
-/**
- * Poll object
-*/
+require_once __DIR__ . '/attachment.php';
 
-if (!class_exists('Attachment'))
-	require __DIR__ . '/attachment.php';
+/**
+ * Poll class
+*/
 
 class Poll extends Attachment
 {
@@ -65,6 +64,11 @@ class Poll extends Attachment
 				$this->getAnswers();
 			}
 		}
+	}
+
+	public function getType (): string
+	{
+		return "poll";
 	}
 
 	public function getOwnerId (): int
@@ -133,7 +137,7 @@ class Poll extends Attachment
 		];
 	}
 
-	public function getAnswers () 
+	public function getAnswers (): array
 	{
 		if (!$this->isValid) return false;
 
@@ -159,7 +163,7 @@ class Poll extends Attachment
 		return $this->currentVariants;
 	}
 
-	public function addAnswer ($answer_text) 
+	public function addAnswer ($answer_text): bool
 	{
 		if (!$this->isValid) return false;
 
@@ -189,18 +193,24 @@ class Poll extends Attachment
 		return false;
 	}
 
-	public function editAnswer ($answer_id) 
-	{}
+	public function editAnswer ($answer_id): bool
+	{
+		return false;
+	}
 
-	public function removeAnswer ($answer_id)
-	{}
+	public function removeAnswer ($answer_id): bool
+	{
+		return false;
+	}
 
-	public function vote ($user_id, $answer_id)
-	{}
+	public function vote ($user_id, $answer_id): bool
+	{
+		return false;
+	}
 
 	public function getCredentials (): string
 	{
-		return 'poll' . $this->owner_id . '_' . $this->poll_id . '_' . $this->access_key;
+		return $this->getType() . $this->getOwnerId() . '_' . $this->getId() . '_' . $this->getAccessKey();
 	}
 }
 

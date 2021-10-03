@@ -1,22 +1,17 @@
 <?php
 
-/**
- * Theme object. Usable for attaching to messages, comments, etc.
-*/
+require_once __DIR__ . '/attachment.php';
+require_once __DIR__ . '/../event_manager.php';
+require_once __DIR__ . '/../platform-tools/cache.php';
 
-if (!class_exists('Entity'))
-	require __DIR__ . '/entities.php';
-if (!class_exists('Attachment'))
-	require __DIR__ . '/attachment.php';
-if (!class_exists('EventEmitter'))
-	require __DIR__ . '/../event_manager.php';
-if (!class_exists('Cache'))
-	require __DIR__ . '/../platform-tools/cache.php';
+/**
+ * Theme class
+*/
 
 class Theme extends Attachment
 {
-	private $owner = NULL;
-	private $id    = NULL;
+	private $owner_id = NULL;
+	private $id      = NULL;
 
 	private $title       = NULL;
 	private $description = NULL;
@@ -48,7 +43,7 @@ class Theme extends Attachment
 			if ($data)
 			{
 				$this->id           = intval($data['id']);
-				$this->owner        = (intval($data['owner_id']) > 0) ? new User(intval($data['owner_id'])) : new Bot(intval($data['owner_id']));
+				$this->owner_id     = intval($data['owner_id']);
 				$this->title        = strval($data['title']);
 				$this->description  = strval($data['description']);
 				$this->defaultTheme = boolval(intval($data['is_default']));
@@ -75,24 +70,24 @@ class Theme extends Attachment
 						$this->currentCache->putItem($this->getCredentials() . '/js', $JSCode);
 				}
 
-				$JSONCode = $this->currentCache->getItem($this->getCredentials() . '/json');
+				/*$JSONCode = $this->currentCache->getItem($this->getCredentials() . '/json');
 				if (!$JSONCode)
 				{
 					$JSONCode = file_get_contents(__DIR__ . "/../../attachments/themes" . $data["path_to_api"]);
 					if ($JSONCode)
 						$this->currentCache->putItem($this->getCredentials() . '/json', $JSONCode);
-				}
+				}*/
 
 				$this->CSSCode  = $CSSCode;
 				$this->JSCode   = $JSCode;
-				$this->JSONCode = $JSONCode;
+				//$this->JSONCode = $JSONCode;
 			}
 		}
 	}
 
 	public function setAsCurrent (): bool
 	{
-		if ((!$this->valid() || ($this->isPrivate() && $this->getOwner()->getId() !== intval($_SESSION['user_id']))) && !$this->isDefault()) return false;
+		if ((!$this->valid() || ($this->isPrivate() && $this->getOwnerId() !== intval($_SESSION['user_id']))) && !$this->isDefault()) return false;
 
 		// setting up theme
 		$res = $this->currentConnection->prepare("UPDATE users.info SET current_theme = ? WHERE id = ? LIMIT 1;");
@@ -120,9 +115,14 @@ class Theme extends Attachment
 						  			   ->execute([intval($_SESSION['user_id'])]);
 	}
 
+	public function getType (): string
+	{
+		return "theme";
+	}
+
 	public function getCredentials (): string
 	{
-		return 'theme' . $this->getOwner()->getId() . '_' . $this->getId();
+		return $this->getType() . $this->getOwnerId() . '_' . $this->getId();
 	}
 
 	public function getId (): int
@@ -130,9 +130,9 @@ class Theme extends Attachment
 		return $this->id;
 	}
 
-	public function getOwner (): User
+	public function getOwnerId (): int
 	{
-		return $this->owner;
+		return $this->owner_id;
 	}
 
 	public function getTitle (): string
@@ -231,7 +231,7 @@ class Theme extends Attachment
 		$theme_id     = intval($this->getId());
 		$theme_title  = strval($this->getTitle());
 		$theme_descr  = strval($this->getDescription());
-		$theme_owner  = intval($this->getOwner()->getId());
+		$theme_owner  = intval($this->getOwnerId());
 		$private_mode = intval($this->isPrivate());
 
 		if ($theme_owner !== intval($_SESSION['user_id'])) return false;
@@ -269,7 +269,7 @@ class Theme extends Attachment
 	public function toArray (): array
 	{
 		return [
-			'owner_id' => $this->getOwner()->getId(),
+			'owner_id' => $this->getOwnerId(),
 			'id'       => $this->getId(),
 			'data'     => [
 				'title'       => $this->getTitle(),
@@ -499,139 +499,5 @@ console.log(`[OK] Theme is working! Fine :)`)
 		return $result;
 	}
 }
-
-/*class Theme
-{
-	public $url         = DEFAULT_THEMES_URL;
-	public $type        = "theme";
-	public $description = "";
-	public $title       = "";
-	public $is_private  = 0;
-	public $owner_id    = 0;
-	public $id          = 0;
-	public $isValid     = false;
-	public $isDefault   = 0;
-
-	// paths data
-	public $path_to_css = "";
-	public $path_to_js  = "";
-	public $path_to_api = "";
-
-	private $utils     = [
-		"connection" => false
-	];
-
-	// build theme object.
-	function __construct ($connection, $credentials)
-	{
-		$this->utils["connection"] = $connection;
-
-		$res = $connection->prepare("SELECT id, owner_id, title, description, path_to_css, path_to_js, path_to_api, is_hidden, is_default FROM users.themes WHERE owner_id = ? AND id = ? LIMIT 1;");
-
-		$credentials = explode("_", substr($credentials, 5));
-		$owner_id    = intval($credentials[0]);
-		$id          = intval($credentials[1]);
-
-		if ($owner_id === 0 && $id === 0)
-		{
-			return $this->isValid = false;
-		}
-
-		$res->execute([$owner_id, $id]);
-		$data = $res->fetch(PDO::FETCH_ASSOC);
-
-		if (!$data)
-		{
-			return $this->isValid = false;
-		}
-
-		// setting up all data
-		$this->id          = intval($data["id"]);
-		$this->owner_id    = intval($data["owner_id"]);
-		$this->title       = strval($data["title"]);
-		$this->description = strval($data["description"]);
-		$this->url        .= "/theme" . $this->owner_id . "_" . $this->id;
-		$this->is_private  = intval($data["is_hidden"]);
-		$this->isDefault   = intval($data['is_default']);
-
-		// setting up all paths.
-		if ($data["path_to_css"])
-		{
-			$this->path_to_css = __DIR__ . "/../../attachments/themes" . $data["path_to_css"];
-		}
-		if ($data["path_to_js"])
-		{
-			$this->path_to_js  = __DIR__ . "/../../attachments/themes" . $data["path_to_js"];
-		}
-		if ($data["path_to_api"])
-		{
-			$this->path_to_api = __DIR__ . "/../../attachments/themes" . $data["path_to_api"];
-		}
-
-		$this->data = $data;
-
-		// theme set up success!
-		return $this->isValid = true;
-	}
-
-	// creates the uth file format
-	function createUTHFormat ()
-	{
-		$dataObject = [
-			'title'       => $this->title,
-			'description' => $this->description,
-			'id'          => $this->id,
-			'owner_id'    => $this->owner_id,
-			'data'        => [
-				'js'  => $this->getJSCode(),
-				'css' => $this->getCSSCode(),
-				'api' => $this->getJSONCode()
-			]
-		];
-
-		return serialize(serialize(json_encode($dataObject)));
-	}
-
-	// get js code
-	function getJSCode ()
-	{
-		return file_get_contents($this->path_to_js);
-	}
-
-	// get css code
-	function getCSSCode ()
-	{
-		return str_replace('!important', '', file_get_contents($this->path_to_css));
-	}
-
-	// get API JSON
-	function getJSONCode ()
-	{
-		return file_get_contents($this->path_to_api);
-	}
-
-	// convert to array for json build
-	function toArray ()
-	{
-		return [
-			'owner_id' => $this->owner_id,
-			'id'       => $this->id,
-			'data'     => [
-				'title'       => $this->title,
-				'description' => $this->description,
-				'url'         => $this->url
-			],
-			'settings' => [
-				'is_private' => intval($this->is_private),
-				'is_default' => intval($this->isDefault)
-			],
-			'params'   => [
-				'has_js'  => ($this->path_to_js !== ""),
-				'has_css' => ($this->path_to_css !== ""),
-				'has_api' => ($this->path_to_api !== "")
-			]
-		];
-	}
-}*/
 
 ?>

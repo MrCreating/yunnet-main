@@ -1,9 +1,7 @@
+unt.modules = {};
 unt.actions.linkWorker.go = function (url = window.location.href, writeToLocalHistory = true, internalData = null) {
 	let splittedUrl = String(url).split(window.location.host)
 	let resultedUrl = (splittedUrl[1] ? splittedUrl[1] : (splittedUrl[0] ? splittedUrl[0] : '/'));
-
-	if (unt.actions.linkWorker.currentPage && url === unt.actions.linkWorker.currentPage.url)
-		return;
 
 	if (!resultedUrl.startsWith('/'))
 		return (window.location.href = url);
@@ -69,8 +67,6 @@ unt.actions.linkWorker.go = function (url = window.location.href, writeToLocalHi
 		break;
 	}
 
-	unt.components.navPanel ? unt.components.navPanel.setTitle(document.title) : '';
-
 	return this.define();
 }
 
@@ -124,7 +120,7 @@ window.addEventListener('popstate', function handleBackPressed (event) {
 	event.preventDefault();
 	
 	if (event.state) {
-		unt.actions.linkWorker.go(event.state.url, false);
 		unt.actions.linkWorker.currentPage = event.state;
+		unt.actions.linkWorker.go(event.state.url, false);
 	}
 })

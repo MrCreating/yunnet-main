@@ -83,28 +83,42 @@ unt.pages = new Object({
 		document.title = unt.settings.lang.getValue('settings');
 		let menu = unt.components.menuElement;
 
-		let categories = ['main', 'security', 'privacy'];
+		let categories = ['main', 'notifications', 'privacy', 'security', 'blacklist', 'accounts', 'theming', 'about'];
+		let iconsIds   = ['main', 'notifications', 'lock', 'security', 'list', 'accounts', 'palette', 'cookies'];
 		let catMenus = [];
+
+		let urlData = new URLParser();
+		let currentSection = urlData.getQueryValue('section') || (unt.tools.isMobile() ? '' : 'main');
 
 		if (!unt.tools.isMobile()) {
 			let tabsUl = document.createElement('ul');
+			tabsUl.classList.add('hidesc');
 			tabsUl.classList.add('tabs');
 			tabsUl.classList.add('card');
 			tabsUl.style.marginTop = 0;
-			tabsUl.classList.add('tabs-fixed-width');
 			tabsUl.style.marginTop = '5px';
 			menu.appendChild(tabsUl);
 
-			categories.forEach(function (category) {
+			categories.forEach(function (category, index) {
 				let li = document.createElement('li');
 				li.classList.add('tab');
+				li.classList.add('waves-effect');
 
 				let a = document.createElement('a');
+				a.classList.add('no-continue-browsing');
+				a.classList.add('tooltipped');
+				if (category === currentSection)
+					a.style.borderBottom = 'inset';
+
+				a.setAttribute('data-position', 'bottom');
+				a.setAttribute('data-tooltip', unt.settings.lang.getValue(category));
+
 				a.href = '/settings?section=' + category;
 				a.classList.add('unselectable');
 				a.style.cursor = 'pointer';
 				li.appendChild(a);
-				a.innerText = unt.settings.lang.getValue(category);
+				a.innerHTML = unt.icons[iconsIds[index]];
+				a.getElementsByTagName('svg')[0].style.marginTop = '11px';
 				tabsUl.appendChild(li);
 
 				let categoryMenuElement = document.createElement('div');
@@ -112,16 +126,87 @@ unt.pages = new Object({
 				categoryMenuElement.classList.add('settings-category');
 
 				menu.appendChild(categoryMenuElement);
-				/*a.addEventListener('click', function () {
-					menu.querySelectorAll('.tab').forEach(function (tabItem) {
-						tabItem.classList.remove('active');
-					});
-					li.classList.add('active');
-				});*/
 			});
+			unt.AutoInit();
 		} else {
+			if (currentSection === '') {
+				let profileCard = document.createElement('div');
+				profileCard.classList.add('card');
+				profileCard.style.marginBottom = 0;
+				profileCard.style.padding = '20px';
+				menu.appendChild(profileCard);
 
+				let userInfoDiv = document.createElement('div');
+				userInfoDiv.classList.add('valign-wrapper');
+				profileCard.appendChild(userInfoDiv);
+
+				let userPhoto = document.createElement('img');
+				userInfoDiv.appendChild(userPhoto);
+				userPhoto.classList.add('circle');
+				userPhoto.width = userPhoto.height = 64;
+				userPhoto.src = unt.settings.users.current.photo_url;
+				userPhoto.style.marginRight = '15px';
+
+				let userCredentialsDiv = document.createElement('div');
+				userInfoDiv.appendChild(userCredentialsDiv);
+				userCredentialsDiv.classList.add('halign-wrapper');
+
+				let usernameDiv = document.createElement('b');
+				userCredentialsDiv.appendChild(usernameDiv);
+				usernameDiv.innerText = unt.settings.users.current.first_name + ' ' + unt.settings.users.current.last_name;
+				usernameDiv.style.fontSize = '120%';
+
+				let onlineDiv = document.createElement('div');
+				userCredentialsDiv.appendChild(onlineDiv);
+				onlineDiv.innerText = unt.parsers.online(unt.settings.users.current);
+
+				let editPageButton = document.createElement('a');
+				editPageButton.classList = ['btn btn-flat'];
+				editPageButton.innerText = unt.settings.lang.getValue('edit');
+				editPageButton.href = '/edit';
+				editPageButton.style.padding = 0;
+				editPageButton.style.marginTop = '15px';
+				profileCard.appendChild(editPageButton);
+
+				let mainGroup = unt.components.cardButtonsGroup()
+									.addCardButton(unt.icons.main, unt.settings.lang.getValue('main'), function () { unt.actions.linkWorker.go('/settings?section=main') })
+									.addCardButton(unt.icons.notifications, unt.settings.lang.getValue('notifications'), function () { unt.actions.linkWorker.go('/settings?section=notifications') });
+
+				let securityGroup = unt.components.cardButtonsGroup()
+									.addCardButton(unt.icons.lock, unt.settings.lang.getValue('privacy'), function () { unt.actions.linkWorker.go('/settings?section=privacy') })
+									.addCardButton(unt.icons.security, unt.settings.lang.getValue('security'), function () { unt.actions.linkWorker.go('/settings?section=security') })
+									.addCardButton(unt.icons.list, unt.settings.lang.getValue('blacklist'), function () { unt.actions.linkWorker.go('/settings?section=blacklist') });
+
+				let themingGroup = unt.components.cardButtonsGroup()
+									.addCardButton(unt.icons.accounts, unt.settings.lang.getValue('accounts'), function () { unt.actions.linkWorker.go('/settings?section=accounts') })
+									.addCardButton(unt.icons.palette, unt.settings.lang.getValue('theming'), function () { unt.actions.linkWorker.go('/settings?section=theming') });
+
+				let projectGroup = unt.components.cardButtonsGroup()
+									.addCardButton(unt.icons.cookies, unt.settings.lang.getValue('about'), function () { unt.actions.linkWorker.go('/settings?section=about') });
+
+				mainGroup.style.marginBottom = 0;
+				securityGroup.style.marginBottom = 0;
+				themingGroup.style.marginBottom = 0;
+				projectGroup.style.marginBottom = 0;
+
+				menu.appendChild(mainGroup);
+				menu.appendChild(securityGroup);
+				menu.appendChild(themingGroup);
+				menu.appendChild(projectGroup);
+
+				menu.appendChild(unt.components.cardButton(unt.icons.logout, unt.settings.lang.getValue('logout'), function () {
+					return unt.actions.dialog(unt.settings.lang.getValue('logout_q'), unt.settings.lang.getValue('logout_qq')).then(function (response) {
+						if (response) {
+							unt.toast({html: unt.settings.lang.getValue('logout_q') + '...'});
+
+							return unt.settings.users.current.logout();
+						}
+					});
+				}));
+			}
 		}
+
+		return currentSection !== '' ? unt.modules.settings[currentSection](menu) : null;
 	},
 	edit: function (internalData) {
 		document.title = unt.settings.lang.getValue('edit');
@@ -220,11 +305,7 @@ unt.pages = new Object({
 			});
 
 			if (user.can_write_on_wall) {
-				let writeButton = unt.components.floatingActionButton(unt.icons.edit, unt.settings.lang.getValue('write_a_post'));
-				writeButton.style.position = 'absolute';
-				writeButton.style.right = 0;
-				writeButton.style.zIndex = 996;
-				writeButton.style.marginRight = '20px';
+				let writeButton = unt.components.floatingActionButton(unt.icons.edit, unt.settings.lang.getValue('write_a_post'), true);
 				mainData.appendChild(writeButton);
 			}
 
@@ -233,15 +314,21 @@ unt.pages = new Object({
 			let profileContent = document.createElement('div');
 
 			menu.appendChild(profileContentMainContainer);
-			profileContentMainContainer.appendChild(actionsDiv);
-			profileContentMainContainer.appendChild(profileContent);
+
+			if (!unt.tools.isMobile()) {
+				profileContentMainContainer.appendChild(profileContent);
+				profileContentMainContainer.appendChild(actionsDiv);
+			} else {
+				profileContentMainContainer.appendChild(actionsDiv);
+				profileContentMainContainer.appendChild(profileContent);
+			}
 
 			if (!unt.tools.isMobile()) {
 				profileContentMainContainer.classList.add('row');
 				actionsDiv.classList = ['col s4'];
-				actionsDiv.style.paddingRight = '7px';
+				actionsDiv.style.paddingLeft = '7px';
 				profileContent.classList = ['col s8'];
-				profileContent.style.paddingLeft = 0;
+				profileContent.style.paddingRight = 0;
 			}
 
 			let actionsMenu = unt.components.downfallingOptionsMenu(unt.icons.downArrow, unt.settings.lang.getValue('actions'));
@@ -250,22 +337,59 @@ unt.pages = new Object({
 
 			let fastAction = null;
 			if (!fastAction && user.can_write_messages && unt.settings.users.current && user.user_id !== unt.settings.users.current.user_id)
-				fastAction = unt.components.cardButton(unt.icons.message, unt.settings.lang.getValue('write_p'), new Function()), fastAction.id = 'message';
+				fastAction = unt.components.cardButton(unt.icons.message, unt.settings.lang.getValue('write_p'), function () {
+					return unt.actions.linkWorker.go('/messages?s=' + (user.account_type === 'user' ? user.user_id : ('b' + user.bot_id)));
+				}), fastAction.id = 'message';
 			if (!fastAction && unt.settings.users.current && unt.settings.users.current.user_id === user.user_id)
-				fastAction = unt.components.cardButton(unt.icons.edit, unt.settings.lang.getValue('edit'), new Function()), fastAction.id = 'edit';
+				fastAction = unt.components.cardButton(unt.icons.edit, unt.settings.lang.getValue('edit'), function () {
+					return unt.actions.linkWorker.go('/edit');
+				}), fastAction.id = 'edit';
 
-			if (user.friend_state.state === 2) {
+			if (!user.is_banned && user.account_type === 'user' && !user.is_me_blacklisted && !user.is_blacklisted && user.friend_state && user.friend_state.state === 0) {
+				actionsMenu.addOption(unt.settings.lang.getValue('add_to_the_friends'), new Function());
+			}
+			if (!user.is_banned && user.account_type === 'user' && !user.is_me_blacklisted && !user.is_blacklisted && user.friend_state && user.friend_state.state === 1) {
+				let initier = user.friend_state.user1;
+				let accepter = user.friend_state.user2;
+				if (initier === unt.settings.users.current.user_id) {
+					actionsMenu.addOption(unt.settings.lang.getValue('cancel_request'), new Function());
+				} else {
+					actionsMenu.addOption(unt.settings.lang.getValue('accept_request'), new Function());
+				}
+			}
+			if (user.friend_state && user.friend_state.state === 2) {
 				actionsMenu.addOption(unt.settings.lang.getValue('delete_friend'), new Function());
+			}
+
+			if (!user.is_banned && user.account_type === 'user' && user.can_access_closed && !user.is_me_blacklisted && !user.is_blacklisted) {
+				actionsMenu.addOption(unt.settings.lang.getValue('show_friends'), function () {
+					return unt.actions.linkWorker.go('/friends?id=' + user.user_id);
+				});
 			}
 
 			if (fastAction)
 				actionsDiv.appendChild(fastAction);
 
+			if (unt.settings.current.account.is_closed && user.user_id === unt.settings.users.current.user_id) {
+				let closedProfileWarning = unt.components.cardButton(unt.icons.lock, unt.settings.lang.getValue('closed_profile'), function () {
+					return unt.actions.dialog(unt.settings.lang.getValue('closed_profile'), unt.settings.lang.getValue('open_profile_attention'), false, true).then(function (response) {
+						if (response)
+							return unt.settings.users.current.profile.toggleClose().then(function (isClosed) {
+								if (!isClosed)
+									return closedProfileWarning.hide();
+							});
+					});
+				});
+
+				if (!unt.tools.isMobile())
+					actionsDiv.appendChild(closedProfileWarning);
+			}
+
 			if (user.is_banned) {
 				profileContent.appendChild(unt.components.alertBanner(unt.icons.forbidden, unt.settings.lang.getValue('user_banned'), unt.settings.lang.getValue('user_banned_text')));
 			} else if (user.is_me_blacklisted) {
 				profileContent.appendChild(unt.components.alertBanner(unt.icons.forbidden, unt.settings.lang.getValue('you_blocked'), unt.settings.lang.getValue('')));
-			} else if (!user.can_access_closed) {
+			} else if (!user.can_access_closed && user.account_type === 'user') {
 				profileContent.appendChild(unt.components.alertBanner(unt.icons.forbidden, unt.settings.lang.getValue('closed_profile'), unt.settings.lang.getValue('closed_profile_message')));
 			} else {
 				let loader = unt.components.loaderElement();
@@ -296,6 +420,7 @@ unt.pages = new Object({
 			actionsDiv.appendChild(actionsMenu);
 			unt.AutoInit();
 		}).catch(function (err) {
+			console.log(err);
 			profileLoadCard.hide();
 
 			let notFoundCard = document.createElement('div');
@@ -313,6 +438,8 @@ unt.pages = new Object({
 	},
 	wall: function (internalData) {
 		document.title = unt.settings.lang.getValue('wall');
+
+
 	},
 	photo: function (internalData) {
 		document.title = unt.settings.lang.getValue('photo');

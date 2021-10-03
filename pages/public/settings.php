@@ -242,6 +242,17 @@ if (isset($_POST["action"]))
 
 		die(json_encode(array('success' => intval($connection->prepare("UPDATE users.info SET gender = ? WHERE id = ? LIMIT 1;")->execute([$gender, $context->getCurrentUser()->getId()])))));
 	}
+	if ($action === "toggle_new_design")
+	{
+		if (!$context->isLogged()) die(json_encode(array('unauth'=>1)));
+		if ($context->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
+
+		$current_new_design = $context->getCurrentUser()->isNewDesignUsed();
+
+		die(json_encode(array('success' => intval($connection->prepare("UPDATE users.info SET use_new_design = ? WHERE id = ? LIMIT 1")->execute([intval(!$current_new_design), $context->getCurrentUser()->getId()])))));
+	}
+
+	die(json_encode(array('error' => 1)));
 }
 
 ?>

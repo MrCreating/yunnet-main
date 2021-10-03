@@ -617,11 +617,10 @@ function can_access_closed ($connection, $user_id, $select_id)
 	if (!class_exists('Entity'))
 		require __DIR__ . "/../objects/entities.php";
 
-	$user     = new User(intval($select_id));
-	$settings = $user->getSettings()->getValues();
+	$user = new User(intval($select_id));
 
 	// if profile closed.
-	if ($settings->closed_profile)
+	if ($user->getSettings()->getSettingsGroup('account')->isProfileClosed())
 	{
 		// checking friendship state. Must be 2.
 		$state = get_friendship_state($connection, $user_id, $select_id)["state"];
@@ -647,16 +646,16 @@ function can_invite_to_chat ($connection, $user_id, $check_profile)
 	if (!$check_profile->valid()) return false;
 
 	if ($check_profile->type === 'bot') {
-		if ($user_id === $check_profile->getOwner()->getId()) return true;
+		if ($user_id === $check_profile->getOwnerId()) return true;
 
-		$can_inv = $check_profile->getSettings()->getValues()->privacy->can_invite_to_chats;
+		$can_inv = $check_profile->getSettings()->getSettingsGroup('privacy')->getGroupValue('can_invite_to_chats');
 
 		if ($can_inv === 0 || $can_inv === 1 || $can_inv === NULL) return true;
 	}
 
 	if (is_friends($connection, $user_id, $check_profile->getId()))
 	{
-		$can_inv = $check_profile->getSettings()->getValues()->privacy->can_invite_to_chats;
+		$can_inv = $check_profile->getSettings()->getSettingsGroup('privacy')->getGroupValue('can_invite_to_chats');
 
 		if ($can_inv === 0 || $can_inv === NULL) return true;
 	}

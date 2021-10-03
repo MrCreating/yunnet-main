@@ -58,6 +58,53 @@ class POSTData {
 	}
 }
 
+class URLParser {
+	currentDomain = null;
+	currentPage = null;
+	queryStringParams = null;
+
+	constructor (url = window.location.href) {
+		let splittedUrl = (typeof url === 'string' ? url : String(url)).split('/');
+		
+		let domainUrl = splittedUrl.length == 2 ? splittedUrl[0] : (splittedUrl.length >= 4 ? splittedUrl[2] : splittedUrl[splittedUrl.length - 3]);
+		let pageAndParams = splittedUrl.length == 2 ? splittedUrl[1] : (splittedUrl.length >= 4 ? splittedUrl[3] : splittedUrl[splittedUrl.length - 1]);
+
+		this.currentDomain = domainUrl;
+		this.currentPage = pageAndParams.split('?')[0];
+
+		let params = pageAndParams.split('?');
+		let resultedObject = {};
+
+		params.forEach(function (keyPair) {
+			let data = keyPair.split('=');
+
+			let key = data[0];
+			let value = data[1];
+
+			if (!value || value.isEmpty())
+				return;
+			if (!key)
+				return;
+
+			resultedObject[key] = value;
+		});
+
+		this.queryStringParams = resultedObject;
+	}
+
+	getDomain () {
+		return this.currentDomain;
+	}
+
+	getPage () {
+		return this.currentPage;
+	}
+
+	getQueryValue (value) {
+		return this.queryStringParams[value] || '';
+	}
+}
+
 unt.actions = new Object({
 	dialog: function (header, title, fullScreen = false, asImportantWindow = false) {
 		return new Promise(function (resolve) {
@@ -146,26 +193,14 @@ unt.actions = new Object({
 		returnable: function () {
 			return !(this.currentPage.id === 0);
 		},
+		clearHistory: function () {
+			this.currentPage.id = 0;
+			this.history = [];
+
+			history.replaceState(this.currentPage, document.title, window.location.href);
+		},
 		define: function () {
 			let currentObject = this;
-
-			let navIcon = document.getElementById('nav_burger_icon');
-			if (navIcon && !navIcon.defined) {
-				navIcon.addEventListener('click', function (event) {
-					unt.Sidenav.getInstance(document.getElementById('user-navigation')).open();
-
-					navIcon.defined = true;
-				});
-			}
-
-			let backIcon = document.getElementById('nav_back_arrow_icon');
-			if (backIcon && !backIcon.defined) {
-				backIcon.addEventListener('click', function (event) {
-					unt.actions.linkWorker.go(unt.actions.history[unt.actions.linkWorker.currentPage.id === 0 ? 0 : (unt.actions.linkWorker.currentPage.id - 1)].url, false);
-
-					backIcon.defined = true;
-				});
-			}
 
 			let allLinksOnPage = document.querySelectorAll('a');
 			for (let i = 0; i < allLinksOnPage.length; i++) {
@@ -181,9 +216,26 @@ unt.actions = new Object({
 							unt.Sidenav.getInstance(document.getElementById('user-navigation')).close();
 						}
 
+						if (linkElement.classList.contains('no-continue-browsing')) {
+							unt.actions.linkWorker.clearHistory();
+						}
+
 						currentObject.go(linkElement.href);
 					})
 				}
+			}
+
+			unt.components.navPanel ? unt.components.navPanel.setTitle(document.title) : '';
+			if (unt.actions.linkWorker.returnable()) {
+				unt.components.navPanel.getBackButton().style.display = '';
+
+				if (unt.tools.isMobile())
+					unt.components.navPanel.getMenuButton().style.display = 'none';
+			} else {
+				unt.components.navPanel.getBackButton().style.display = 'none';
+
+				if (unt.tools.isMobile())
+					unt.components.navPanel.getMenuButton().style.display = '';
 			}
 		}
 	})
@@ -236,7 +288,19 @@ unt.icons = new Object({
 	forbidden: '<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>',
 	message: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none"/><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>',
 	add_friend: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none"/><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>',
-	failed: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-3.1L7.1 5.69C8.45 4.63 10.15 4 12 4c4.42 0 8 3.58 8 8 0 1.85-.63 3.55-1.69 4.9z"/></svg>'
+	failed: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-3.1L7.1 5.69C8.45 4.63 10.15 4 12 4c4.42 0 8 3.58 8 8 0 1.85-.63 3.55-1.69 4.9z"/></svg>',
+	main: '<svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><g><path d="M0,0h24v24H0V0z" fill="none"/><path d="M12,7V3H2v18h20V7H12z M6,19H4v-2h2V19z M6,15H4v-2h2V15z M6,11H4V9h2V11z M6,7H4V5h2V7z M10,19H8v-2h2V19z M10,15H8v-2h2 V15z M10,11H8V9h2V11z M10,7H8V5h2V7z M20,19h-8v-2h2v-2h-2v-2h2v-2h-2V9h8V19z M18,11h-2v2h2V11z M18,15h-2v2h2V15z"/></g></svg>',
+	notifications: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>',
+	lock: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none"/><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>',
+	security: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>',
+	list: '<svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0,0h24v24H0V0z" fill="none"/><g><path d="M19.5,3.5L18,2l-1.5,1.5L15,2l-1.5,1.5L12,2l-1.5,1.5L9,2L7.5,3.5L6,2v14H3v3c0,1.66,1.34,3,3,3h12c1.66,0,3-1.34,3-3V2 L19.5,3.5z M19,19c0,0.55-0.45,1-1,1s-1-0.45-1-1v-3H8V5h11V19z"/><rect height="2" width="6" x="9" y="7"/><rect height="2" width="2" x="16" y="7"/><rect height="2" width="6" x="9" y="10"/><rect height="2" width="2" x="16" y="10"/></g></svg>',
+	accounts: '<svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><g><path d="M0,0h24v24H0V0z" fill="none"/></g><g><g><circle cx="10" cy="8" r="4"/><path d="M10.67,13.02C10.45,13.01,10.23,13,10,13c-2.42,0-4.68,0.67-6.61,1.82C2.51,15.34,2,16.32,2,17.35V20h9.26 C10.47,18.87,10,17.49,10,16C10,14.93,10.25,13.93,10.67,13.02z"/><path d="M20.75,16c0-0.22-0.03-0.42-0.06-0.63l1.14-1.01l-1-1.73l-1.45,0.49c-0.32-0.27-0.68-0.48-1.08-0.63L18,11h-2l-0.3,1.49 c-0.4,0.15-0.76,0.36-1.08,0.63l-1.45-0.49l-1,1.73l1.14,1.01c-0.03,0.21-0.06,0.41-0.06,0.63s0.03,0.42,0.06,0.63l-1.14,1.01 l1,1.73l1.45-0.49c0.32,0.27,0.68,0.48,1.08,0.63L16,21h2l0.3-1.49c0.4-0.15,0.76-0.36,1.08-0.63l1.45,0.49l1-1.73l-1.14-1.01 C20.72,16.42,20.75,16.22,20.75,16z M17,18c-1.1,0-2-0.9-2-2s0.9-2,2-2s2,0.9,2,2S18.1,18,17,18z"/></g></g></svg>',
+	palette: '<svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><g><rect fill="none" height="24" width="24"/></g><g><path d="M12,2C6.49,2,2,6.49,2,12s4.49,10,10,10c1.38,0,2.5-1.12,2.5-2.5c0-0.61-0.23-1.2-0.64-1.67c-0.08-0.1-0.13-0.21-0.13-0.33 c0-0.28,0.22-0.5,0.5-0.5H16c3.31,0,6-2.69,6-6C22,6.04,17.51,2,12,2z M17.5,13c-0.83,0-1.5-0.67-1.5-1.5c0-0.83,0.67-1.5,1.5-1.5 s1.5,0.67,1.5,1.5C19,12.33,18.33,13,17.5,13z M14.5,9C13.67,9,13,8.33,13,7.5C13,6.67,13.67,6,14.5,6S16,6.67,16,7.5 C16,8.33,15.33,9,14.5,9z M5,11.5C5,10.67,5.67,10,6.5,10S8,10.67,8,11.5C8,12.33,7.33,13,6.5,13S5,12.33,5,11.5z M11,7.5 C11,8.33,10.33,9,9.5,9S8,8.33,8,7.5C8,6.67,8.67,6,9.5,6S11,6.67,11,7.5z"/></g></svg>',
+	sound: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none" opacity=".1"/><path d="M12 1c-4.97 0-9 4.03-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h4v1h-7v2h6c1.66 0 3-1.34 3-3V10c0-4.97-4.03-9-9-9z"/></svg>',
+	addPerson: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none"/><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>',
+	messagesOk: '<svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><g><rect fill="none" height="24" width="24" x="0"/><path d="M17.34,20l-3.54-3.54l1.41-1.41l2.12,2.12l4.24-4.24L23,14.34L17.34,20z M12,17c0-3.87,3.13-7,7-7c1.08,0,2.09,0.25,3,0.68 V4c0-1.1-0.9-2-2-2H4C2.9,2,2,2.9,2,4v18l4-4h6v0c0-0.17,0.01-0.33,0.03-0.5C12.01,17.34,12,17.17,12,17z"/></g></svg>',
+	wallPost: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none"/><path d="M4 4h7V2H4c-1.1 0-2 .9-2 2v7h2V4zm6 9l-4 5h12l-3-4-2.03 2.71L10 13zm7-4.5c0-.83-.67-1.5-1.5-1.5S14 7.67 14 8.5s.67 1.5 1.5 1.5S17 9.33 17 8.5zM20 2h-7v2h7v7h2V4c0-1.1-.9-2-2-2zm0 18h-7v2h7c1.1 0 2-.9 2-2v-7h-2v7zM4 13H2v7c0 1.1.9 2 2 2h7v-2H4v-7z"/></svg>',
+	comments: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none"/><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg>'
 });
 
 unt.components = new Object({
@@ -427,7 +491,90 @@ unt.components = new Object({
 
 		return resultedElement;
 	},
-	cardButton: function (icon, title, onClickHandler) {
+	switchCardButtonsGroup: function (groupTitle) {
+		let resultedElement = document.createElement('ul');
+		resultedElement.classList.add('collapsible');
+		resultedElement.style.width = '100%';
+		resultedElement.style.marginBottom = 0;
+
+		let elements = [];
+
+		resultedElement.addCardButton = function (icon, title, onSwitchHandler) {
+			let someElement = document.createElement('li');
+			resultedElement.appendChild(someElement);
+
+			elements.push(someElement);
+
+			let headerDiv = document.createElement('div');
+			someElement.appendChild(headerDiv);
+			headerDiv.classList.add('collapsible-header');
+			headerDiv.innerHTML = icon;
+
+			let titleContainer = document.createElement('div');
+			titleContainer.innerText = title;
+			titleContainer.style.width = '100%';
+			headerDiv.appendChild(titleContainer);
+			titleContainer.style.marginLeft = '15px';
+
+			let switchDivClass = document.createElement('div');
+			switchDivClass.classList.add('switch');
+			switchDivClass.style.marginTop = '-2px';
+			switchDivClass.style.marginRight = '-15px';
+
+			let label = document.createElement('label');
+			switchDivClass.appendChild(label);
+			headerDiv.appendChild(switchDivClass);
+
+			let input = document.createElement('input');
+			input.type = 'checkbox';
+			label.appendChild(input);
+			input.addEventListener('input', function (event) {
+				if (input.checked)
+					switchDivClass.style.marginTop = '4px';
+				else
+					switchDivClass.style.marginTop = '-2px';
+
+				if (onSwitchHandler)
+					onSwitchHandler(event, someElement, input.checked);
+			});
+
+			someElement.setChecked = function (checked) {
+				input.checked = checked;
+				if (input.checked)
+					switchDivClass.style.marginTop = '4px';
+				else
+					switchDivClass.style.marginTop = '-2px';
+
+				return resultedElement;
+			}
+
+
+			someElement.disable = function () {
+				input.setAttribute('disabled', 'true');
+
+				return someElement;
+			}
+
+			someElement.enable = function () {
+				input.removeAttribute('disabled');
+
+				return someElement;
+			}
+
+			let span = document.createElement('span');
+			label.appendChild(span);
+			span.classList.add('lever');
+
+			return resultedElement;
+		}
+
+		resultedElement.getSwitchCardButton = function (index) {
+			return elements[index] || null;
+		}
+
+		return resultedElement;
+	},
+	switchCardButton: function (icon, title, onSwitchHandler) {
 		let resultedElement = document.createElement('ul');
 		resultedElement.classList.add('collapsible');
 		resultedElement.classList.add('waves-effect');
@@ -440,6 +587,111 @@ unt.components = new Object({
 		let headerDiv = document.createElement('div');
 		someElement.appendChild(headerDiv);
 		headerDiv.classList.add('collapsible-header');
+		headerDiv.innerHTML = icon;
+
+		let titleContainer = document.createElement('div');
+		titleContainer.innerText = title;
+		titleContainer.style.width = '100%';
+		headerDiv.appendChild(titleContainer);
+		titleContainer.style.marginLeft = '15px';
+
+		let switchDivClass = document.createElement('div');
+		switchDivClass.classList.add('switch');
+		switchDivClass.style.marginTop = '-2px';
+		switchDivClass.style.marginRight = '-15px';
+
+		let label = document.createElement('label');
+		switchDivClass.appendChild(label);
+		headerDiv.appendChild(switchDivClass);
+
+		let input = document.createElement('input');
+		input.type = 'checkbox';
+		label.appendChild(input);
+		input.addEventListener('input', function (event) {
+			if (input.checked)
+				switchDivClass.style.marginTop = '4px';
+			else
+				switchDivClass.style.marginTop = '-2px';
+
+			if (onSwitchHandler)
+				onSwitchHandler(event, resultedElement, input.checked);
+		});
+
+		resultedElement.setChecked = function (checked) {
+			input.checked = checked;
+			if (input.checked)
+				switchDivClass.style.marginTop = '4px';
+			else
+				switchDivClass.style.marginTop = '-2px';
+
+			return resultedElement;
+		}
+
+		resultedElement.disable = function () {
+			input.setAttribute('disabled', 'true');
+
+			return resultedElement;
+		}
+
+		resultedElement.enable = function () {
+			input.removeAttribute('disabled');
+
+			return resultedElement;
+		}
+
+		let span = document.createElement('span');
+		label.appendChild(span);
+		span.classList.add('lever');
+
+		return resultedElement;
+	},
+	cardButtonsGroup: function (groupTitle) {
+		let resultedElement = document.createElement('ul');
+		resultedElement.classList.add('collapsible');
+		resultedElement.classList.add('waves-effect');
+		resultedElement.style.width = '100%';
+		resultedElement.style.marginBottom = 0;
+
+		resultedElement.addCardButton = function (icon, title, onClickHandler) {
+			let someElement = document.createElement('li');
+			resultedElement.appendChild(someElement);
+
+			let headerDiv = document.createElement('div');
+			someElement.appendChild(headerDiv);
+			headerDiv.classList.add('collapsible-header');
+			headerDiv.innerHTML = icon;
+
+			let titleContainer = document.createElement('div');
+			titleContainer.innerText = title;
+			headerDiv.appendChild(titleContainer);
+			headerDiv.classList.add('waves-effect');
+			headerDiv.style.width = '100%';
+			titleContainer.style.marginLeft = '15px';
+
+			someElement.addEventListener('click', function () {
+				if (onClickHandler)
+					return onClickHandler(event, resultedElement);
+			});
+
+			return resultedElement;
+		}
+
+		return resultedElement;
+	},
+	cardButton: function (icon, title, onClickHandler) {
+		let resultedElement = document.createElement('ul');
+		resultedElement.classList.add('collapsible');
+		resultedElement.style.width = '100%';
+		resultedElement.style.marginBottom = 0;
+
+		let someElement = document.createElement('li');
+		resultedElement.appendChild(someElement);
+
+		let headerDiv = document.createElement('div');
+		someElement.appendChild(headerDiv);
+		headerDiv.classList.add('collapsible-header');
+		headerDiv.classList.add('waves-effect');
+		headerDiv.style.width = '100%';
 		headerDiv.innerHTML = icon;
 
 		let titleContainer = document.createElement('div');
@@ -550,6 +802,40 @@ unt.components = new Object({
 
 			unt.settings.users.get().then(function (user) {
 				unt.settings.users.current = user;
+				unt.settings.users.current.logout = function () {
+					return new Promise(function (resolve) {
+						return unt.tools.Request({
+							url: '/settings',
+							method: 'POST',
+							data: (new POSTData()).append('action', 'logout').build(),
+							success: function () {
+								return window.location.reload();
+							},
+							error: function () {
+								return unt.toast({html: unt.settings.lang.getValue('upload_error')});
+							}
+						});
+					});
+				};
+
+				unt.settings.users.current.profile = {
+					toggleClose: function () {
+						return new Promise(function (resolve) {
+							return unt.tools.Request({
+								url: '/settings',
+								method: 'POST',
+								data: (new POSTData()).append('action', 'toggle_profile_state').build(),
+								success: function (response) {
+									return resolve(unt.settings.current.account.is_closed = !unt.settings.current.account.is_closed);
+								},
+								error: function () {
+									return resolve(unt.settings.current.account.is_closed);
+								}
+							});
+						});
+					}
+				};
+
 				unt.settings.users.current.edit = {
 					status: function () {
 						let win = unt.components.windows.createImportantWindow({
@@ -1038,7 +1324,13 @@ unt.components = new Object({
 			let i = document.createElement('i');
 			a.appendChild(i);
 			i.innerHTML = '<svg id="nav_burger_icon" class="unt_icon" style="fill: white" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"></path><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path></svg><svg id="nav_back_arrow_icon" style="fill: white; display: none" class="unt_icon" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"></path><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"></path></svg>';
-		
+			i.getElementsByTagName('svg')[0].addEventListener('click', function () {
+				unt.Sidenav.getInstance(document.getElementById('user-navigation')).open();
+			});
+			i.getElementsByTagName('svg')[1].addEventListener('click', function () {
+				unt.actions.linkWorker.returnable() ? history.back() : '';
+			});
+
 			let titleDiv = document.createElement('div');
 			a.appendChild(titleDiv);
 			titleDiv.style.marginLeft = '15px';
@@ -1059,7 +1351,7 @@ unt.components = new Object({
 		} else {
 			let navContainer = document.createElement('div');
 			navContainer.classList.add('row');
-			navContainer.style = 'margin: 0; height: 100%';
+			navContainer.style = 'max-width: 1500px; height: 100%';
 			wrapper.appendChild(navContainer);
 
 			let logoWrapper = document.createElement('div');
@@ -1071,6 +1363,7 @@ unt.components = new Object({
 			logoContainer.style = 'margin-left: 15px';
 
 			let logo = document.createElement('a');
+			logo.classList.add('no-continue-browsing');
 			logo.classList.add('valign-wrapper');
 			logo.href = '/';
 			logoContainer.appendChild(logo);
@@ -1101,10 +1394,14 @@ unt.components = new Object({
 			currentPageBack.style.marginRight = '15px';
 			currentPageTitleValign.appendChild(currentPageBack);
 			currentPageBack.innerHTML = '<i style="margin-bottom: -3px"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"></path><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" fill="white"></path></svg></i>';
+			currentPageBack.getElementsByTagName('svg')[0].addEventListener('click', function () {
+				unt.actions.linkWorker.returnable() ? history.back() : this.style.display = 'none';
+			});
 
 			let currentPage = document.createElement('div');
 			currentPageTitleValign.appendChild(currentPage);
 			currentPage.style.width = '100%';
+			currentPage.style.fontSize = '90%';
 			currentPage.classList.add('current-title');
 
 			let partialActions = document.createElement('div');
@@ -1133,6 +1430,7 @@ unt.components = new Object({
 
 			let userCredentials = document.createElement('div');
 			userCredentials.style.marginLeft = '15px';
+			userCredentials.style.fontSize = '90%';
 			userCredentials.innerText = unt.settings.users.current.first_name + ' ' + unt.settings.users.current.last_name;
 			userInfoActionContainer.appendChild(userCredentials);
 
@@ -1171,6 +1469,26 @@ unt.components = new Object({
 			userCredentialsInfo.innerText = unt.settings.users.current.first_name + ' ' + unt.settings.users.current.last_name;
 			infoDiv.appendChild(userCredentialsInfo);
 
+			let dividerLi = document.createElement('li');
+			dividerLi.classList.add('divider');
+			ulDropdownContent.appendChild(dividerLi);
+
+			let logoutButtonLi = document.createElement('li');
+			ulDropdownContent.appendChild(logoutButtonLi);
+
+			let logoutButton = document.createElement('a');
+			logoutButtonLi.appendChild(logoutButton);
+			logoutButton.innerText = unt.settings.lang.getValue('logout');
+			logoutButton.addEventListener('click', function () {
+				return unt.actions.dialog(unt.settings.lang.getValue('logout_q'), unt.settings.lang.getValue('logout_qq'), true, true).then(function (response) {
+					if (response) {
+						unt.toast({html: unt.settings.lang.getValue('logout_q') + '...'});
+
+						return unt.settings.users.current.logout();
+					}
+				});
+			});
+
 			navFixed.setTitle = function (title) {
 				currentPage.innerText = title;
 
@@ -1207,11 +1525,14 @@ unt.components = new Object({
 		if (unt.tools.isMobile()) {
 			if (unt.settings.users.current) {
 				mainDiv.appendChild(collectionUl);
+				menuContainer.style.maxWidth = '1500px';
+				menuContainer.style.margin = 'auto';
 
 				collectionUl.classList.add('sidenav');
 				collectionUl.id = 'user-navigation';
 
 				let a = document.createElement('a');
+				a.classList.add('no-continue-browsing');
 				mainDiv.appendChild(a);
 				a.classList.add('sidenav-trigger');
 
@@ -1266,7 +1587,7 @@ unt.components = new Object({
 			return menuContainer;
 		} else {
 			menuContainer.classList.add('row');
-			menuContainer.style.margin = 0;
+			menuContainer.style.maxWidth = '1500px';
 			menuContainer.style.height = '100%';
 			mainDiv.appendChild(menuContainer);
 
@@ -1276,6 +1597,7 @@ unt.components = new Object({
 				leftMenuContainer.style.padding = 0;
 				leftMenuContainer.style.height = '100%';
 				leftMenuContainer.style.position = 'fixed';
+				leftMenuContainer.style.maxWidth = '370px';
 				menuContainer.appendChild(leftMenuContainer);
 
 				let resultedMenuPlaceholder = document.createElement('div');
@@ -1371,6 +1693,8 @@ unt.components = new Object({
 				li.style.width = '100%';
 
 			let a = document.createElement('a');
+			a.classList.add('no-continue-browsing');
+
 			if (!unt.tools.isMobile())
 				a.classList.add('valign-wrapper');
 			li.appendChild(a);
@@ -1489,6 +1813,95 @@ unt.settings = new Object({
 				}
 			});
 		});
+	},
+
+	managers: {
+		privacyManager: function (privacyGroup) {
+			if (!privacyGroup || (typeof privacyGroup !== 'number')) return null;
+
+			let groups = {
+				1: {name: 'can_write_messages', values: [0, 1, 2], lang: 'messages_privacy'},
+				2: {name: 'can_write_on_wall', values: [0, 1, 2], lang: 'wall_privacy'},
+				4: {name: 'can_comment_posts', values: [0, 1, 2], lang: 'who_can_comment_my_posts'},
+				3: {name: 'can_invite_to_chats', values: [1, 2], lang: 'chat_privacy'}
+			};
+
+			let privacyValues = {
+				0: 'all',
+				1: 'only_friends',
+				2: 'nobody'
+			};
+
+			if (!groups[privacyGroup]) return null;
+
+			let windowParams = {title: unt.settings.lang.getValue('privacy'), fullScreen: false};
+
+			let winObject = unt.tools.isMobile() ? unt.components.windows.createWindow(windowParams) : unt.components.windows.createImportantWindow(windowParams);
+			let winMenu = winObject.getMenu();
+
+			if (!unt.tools.isMobile())
+				winMenu.style.padding = '10px';
+
+			let descriptionDiv = document.createElement('div');
+			if (unt.tools.isMobile())
+				descriptionDiv.style.marginTop = '20px';
+			else
+				descriptionDiv.style.padding = '15px 18px 10px';
+
+			descriptionDiv.innerText = unt.settings.lang.getValue(groups[privacyGroup].lang);
+			winMenu.appendChild(descriptionDiv);
+
+			let winForm = document.createElement('form');
+			winMenu.appendChild(winForm);
+
+			if (!unt.tools.isMobile())
+				winForm.style.padding = '0px 15px';
+
+			groups[privacyGroup].values.forEach(function (value) {
+				let p = document.createElement('p');
+				winForm.appendChild(p);
+
+				let label = document.createElement('label');
+				p.appendChild(label);
+
+				let input = document.createElement('input');
+				input.setAttribute('name', groups[privacyGroup].name);
+				input.type = 'radio';
+				input.classList.add('with-gap');
+				label.appendChild(input);
+
+				if (unt.settings.current.privacy[groups[privacyGroup].name] === value)
+					input.checked = true;
+
+				input.addEventListener('input', function () {
+					return unt.tools.Request({
+						url: '/settings',
+						method: 'POST',
+						data: (new POSTData()).append('action', 'set_privacy_settings').append('group', Number(privacyGroup)).append('value', Number(value)).build(),
+						success: function (response) {
+							try {
+								response = JSON.parse(response);
+								if (response.error)
+									return unt.toast({html: unt.settings.lang.getValue('upload_error')});
+
+								return unt.settings.current.privacy[groups[privacyGroup].name] = value;
+							} catch (e) {
+								return unt.toast({html: unt.settings.lang.getValue('upload_error')});
+							}
+						},
+						error: function () {
+							return unt.toast({html: unt.settings.lang.getValue('upload_error')});
+						}
+					});
+				});
+
+				let span = document.createElement('span');
+				label.appendChild(span);
+				span.innerText = unt.settings.lang.getValue(privacyValues[value]);
+			});
+
+			return winObject.show();
+		}
 	},
 
 	lang: new Object({

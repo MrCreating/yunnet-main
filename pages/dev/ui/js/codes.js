@@ -1026,11 +1026,36 @@ const subPages = {
 			[
 				unt.Icon.PALETTE,
 				settings.lang.getValue('use_new_design'),
-				function () {}
+				function (event, item) {
+					item.checked = !item.checked;
+					return pages.elements.confirm('', settings.lang.getValue('change_to_new_design'), function (response) {
+						if (response) {
+							let data = new FormData();
+
+							data.append('action', 'toggle_new_design');
+							return ui.Request({
+								url: '/settings',
+								method: 'POST',
+								data: data,
+								success: function () {
+									item.checked = !item.checked;
+									
+									document.body.innerHTML = '';
+								  	unt.toast({html: 'Redirecting...'});
+								  	setTimeout(function () {
+								  		return window.location.reload();
+								  	}, 2000);
+								},
+								error: function () {
+									return unt.toast({html: settings.lang.getValue('upload_error')});
+								}
+							});
+						}
+					})
+				}
 			]
 		]).selectItem(0, settings.get().theming.js_allowed)
-		  .selectItem(1, settings.get().theming.new_design)
-		  .disable(1));
+		  .selectItem(1, settings.get().theming.new_design));
 
 		let elementsEditor = pages.elements.createCollapsible([[
 			unt.Icon.EDIT,

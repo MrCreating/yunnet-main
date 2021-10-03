@@ -563,5 +563,8 @@
   "access_granted": "You have provided access to your account.",
   "return_to_auth": "Back to login start?",
   "use_new_design": "Use a new design",
-  "unknown_error": "An unknown error has occurred. You may not be connected to the Internet, or the access rights have changed after you synchronized the interface. Alternatively, try refreshing the page..."
+  "unknown_error": "An unknown error has occurred. You may not be connected to the Internet, or the access rights have changed after you synchronized the interface. Alternatively, try refreshing the page...",
+  "change_to_new_design": "Are you sure you want to upgrade to the new version of the site? In this version, not all changes have been transferred yet, errors are possible. Are you sure?",
+  "roll_back_to_old_design": "Roll back to the old version of the site?",
+  "open_profile_attention": "Your profile is now closed. However, you can open it so that other users can recognize you faster!"
 }

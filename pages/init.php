@@ -1,15 +1,15 @@
 <?php
+
+require_once __DIR__ . '/../bin/context.php';
+require_once __DIR__ . '/page_templates.php';
+
 /**
  * creates an a context and returns html of selected page.
 */
-//ini_set("display_errors", 1);
 
 // setting the header
 header('Save-Data: on');
 header('Strict-Transport-Security: max-age=31536000; preload; includeSubDomains');
-
-if (!class_exists('Context'))
-	require __DIR__ . '/../bin/context.php';
 
 $context = new Context();
 $connection = $context->getConnection();
@@ -33,27 +33,25 @@ if (strtoupper($_SERVER['REQUEST_METHOD']) === "POST")
 		}
 
 		if (file_exists(__DIR__ . '/public/'.$page[1].'.php'))
-			require __DIR__ . '/public/'.$page[1].'.php';
+			require_once __DIR__ . '/public/'.$page[1].'.php';
 		else
 			die(json_encode(array('error' => 1)));
 	}
 
 	if (substr(strtolower(REQUESTED_PAGE), 0, 5) === "/wall")
 	{
-		require __DIR__ . '/public/wall.php';
+		require_once __DIR__ . '/public/wall.php';
 	}
 
 	if (substr(strtolower(REQUESTED_PAGE), 0, 6) === "/photo")
 	{
-		require __DIR__ . '/public/photo.php';
+		require_once __DIR__ . '/public/photo.php';
 	}
 
-	require __DIR__ . '/public/profile.php';
+	require_once __DIR__ . '/public/profile.php';
 
 	die(json_encode(array('error' => 1)));
 }
-
-require __DIR__ . '/page_templates.php';
 
 die(default_page_template($context->isMobile(), $context->getLanguage()->id, $context->getCurrentUser()));
 ?>

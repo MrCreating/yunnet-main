@@ -32,7 +32,7 @@ if (isset($_POST["action"]))
 
 		case 'get_tokens':
 			$bot = new Bot(intval($_POST['bot_id']));
-			if (!$bot->valid() || ($bot->getOwner()->getId() !== $context->getCurrentUser()->getId()))
+			if (!$bot->valid() || ($bot->getOwnerId() !== $context->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
 			if (!function_exists('get_tokens_list'))
@@ -56,7 +56,7 @@ if (isset($_POST["action"]))
 
 		case 'change_screen_name':
 			$bot = new Bot(intval($_POST['bot_id']));
-			if (!$bot->valid() || ($bot->getOwner()->getId() !== $context->getCurrentUser()->getId()))
+			if (!$bot->valid() || ($bot->getOwnerId() !== $context->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
 			if (!function_exists('update_screen_name'))
@@ -83,7 +83,7 @@ if (isset($_POST["action"]))
 				require __DIR__ . '/../../bin/objects/entities.php';
 
 			$bot = new Bot(intval($_POST['bot_id']));
-			if (!$bot->valid() || ($bot->getOwner()->getId() !== $context->getCurrentUser()->getId()))
+			if (!$bot->valid() || ($bot->getOwnerId() !== $context->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
 			$photo = (new AttachmentsParser())->getObject(strval($_POST["photo"]));
@@ -104,7 +104,7 @@ if (isset($_POST["action"]))
 				require __DIR__ . '/../../bin/objects/entities.php';
 
 			$bot = new Bot(intval($_POST['bot_id']));
-			if (!$bot->valid() || ($bot->getOwner()->getId() !== $context->getCurrentUser()->getId()))
+			if (!$bot->valid() || ($bot->getOwnerId() !== $context->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
 			die(json_encode(array('state'=>intval($connection->prepare("UPDATE bots.info SET photo_path = NULL WHERE id = ? LIMIT 1;")->execute([intval($_POST['bot_id'])])))));
@@ -116,7 +116,7 @@ if (isset($_POST["action"]))
 				require __DIR__ . '/../../bin/objects/entities.php';
 
 			$bot = new Bot(intval($_POST['bot_id']));
-			if (!$bot->valid() || ($bot->getOwner()->getId() !== $context->getCurrentUser()->getId()))
+			if (!$bot->valid() || ($bot->getOwnerId() !== $context->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
 			$result = update_bot_name($connection, intval($_POST["bot_id"]), strval($_POST["new_title"]));
@@ -132,7 +132,7 @@ if (isset($_POST["action"]))
 				require __DIR__ . '/../../bin/objects/entities.php';
 
 			$bot = new Bot(intval($_POST['bot_id']));
-			if (!$bot->valid() || ($bot->getOwner()->getId() !== $context->getCurrentUser()->getId()))
+			if (!$bot->valid() || ($bot->getOwnerId() !== $context->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
 			$res = set_privacy_settings($connection, intval($bot->getId()*-1), intval($_POST["group_id"]), intval($_POST["new_value"]));

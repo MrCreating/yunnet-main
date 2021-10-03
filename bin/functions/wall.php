@@ -412,7 +412,7 @@ function can_write_posts ($connection, $user_id, $check_id)
 	// only exists
 	if (!$object->valid()) return false;
 
-	$can_write_posts = $object->getSettings()->getValues()->privacy->can_write_on_wall;
+	$can_write_posts = $object->getSettings()->getSettingsGroup('privacy')->getGroupValue('can_write_on_wall');
 
 	// all users can write
 	if ($can_write_posts === 0) return true;
@@ -428,7 +428,7 @@ function can_write_posts ($connection, $user_id, $check_id)
 	if ($object->getType() === "user" && $can_write_posts === 1 && is_friends($connection, $check_id, $user_id)) return true;
 
 	// only owners can write on bot's wall
-	if ($object->getType() === "bot" && $can_write_posts === 2 && intval($user_id) === $object->getOwner()->getId()) return true;
+	if ($object->getType() === "bot" && $can_write_posts === 2 && intval($user_id) === $object->getOwnerId()) return true;
 
 	// another errors is a false for safety
 	return false;
@@ -581,7 +581,7 @@ function can_comment ($connection, $user_id, $check_id)
 	$user_object = new User(intval($check_id));
 	if (!$user_object->valid()) return false;
 
-	$settings    = $user_object->getSettings()->getValues()->privacy->can_comment_posts;
+	$settings    = $user_object->getSettings()->getSettingGroup('privacy')->getGroupValue('can_comment_posts');
 
 	// all can comment posts
 	if ($settings === 0) return true;

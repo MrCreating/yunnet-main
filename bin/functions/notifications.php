@@ -133,7 +133,7 @@ function create_notification ($connection, $to_id, $type, $data)
 		$user = new User($to_id);
 
 		// emit event if it allow settings.
-		if ($user->getSettings()->getValues()->notifications->notifications)
+		if ($user->getSettings()->getSettingsGroup('push')->isNotificationsEnabled())
 		{
 			emit_event([$to_id], [0], [
 				'event'        => 'new_notification',

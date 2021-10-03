@@ -17,7 +17,7 @@ if ($context['owner_object']->getType() === "bot")
 if (!function_exists('set_user_settings'))
 	require __DIR__ . '/../../../bin/functions/users.php';
 
-$result = set_user_settings($connection, $context['user_id'], "notifications", intval(!$context['owner_object']->getSettings()->getValues()->notifications->notifications));
+$result = set_user_settings($connection, $context['user_id'], "notifications", intval(!$context['owner_object']->getSettings()->getSettingsGroup('push')->isNotificationsEnabled()));
 
 die(json_encode(array('response'=>intval($result))));
 ?>

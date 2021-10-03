@@ -1,13 +1,12 @@
 <?php
 
+require_once __DIR__ . '/event_manager.php';
+
 /**
  * This file contains functions,
  * which send data to PollEngine (events for users), 
  * or TextEngine (messages, chats, etc)
 */
-
-if (!class_exists('EventEmitter'))
-	require __DIR__ . '/event_manager.php';
 
 // send event to lp server
 function emit_event ($user_ids, $lids, $event, $owner_id = 0)

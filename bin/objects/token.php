@@ -1,8 +1,5 @@
 <?php
 
-if (!class_exists('Context'))
-	require __DIR__ . '/../context.php';
-
 /**
  * Access key (token) class
 */
@@ -104,13 +101,6 @@ class Token
 	{
 		return boolval($this->isValid);
 	}
-
-	//////////////////////////////////////////
-	public static function create (): bool
-	{}
-
-	public static function auth (string $token): Context
-	{}
 }
 
 ?>
