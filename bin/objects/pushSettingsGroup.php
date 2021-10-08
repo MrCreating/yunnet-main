@@ -24,21 +24,31 @@ class PushSettingsGroup extends SettingsGroup
 
 	public function isNotificationsEnabled (): bool
 	{
-		return boolval($notificationsEnabled);
+		return boolval($this->notificationsEnabled);
 	}
 
 	public function setNotificationsEnabled (bool $enabled): PushSettingsGroup
 	{
+		if ($this->currentConnection->prepare("UPDATE users.info SET settings_push_notifications = ? WHERE id = ? LIMIT 1;")->execute([intval(boolval($enabled)), intval($_SESSION['user_id'])]))
+		{
+			$this->notificationsEnabled = boolval($enabled);
+		}
+
 		return $this;
 	}
 
 	public function isSoundEnabled (): bool
 	{
-		return boolval($soundEnabled);
+		return boolval($this->soundEnabled);
 	}
 
 	public function setSoundEnabled (bool $enabled): PushSettingsGroup
 	{
+		if ($this->currentConnection->prepare("UPDATE users.info SET settings_push_sound = ? WHERE id = ? LIMIT 1;")->execute([intval(boolval($enabled)), intval($_SESSION['user_id'])]))
+		{
+			$this->soundEnabled = boolval($enabled);
+		}
+
 		return $this;
 	}
 

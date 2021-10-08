@@ -2,7 +2,7 @@
 
 require __DIR__ . '/../bin/base_functions.php';
 
-$user = new Bot(2);
+$user = new User(1);
 
 die(var_dump($user->getSettings()));
 

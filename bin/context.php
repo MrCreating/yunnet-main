@@ -34,7 +34,15 @@ class Context
 		}
 	}
 
-	public function getCurrentUser ()
+	public function allowToUseUnt (): bool
+	{
+		if (!$this->isLogged()) return false;
+		if ($this->getCurrentUser()->isBanned() && $this->getCurrentUser()->getAccessLevel() < 3) return false;
+
+		return true;
+	}
+
+	public function getCurrentUser (): ?Entity
 	{
 		$session = $this->getCurrentSession();
 		if ($session)
@@ -70,7 +78,7 @@ class Context
 
 	public function getLanguage ()
 	{
-		return get_language($this->getConnection());
+		return get_language($this->getConnection(), $this->getCurrentUser());
 	}
 
 	public function getConnection ()

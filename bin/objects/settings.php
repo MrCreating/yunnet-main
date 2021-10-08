@@ -28,39 +28,36 @@ class Settings
 		if (!$connection)
 			$connection = get_database_connection();
 
-		if ($user->getType() === "user")
-		{
-			$settings = [
-				'settings' => json_decode($user_info->settings),
-				'themes'   => unserialize($user_info->themes)
-			];
+		$this->currentConnection = $connection;
 
+		if ($user->getType() === "user" && $user->valid())
+		{
 			$this->accountSettings  = new AccountSettingsGroup($connection, [
 				'cookies'      => intval($user_info->cookies),
 				'half_cookies' => intval($user_info->half_cookies),
-				'is_closed'    => boolval($settings['settings']->closed_profile),
-				'lang_id'      => strval($settings['settings']->lang)
+				'is_closed'    => boolval(intval($user_info->settings_account_is_closed)),
+				'lang_id'      => strval($user_info->settings_account_language)
 			]);
 
 			$this->pushSettings     = new PushSettingsGroup($connection, [
-				'notifications' => boolval($settings['settings']->notifications->notifications),
-				'sound'         => boolval($settings['settings']->notifications->sound)
+				'notifications' => boolval(intval($user_info->settings_push_notifications)),
+				'sound'         => boolval(intval($user_info->settings_push_sound))
 			]);
 
 			$this->privacySettings  = new PrivacySettingsGroup($connection, [
-				'can_invite_to_chats' => intval($settings['settings']->privacy->can_invite_to_chats),
-				'can_write_messages' => intval($settings['settings']->privacy->can_write_messages),
-				'can_comment_posts' => intval($settings['settings']->privacy->can_comment_posts),
-				'can_write_on_wall' => intval($settings['settings']->privacy->can_write_on_wall)
+				'can_invite_to_chats' => intval($user_info->settings_privacy_can_invite_to_chats),
+				'can_write_messages' => intval($user_info->settings_privacy_can_write_messages),
+				'can_comment_posts' => intval($user_info->settings_privacy_can_comment_posts),
+				'can_write_on_wall' => intval($user_info->settings_privacy_can_write_on_wall)
 			]);
 
 			$this->securitySettings = new SecuritySettingsGroup($connection, []);
 
 			$this->themingSettings  = new ThemingSettingsGroup($connection, [
-				'new_design' => boolval(intval($user_info->use_new_design)),
-				'js_allowed' => boolval(intval($user_info->themes_allow_js)),
-				'theme'      => strval($user_info->current_theme),
-				'menu_items' => $settings['themes']['menu']
+				'new_design' => boolval(intval($user_info->settings_theming_new_design)),
+				'js_allowed' => boolval(intval($user_info->settings_theming_js_allowed)),
+				'theme'      => strval($user_info->settings_theming_current_theme),
+				'menu_items' => explode(',', $user_info->settings_theming_menu_items)
 			]);
 		} 
 		else 

@@ -21,88 +21,69 @@ if (isset($_POST["action"]))
 	}
 	if ($action === "change_language")
 	{
-		session_start();
+		if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
-		$lang_id = strtolower($_POST['lang']);
+		$accountSettings = $context->getCurrentUser()->getSettings()->getSettingsGroup('account');
 
-		$lang = 'en';
-		$langs = [
-			'ru', 'en'
-		];
-
-		if (in_array($lang_id, $langs))
-			$lang = $lang_id;
-
-		$_SESSION['lang'] = $lang;
-		if ($context->isLogged()) 
-		{
-			$settings = $context->getCurrentUser()->getSettings()->getValues();
-			$settings->lang = $lang;
-
-			$connection->prepare("UPDATE users.info SET settings = ? WHERE id = ? LIMIT 1;")->execute([
-				json_encode($settings),
-				strval($context->getCurrentUser()->getId())
-			]);
-		}
-
-		die(json_encode(array('success' => 1)));
+		die(json_encode(array('success' => intval($accountSettings->setLanguageId($_POST['lang'])->getLanguageId() === strtolower($_POST['lang'])))));
 	}
 
 	if ($action === 'set_privacy_settings')
 	{
-		if (!$context->isLogged()) die(json_encode(array('unauth'=>1)));
-		if ($context->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
+		if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
-		if (!function_exists('set_privacy_settings'))
-			require __DIR__ . '/../../bin/functions/users.php';
+		$privacySettings = $context->getCurrentUser()->getSettings()->getSettingsGroup('privacy');
 
-		$res = set_privacy_settings($connection, $context->getCurrentUser()->getId(), intval($_POST["group"]), intval($_POST["value"]));
-		if (!$res) die(json_encode(array('error'=>1)));
+		$groups = [
+			1 => 'can_write_messages',
+			2 => 'can_write_on_wall',
+			3 => 'can_invite_to_chats',
+			4 => 'can_comment_posts'
+		];
 
-		die(json_encode(array('success'=>1)));
+		$group  = $groups[intval($_POST['group'])];
+		$value  = intval($_POST['value']);
+		$result = intval($privacySettings->setGroupValue($group, $value)->getGroupValue($group) === $value);
+
+		if (!$result)
+			die(json_encode(array('error' => 1)));
+
+		die(json_encode(array('success' => 1)));
 	}
 	if ($action === 'toggle_profile_state')
 	{
-		if (!$context->isLogged()) die(json_encode(array('unauth'=>1)));
-		if ($context->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
+		if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
-		$settings = $context->getCurrentUser()->getSettings()->getValues();
-		$settings->closed_profile = !$settings->closed_profile;
+		$accountSettings = $context->getCurrentUser()->getSettings()->getSettingsGroup('account');
 
-		$encoded_settings = json_encode($settings);
-		$user_id          = intval($context->getCurrentUser()->getId());
-
-		$res = $connection->prepare("UPDATE users.info SET settings = :settings WHERE id = :id LIMIT 1;");
-		$res->bindParam(":settings", $encoded_settings, PDO::PARAM_STR);
-		$res->bindParam(":id",       $user_id,          PDO::PARAM_INT);
-
-		die(json_encode(array('success'=>intval($res->execute()))));
+		die(json_encode(array('success' => intval($accountSettings->setProfileClosed(!$accountSettings->isProfileClosed())->isProfileClosed()))));
 	}
 	if ($action === 'toggle_push_settings')
 	{
-		if (!$context->isLogged()) die(json_encode(array('unauth'=>1)));
-		if ($context->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
-
-		if (!function_exists('set_user_settings'))
-			require __DIR__ . '/../../bin/functions/users.php';
+		if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
 		$settingsGroup = strval($_POST['settings_group']);
 		$groups = ['notifications', 'sound'];
 
 		if (!in_array($settingsGroup, $groups))
-			die(json_encode(array('error'=>1)));
+			die(json_encode(array('error' => 1)));
 
-		$new_value = intval(boolval(intval($_POST['new_value'])));
-		$result = set_user_settings($connection, $context->getCurrentUser()->getId(), $settingsGroup, $new_value);
+		$new_value = boolval(intval($_POST['new_value']));
+		
+		$pushSettings = $context->getCurrentUser()->getSettings()->getSettingsGroup('push');
+		if ($settingsGroup === $groups[0])
+			$result = $pushSettings->setNotificationsEnabled($new_value);
+		if ($settingsGroup === $groups[1])
+			$result = $pushSettings->setSoundEnabled($new_value);
+
 		if (!$result)
 			die(json_encode(array('error'=>1)));
 
-		die(json_encode(array('response'=>$new_value)));
+		die(json_encode(array('response' => $new_value)));
 	}
 	if ($action === 'get_blacklisted')
 	{
-		if (!$context->isLogged()) die(json_encode(array('unauth'=>1)));
-		if ($context->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
+		if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
 		if (!function_exists('get_blacklist'))
 			require __DIR__ . '/../../bin/functions/users.php';
@@ -118,8 +99,7 @@ if (isset($_POST["action"]))
 	}
 	if ($action === 'verify_password')
 	{
-		if (!$context->isLogged()) die(json_encode(array('unauth'=>1)));
-		if ($context->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
+		if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
 		if (!function_exists('check_password'))
 			require __DIR__ . '/../../bin/functions/auth.php';
@@ -132,8 +112,7 @@ if (isset($_POST["action"]))
 	}
 	if ($action === 'change_password')
 	{
-		if (!$context->isLogged()) die(json_encode(array('unauth'=>1)));
-		if ($context->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
+		if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
 		if (!function_exists('check_password'))
 			require __DIR__ . '/../../bin/functions/auth.php';
@@ -149,57 +128,46 @@ if (isset($_POST["action"]))
 
 		$context->writeSessions([]);
 
-		die(json_encode(array('state'=>1)));
+		die(json_encode(array('state' => 1)));
 	}
 	if ($action === 'get_accounts')
 	{
-		if (!$context->isLogged()) die(json_encode(array('unauth'=>1)));
-		if ($context->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
+		if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
 		if (!function_exists('get_accounts'))
 			require __DIR__ . '/../../bin/functions/accounts.php';
 
 		$accounts_list = get_accounts($connection, $context->getCurrentUser()->getId());
 
-		die(json_encode(array('response'=>$accounts_list)));
+		die(json_encode(array('response' => $accounts_list)));
 	}
 	if ($action === 'update_menu_items')
 	{
-		if (!$context->isLogged()) die(json_encode(array('unauth'=>1)));
-		if ($context->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
+		if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
 		$items  = explode(',', strval($_POST['items']));
-		$result = [];
 
-		foreach ($items as $index => $itemId) {
-			if (intval($itemId) < 0 || intval($itemId) > 8) die(json_encode(array('error'=>1)));
+		$themingSettings = $context->getCurrentUser()->getSettings()->getSettingsGroup('theming');
+		$success         = $themingSettings->setMenuItemIds($items);
 
-			$result[] = intval($itemId);
-		}
+		if (!$success)
+			die(json_encode(array('error' => 1)));
 
-		if (!function_exists('set_menu_items'))
-			require __DIR__ . "/../../bin/functions/theming.php";
-
-		$result = set_menu_items($connection, $context->getCurrentUser()->getId(), $result);
-		if (!$result)
-			die(json_encode(array('error'=>1)));
-
-		die(json_encode(array('success'=>1)));
+		die(json_encode(array('success' => 1)));
 	}
 	if ($action === 'toggle_js_state')
 	{
-		if (!$context->isLogged()) die(json_encode(array('unauth'=>1)));
-		if ($context->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
+		if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
-		if (!function_exists('toggle_js_allowance'))
-			require __DIR__ . "/../../bin/functions/theming.php";
-		
-		die(json_encode(array('state'=>toggle_js_allowance($connection, $context->getCurrentUser()->getId()))));
+		$themingSettings = $context->getCurrentUser()->getSettings()->getSettingsGroup('theming');
+
+		$result = intval($themingSettings->setJSAllowance(!$themingSettings->isJSAllowed())->isJSAllowed());
+
+		die(json_encode(array('success' => $result)));
 	}
 	if ($action === "get_sessions_list")
 	{
-		if (!$context->isLogged()) die(json_encode(array('unauth'=>1)));
-		if ($context->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
+		if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
 		if (!class_exists('Session'))
 			require __DIR__ . '/../../bin/objects/session.php';
@@ -216,8 +184,7 @@ if (isset($_POST["action"]))
 	}
 	if ($action === "end_session")
 	{
-		if (!$context->isLogged()) die(json_encode(array('unauth'=>1)));
-		if ($context->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
+		if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
 		if (!class_exists('Session'))
 			require __DIR__ . '/../../bin/objects/session.php';
@@ -232,8 +199,7 @@ if (isset($_POST["action"]))
 	}
 	if ($action === "set_gender")
 	{
-		if (!$context->isLogged()) die(json_encode(array('unauth'=>1)));
-		if ($context->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
+		if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
 		$gender = intval($_POST['gender']);
 
@@ -244,12 +210,13 @@ if (isset($_POST["action"]))
 	}
 	if ($action === "toggle_new_design")
 	{
-		if (!$context->isLogged()) die(json_encode(array('unauth'=>1)));
-		if ($context->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
+		if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
-		$current_new_design = $context->getCurrentUser()->isNewDesignUsed();
+		$themingSettings = $context->getCurrentUser()->getSettings()->getSettingsGroup('theming');
 
-		die(json_encode(array('success' => intval($connection->prepare("UPDATE users.info SET use_new_design = ? WHERE id = ? LIMIT 1")->execute([intval(!$current_new_design), $context->getCurrentUser()->getId()])))));
+		$result = intval($themingSettings->useNewDesign(!$themingSettings->isNewDesignUsed())->isNewDesignUsed());
+
+		die(json_encode(array('success' => $result)));
 	}
 
 	die(json_encode(array('error' => 1)));

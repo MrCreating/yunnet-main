@@ -46,52 +46,46 @@ function get_page_origin ()
 }
 
 // get language function
-function get_language ($connection)
+function get_language ($connection, $current_user = NULL)
 {
 	$language_code = "en";
 
-	if ( !isset($_SESSION['user_id']) )
+	if ($current_user)
 	{
-		if ( isset($_SESSION['lang']) )
+		$language_code = $current_user->getSettings()->getSettingsGroup('account')->getLanguageId();
+	} else
+	{
+		if (isset($_SESSION['lang']))
 		{
-			$language_code = strtolower( $_SESSION['lang'] );
+			$language_code = strtolower($_SESSION['lang']);
 		}
 		else
 		{
 			// get language by header
 			$lang = substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2);
-			switch ( $lang )
+			switch ($lang)
 			{
 				case 'ru':
 					$language_code = "ru";
-					break;
+				break;
 				case 'en':
 					$language_code = "en";
-					break;
+				break;
 				default:
 					$language_code = "en";
-					break;
+				break;
 			}
 		}
 	}
-	else
-	{
-		$res = $connection->prepare("SELECT settings FROM users.info WHERE id = ?;");
-		$res->execute([strval($_SESSION['user_id'])]);
-
-		$settings = json_decode($res->fetch(PDO::FETCH_ASSOC)['settings'], true);
-		if ($settings['lang'] === 'ru')
-			$language_code = 'ru';
-	}
 
 	$cache = get_cache();
-	$lang = json_decode($cache->get( 'lang_' . $language_code ), true);
+	$lang = json_decode($cache->get( 'lang_' . $language_code), true);
 
-	if ( !$lang )
+	if (!$lang)
 	{
 		$language_json = file_get_contents(__DIR__.'/languages/' . $language_code);
 
-		$cache->set( 'lang_' . $language_code, $language_json );
+		$cache->set('lang_' . $language_code, $language_json);
 		$lang = json_decode($language_json, true);
 	}
 

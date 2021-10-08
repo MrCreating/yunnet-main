@@ -37,7 +37,15 @@ class User extends Entity
 		/*$user_info = $cache->getItem(strval($user_id));
 		if (!$user_info)
 		{*/
-			$user_info = $this->currentConnection->execute("SELECT id, use_new_design, first_name, online_hidden, last_name, email, status, themes, userlevel, photo_path, settings, is_online, screen_name, current_theme, show_nav_button, is_verified, userlevel, themes_allow_js, is_banned, cookies, half_cookies, gender FROM users.info WHERE id = :user_id AND is_deleted = 0 LIMIT 1;", new DataBaseParams([new DBRequestParam(":user_id", $user_id, 	PDO::PARAM_INT)]));
+																/*themes,*/
+																/*settings,*/ 
+																/*use_new_design,*/
+																/*current_theme,*/
+																/*show_nav_button,*/ 
+																/*themes_allow_js,*/
+
+			$user_info = $this->currentConnection->execute("SELECT id, first_name, last_name, email, status, is_banned, is_verified, is_online, online_hidden, userlevel, photo_path, screen_name, cookies, half_cookies, gender, settings_account_language, settings_account_is_closed, settings_privacy_can_write_messages, settings_privacy_can_write_on_wall, settings_privacy_can_comment_posts, settings_privacy_can_invite_to_chats, settings_push_notifications, settings_push_sound, settings_theming_js_allowed, settings_theming_new_design, settings_theming_current_theme, settings_theming_menu_items FROM users.info WHERE id = :user_id AND is_deleted = 0 LIMIT 1;", new DataBaseParams([new DBRequestParam(":user_id", $user_id, PDO::PARAM_INT)]));
+
 			$user_info = $user_info->{"0"};
 
 			//$cache->putItem(strval($user_id), json_encode($user_info));

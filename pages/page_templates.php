@@ -4,7 +4,7 @@ function default_page_template ($is_mobile, $lang = "en", $user)
 {
 	$userlevel = $user ? $user->getAccessLevel() : 0;
 
-	if ($user && $user->isNewDesignUsed())
+	if ($user && $user->getSettings()->getSettingsGroup('theming')->isNewDesignUsed())
 	{
 		$result = '
 <!DOCTYPE html>

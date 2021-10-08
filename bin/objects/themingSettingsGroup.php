@@ -35,12 +35,12 @@ class ThemingSettingsGroup extends SettingsGroup
 		$menu_ids = $params["menu_items"];
 		foreach ($default_item_ids as $index => $menu_id)
 		{
-			$item = $menu_ids[$index];
+			$item = intval($menu_ids[$index]);
 			if (!$item)
 				$item = intval($menu_id);
 
-			if (!in_array($item, $item_ids))
-				$item_ids[] = $item;
+			if (!in_array(intval($item), $item_ids))
+				$item_ids[] = intval($item);
 		}
 
 		if (count($menu_ids) != count($default_item_ids))
@@ -59,11 +59,6 @@ class ThemingSettingsGroup extends SettingsGroup
 		return $this->currentTheme;
 	}
 
-	public function setCurrentTheme (?Theme $newTheme = NULL): ThemingSettingsGroup
-	{
-		return $this;
-	}
-
 	public function isJSAllowed (): bool
 	{
 		return boolval($this->JSAllowed);
@@ -71,6 +66,11 @@ class ThemingSettingsGroup extends SettingsGroup
 
 	public function setJSAllowance (bool $jsAllowed): ThemingSettingsGroup
 	{
+		if ($this->currentConnection->prepare("UPDATE users.info SET settings_theming_js_allowed = ? WHERE id = ? LIMIT 1;")->execute([intval(boolval($jsAllowed)), intval($_SESSION['user_id'])]))
+		{
+			$this->JSAllowed = boolval($jsAllowed);
+		}
+
 		return $this;
 	}
 
@@ -81,7 +81,38 @@ class ThemingSettingsGroup extends SettingsGroup
 
 	public function setMenuItemIds (array $menuItemIds): bool
 	{
-		return true;
+		$default_item_ids = [
+			1, 2, 3, 4, 5, 6, 7, 8
+		];
+
+		// in items ids must only have unique items from 1 to 6.
+		$item_ids = array();
+		foreach ($default_item_ids as $index => $menu_id)
+		{
+			$item = intval($menuItemIds[$index]);
+			if (!$item)
+				$item = intval($menu_id);
+
+			if (!in_array($item, $item_ids))
+				$item_ids[] = $item;
+		}
+
+		if (count($menuItemIds) != count($default_item_ids))
+		{
+			foreach ($default_item_ids as $index => $menu_id) {
+				if (!in_array($menu_id, $item_ids))
+					$item_ids[] = $menu_id;
+			}
+		}
+
+		if ($this->currentConnection->prepare("UPDATE users.info SET settings_theming_menu_items = ? WHERE id = ? LIMIT 1;")->execute([implode(',', $item_ids), intval($_SESSION['user_id'])]))
+		{
+			$this->menuItemIds = $item_ids;
+
+			return true;
+		}
+
+		return false;
 	}
 
 	public function isNewDesignUsed (): bool
@@ -91,6 +122,11 @@ class ThemingSettingsGroup extends SettingsGroup
 
 	public function useNewDesign (bool $use): ThemingSettingsGroup
 	{
+		if ($this->currentConnection->prepare("UPDATE users.info SET settings_theming_new_design = ? WHERE id = ? LIMIT 1;")->execute([intval(boolval($use)), intval($_SESSION['user_id'])]))
+		{
+			$this->newDesignUsed = boolval($use);
+		}
+
 		return $this;
 	}
 

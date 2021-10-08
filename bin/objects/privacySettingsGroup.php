@@ -27,6 +27,39 @@ class PrivacySettingsGroup extends SettingsGroup
 
 	public function setGroupValue (string $group, int $newValue): PrivacySettingsGroup
 	{
+		$groupsInfo = [
+			'can_write_messages' => [
+				'name'   => 'can_write_messages',
+				'values' => [0, 1, 2]
+			],
+			'can_write_on_wall' => [
+				'name'   => 'can_write_on_wall',
+				'values' => [0, 1, 2]
+			],
+			'can_comment_posts' => [
+				'name'   => 'can_comment_posts',
+				'values' => [0, 1, 2]
+			],
+			'can_invite_to_chats' => [
+				'name'   => 'can_invite_to_chats',
+				'values' => [0, 1]
+			]
+		];
+
+		if (!isset($groupsInfo[$group])) return $this;
+
+		$currentGroup  = $groupsInfo[$group];
+		$currentValues = $currentGroup['values'];
+
+		if (!in_array($newValue, $currentValues)) return $this;
+
+		if ($this->currentConnection->prepare("UPDATE users.info SET settings_privacy_".$currentGroup['name']." = ? WHERE id = ? LIMIT 1;")->execute([intval($newValue), intval($_SESSION['user_id'])]))
+		{
+			$this->privacyValues[$currentGroup['name']] = intval($newValue);
+
+			return $this;
+		}
+
 		return $this;
 	}
 
