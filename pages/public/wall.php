@@ -1,5 +1,8 @@
 <?php
 
+require_once __DIR__ . "/../../bin/functions/wall.php";
+require_once __DIR__ . "/../../bin/functions/users.php";
+
 /**
  * Here is the wall post shower.
 */
@@ -13,12 +16,6 @@ $post_id = intval($string[1]);
 // if wall is valid
 if ($wall_id !== 0)
 {
-	if (!function_exists('like_post'))
-		require __DIR__ . "/../../bin/functions/wall.php";
-
-	if (!function_exists('can_access_closed'))
-		require __DIR__ . "/../../bin/functions/users.php";
-
 	// if current user is not blacklisted on wall owner
 	if (!in_blacklist($connection, $wall_id, $context->getCurrentUser()->getId()))
 	{	

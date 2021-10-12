@@ -1,15 +1,15 @@
 <?php
-// checking login data
+
+require_once __DIR__ . '/../../bin/functions/auth.php';
+
 if (isset($_POST['action']))
 {
-	if ($context->isLogged())
-		die(json_encode(array("error" => 1)));
-
 	$action = strtolower($_POST['action']);
+
+	if ($context->allowToUseUnt()) die(json_encode(array("error" => 1)));
+
 	if ($action === 'login')
 	{
-		require_once __DIR__ . '/../../bin/functions/auth.php';
-
 		header('Access-Control-Allow-Origin: '.get_page_origin());
 		header('Access-Control-Allow-Credentials: true');
 
@@ -17,12 +17,13 @@ if (isset($_POST['action']))
 		$res = auth_user($connection, $_POST['email'], $_POST['password']);
 		if (!$res)
 		{
-			die(json_encode(array("error"=>1)));
+			die(json_encode(array("error" => 1)));
 		}
 		else
 		{	
-			die(json_encode(array("success"=>array("redirect_url"=>($_REQUEST["to"] ? "/".$_REQUEST["to"] : "/")))));
+			die(json_encode(array("success" => array("redirect_url" => ($_REQUEST["to"] ? "/".$_REQUEST["to"] : "/")))));
 		}
 	}
 }
+
 ?>

@@ -1,13 +1,16 @@
 <?php
-require __DIR__ . "/../../bin/functions/notifications.php";
 
-// here we will handle notifications actions
+require __DIR__ . "/../../bin/objects/notification.php";
+
+/**
+ * Notifications actions will be here
+*/
+
 if (isset($_POST["action"]))
 {
 	$action = strtolower($_POST['action']);
 
-	if (!$context->isLogged()) die(json_encode(array('unauth' => 1)));
-	if ($context->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
+	if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
 	switch ($action)
 	{
@@ -15,31 +18,27 @@ if (isset($_POST["action"]))
 			$id = intval($_POST["notification_id"]);
 			if ($id >= 0)
 			{
-				$notification = new Notification($connection, $id, $context->getCurrentUser()->getId());
-				if ($notification->isValid && $notification->read())
-					die(json_encode(array('success'=>1)));
+				$notification = new Notification($id);
 
-				die(json_encode(array('error'=>1)));
-			} else {
-				die(json_encode(array('success'=>1)));
+				if ($notification->valid() && $notification->read())
+					die(json_encode(array('success' => 1)));
 			}
 		break;
+
 		case "notification_hide":
 			$id = intval($_POST["notification_id"]);
 
 			if ($id >= 0)
 			{
-				$notification = new Notification($connection, $id, $context->getCurrentUser()->getId());
-				if ($notification->isValid && $notification->hide())
-					die(json_encode(array('success'=>1)));
+				$notification = new Notification($id);
 
-				die(json_encode(array('error'=>1)));
-			} else {
-				die(json_encode(array('success'=>1)));
+				if ($notification->valid() && $notification->hide())
+					die(json_encode(array('success' => 1)));
 			}
 		break;
+
 		case "get_notifications":
-			$notes = get_notifications($connection, $context->getCurrentUser()->getId(), intval($_POST['offset']), intval($_POST['count']));
+			$notes    = Notification::getList(intval($_POST['offset']), intval($_POST['count']));
 			$response = [];
 
 			foreach ($notes as $index => $note) {
@@ -47,8 +46,13 @@ if (isset($_POST["action"]))
 			}
 
 			die(json_encode($response));
+		break;
+		
 		default:
 		break;
 	}
+
+	die(json_encode(array('error' => 1)));
 }
+
 ?>

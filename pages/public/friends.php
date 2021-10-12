@@ -1,13 +1,12 @@
 <?php
-require __DIR__ . "/../../bin/functions/users.php";
+require_once __DIR__ . "/../../bin/functions/users.php";
 
 // large actions handle here.
 if (isset($_POST["action"]))
 {
-	if (!$context->isLogged()) die(json_encode(array('unauth'=>1)));
-	if ($context->getCurrentUser()->isBanned()) die(json_encode(array('error'=>1)));
-
 	$action = strtolower($_POST["action"]);
+
+	if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
 	switch ($action) {
 		case 'search':
@@ -32,21 +31,22 @@ if (isset($_POST["action"]))
 
 			die(json_encode($done));
 		break;
+
 		case 'hide_request':
 			$user_id = intval($_POST['user_id']);
 
-			if (!function_exists('hide_friendship_request'))
-				require __DIR__ . '/../../bin/functions/users.php';
-
 			$result = hide_friendship_request($connection, $context->getCurrentUser()->getId(), $user_id);
 			if (!$result)
-				die(json_encode(array('error'=>1)));
+				die(json_encode(array('error' => 1)));
 
-			die(json_encode(array('success'=>1)));
+			die(json_encode(array('success' => 1)));
 		break;
+
 		default:
 		break;
 	}
+
+	die(json_encode(array('error' => 1)));
 }
 
 ?>

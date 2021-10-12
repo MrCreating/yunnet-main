@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/settingsGroup.php';
+require_once __DIR__ . '/../event_manager.php';
 
 /**
  * Class for Psuh settings
@@ -9,6 +10,7 @@ require_once __DIR__ . '/settingsGroup.php';
 class PushSettingsGroup extends SettingsGroup
 {
 	protected $currentConnection = NULL;
+	protected $eventEmitter      = NULL;
 
 	private bool $notificationsEnabled;
 	private bool $soundEnabled;
@@ -17,6 +19,7 @@ class PushSettingsGroup extends SettingsGroup
 	{
 		$this->type              = "push";
 		$this->currentConnection = $connection;
+		$this->eventEmitter      = new EventEmitter();
 
 		$this->notificationsEnabled = $params['notifications'];
 		$this->soundEnabled         = $params['sound'];
