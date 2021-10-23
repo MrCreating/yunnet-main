@@ -21,9 +21,7 @@ require_once __DIR__ . '/parsers/attachments.php';
 
 function context ()
 {
-	return isset($_SERVER['context']) ? $_SERVER['context'] : (function () {
-		$_SERVER['context'] = new Context();
-	})();
+	return Project::getContext();
 }
 
 // returns a page origin for CORS.
@@ -175,12 +173,7 @@ function get_database_connection ()
 // get cache function
 function get_cache () 
 {
-	//return Cache::getMemcached();
-
-	$mem = new Memcached();
-	$mem->addServer('127.0.0.1', 11211);
-
-	return $mem;
+	return Cache::getCacheServer();
 }
 
 // returns a list of default available pages.

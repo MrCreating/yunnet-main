@@ -14,7 +14,7 @@ class Cache
 	function __construct ($cacheName = "default")
 	{
 		$this->currentCacheServer = new Memcached();
-		$this->currentCacheServer->addServer('127.0.0.1', 11211);
+		$this->currentCacheServer->addServer(Project::CACHE_IP, Project::CACHE_PORT);
 		$this->currentCacheName = $cacheName;
 	}
 
@@ -42,6 +42,15 @@ class Cache
 		$this->currentCacheServer->delete($this->currentCacheName . '/' . $name);
 		
 		return $this;
+	}
+
+	/////////////////////////////////////
+	public static function getCacheServer (): Memcached
+	{
+		$mem = new Memcached();
+		$mem->addServer(Project::CACHE_IP, Project::CACHE_PORT);
+
+		return $mem;
 	}
 }
 
