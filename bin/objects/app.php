@@ -138,7 +138,7 @@ class App
 			'id'            => $this->getId(),
 			'owner_id'      => $this->getOwnerId(),
 			'title'         => $this->getTitle(),
-			'photo_url'     => ($this->getPhoto() ? $this->getPhoto()->getLink() : (DEFAULT_SCRIPTS_URL . '/images/default.png')),
+			'photo_url'     => ($this->getPhoto() ? $this->getPhoto()->getLink() : (Project::DEVELOPERS_URL . '/images/default.png')),
 			'description'   => $this->getDescription(),
 			'creation_time' => $this->getCreationTime()
 		];

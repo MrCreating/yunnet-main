@@ -35,6 +35,16 @@ class PushSettingsGroup extends SettingsGroup
 		if ($this->currentConnection->prepare("UPDATE users.info SET settings_push_notifications = ? WHERE id = ? LIMIT 1;")->execute([intval(boolval($enabled)), intval($_SESSION['user_id'])]))
 		{
 			$this->notificationsEnabled = boolval($enabled);
+
+			$event = [
+				'event' => 'interface_event',
+				'data'  => [
+					'sound' => intval($this->isSoundEnabled()),
+					'notes' => intval($this->isNotificationsEnabled())
+				]
+			];
+
+			$this->eventEmitter->sendEvent([intval($_SESSION['user_id'])], [0], $event);
 		}
 
 		return $this;
@@ -50,6 +60,16 @@ class PushSettingsGroup extends SettingsGroup
 		if ($this->currentConnection->prepare("UPDATE users.info SET settings_push_sound = ? WHERE id = ? LIMIT 1;")->execute([intval(boolval($enabled)), intval($_SESSION['user_id'])]))
 		{
 			$this->soundEnabled = boolval($enabled);
+
+			$event = [
+				'event' => 'interface_event',
+				'data'  => [
+					'sound' => intval($this->isSoundEnabled()),
+					'notes' => intval($this->isNotificationsEnabled())
+				]
+			];
+
+			$this->eventEmitter->sendEvent([intval($_SESSION['user_id'])], [0], $event);
 		}
 
 		return $this;

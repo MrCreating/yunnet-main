@@ -16,7 +16,7 @@ if (!in_array('3', $context['permissions']))
 	die(create_json_error(-1, "Authentication failed: this access key don't have permission to call this method"));
 
 // getting LP data
-$lp_data = get_polling_data(get_cache(), $context["user_id"], $params['mode']);
+$lp_data = get_polling_data(Cache::getCacheServer(), $context["user_id"], $params['mode']);
 
 die(json_encode(
 	['response' => $lp_data]

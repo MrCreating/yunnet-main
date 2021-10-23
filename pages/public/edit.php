@@ -59,11 +59,8 @@ if (isset($_POST['action']))
 
 			if ($context->getCurrentUser()->getScreenName() !== $_POST["screen_name"] && isset($_POST['screen_name']))
 			{
-				if (!function_exists('update_screen_name'))
-					require __DIR__ . '/../../bin/functions/alsettings.php';
-
-				$result = update_screen_name($connection, $context->getCurrentUser()->getId(), (is_empty($_POST["screen_name"]) ? NULL : $_POST["screen_name"]));
-				if ($result === false)
+				$result = Context::get()->getCurrentUser()->edit()->setScreenName(is_empty($_POST["screen_name"]) ? NULL : $_POST["screen_name"]);
+				if ($result === 0)
 				{
 					die(json_encode(array('error'=>1, 'message'=>$context->getLanguage()->in_f_3)));
 				}
@@ -77,18 +74,15 @@ if (isset($_POST['action']))
 
 			if (isset($_POST['photo']))
 			{
-				$attachment_data = strval($_POST['photo']);
-				if (is_empty($attachment_data))
-				{
-					$result = delete_user_photo($connection, $context->getCurrentUser()->getId());
-					if ($result) die(json_encode(array('response'=>1)));
-				} else
-				{
-					$result = update_user_photo($connection, $context->getCurrentUser()->getId(), $attachment_data);
-					if ($result) die(json_encode($result->toArray()));
-
-					die(json_encode(array('error'=>1)));
-				}
+				$attachment = (new AttachmentsParser())->getObject($_POST['photo']);
+				
+				$result = Context::get()->getCurrentUser()->edit()->setPhoto($attachment);
+				if ($result === false)
+					die(json_encode(array('error' => 1)));
+				if ($result === true)
+					die(json_encode(array('response' => 1)));
+				if ($result instanceof Photo)
+					die(json_encode($result->toArray()));
 			}
 
 			die(json_encode(array('error'=>1, 'message'=>$context->getLanguage()->in_f_2)));

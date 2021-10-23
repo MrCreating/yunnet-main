@@ -3,7 +3,6 @@
 require_once __DIR__ . '/entity.php';
 require_once __DIR__ . '/settings.php';
 require_once __DIR__ . '/userInfoEditor.php';
-require_once __DIR__ . '/../data.php';
 require_once __DIR__ . '/../parsers/attachments.php';
 
 /**
@@ -155,20 +154,39 @@ class User extends Entity
 		return true;
 	}
 
-	public function setStatus (?string $newStatus = NULL): bool
+	public function block (int $user_id): bool
 	{
+		if ($this->getId() === $user_id) return false;
 
+		$res = $this->currentConnection->getPDOObject()->prepare("SELECT state FROM users.blacklist WHERE user_id = ? AND added_id = ? LIMIT 1;");
+		if ($res->execute([$this->getId(), $user_id]))
+		{
+			$state = (int) $res->fetch(PDO::FETCH_ASSOC)["state"];
+			if ($state === NULL)
+			{
+				return $this->currentConnection->getPDOObject()->prepare("INSERT INTO users.blacklist (user_id, added_id, state) VALUES (?, ?, -1);")->execute([$this->getId(), $user_id]);
+			}
+			if (intval($state) === -1)
+			{
+				return $this->currentConnection->getPDOObject()->prepare("UPDATE users.blacklist SET state = 0 WHERE user_id = ? AND added_id = ? LIMIT 1;")->execute([$this->getId(), $user_id]);
+			} else
+			{
+				if (
+					$this->currentConnection->getPDOObject()->prepare("UPDATE users.relationships SET state = 0 WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ? LIMIT 1;")->execute([$this->getId(), $user_id, $user_id, $this->getId()]) &&
+					$this->currentConnection->getPDOObject()->prepare("UPDATE users.relationships SET is_hidden = 0 WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ? LIMIT 1;")->execute([$this->getId(), $user_id, $user_id, $this->getId()]) &&
+					$this->currentConnection->getPDOObject()->prepare("UPDATE users.blacklist SET state = -1 WHERE user_id = ? AND added_id = ? LIMIT 1;")->execute([$this->getId(), $user_id])
+				)
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 
-	public function block (): bool
+	public function edit (): UserInfoEditor
 	{
-
-	}
-
-	public function edit (): ?UserInfoEditor
-	{
-		if ($this->getId() !== intval($_SESSION['user_id'])) return NULL;
-
 		return new UserInfoEditor($this);
 	}
 

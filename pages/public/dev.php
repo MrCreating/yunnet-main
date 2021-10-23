@@ -135,11 +135,8 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 
 					if ($user->getScreenName() !== $_POST["screen_name"] && isset($_POST['screen_name']))
 					{
-						if (!function_exists('update_screen_name'))
-							require __DIR__ . '/../../bin/functions/alsettings.php';
-
-						$result = update_screen_name($connection, $user_id, (is_empty($_POST["screen_name"]) ? NULL : $_POST["screen_name"]));
-						if ($result === false)
+						$result = $user->edit()->setScreenName(is_empty($_POST["screen_name"]) ? NULL : $_POST["screen_name"]);
+						if ($result === 0)
 						{
 							die(json_encode(array('error'=>1, 'message'=>$context->lang["in_f_3"])));
 						}

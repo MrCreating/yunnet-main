@@ -5,7 +5,7 @@
 */
 
 // data class connect
-require __DIR__ . "/data.php";
+require_once __DIR__ . "/data.php";
 
 class DBRequestParam
 {

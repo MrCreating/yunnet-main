@@ -8,6 +8,17 @@
 
 class Project
 {
+	// URLS
+	public const CONNECTION_HEAD = "https://";
+	public const PROJECT_URL     = "yunnet.ru";
+
+	public const DEFAULT_URL     = self::CONNECTION_HEAD .             self::PROJECT_URL;
+	public const MOBILE_URL      = self::CONNECTION_HEAD . "m."      . self::PROJECT_URL;
+	public const ATTACHMENTS_URL = self::CONNECTION_HEAD . "d-1."    . self::PROJECT_URL;
+	public const DEVELOPERS_URL  = self::CONNECTION_HEAD . "dev."    . self::PROJECT_URL;
+	public const THEMES_URL      = self::CONNECTION_HEAD . "themes." . self::PROJECT_URL;
+	///////
+
 	// current yunNet. version
 	public const VERSION = 6;
 
@@ -22,21 +33,6 @@ class Project
 
 	// default DB password
 	public const DB_PASSWORD = "";
-
-	// project domain - can be changed
-	public const DEFAULT_DOMAIN = "yunnet.ru";
-
-	// mobile url
-	public const DEFAULT_MOBILE_URL = ("m." . Project::DEFAULT_DOMAIN);
-
-	// attachments url
-	public const DEFAULT_ATTACHMENTS_URL = ("d-1." . Project::DEFAULT_DOMAIN);
-
-	// scripts url
-	public const DEFAULT_SCRIPTS_URL = ("dev." . Project::DEFAULT_DOMAIN);
-
-	// themes url
-	public const DEFAULT_THEMES_URL = ("themes" . Project::DEFAULT_DOMAIN);
 
 	public static function isClosed (): bool
 	{
@@ -61,13 +57,6 @@ class Project
 	public static function getSentMessagesCount (): int
 	{
 		return 0;
-	}
-
-	public static function getContext (): Context
-	{
-		return isset($_SERVER['context']) ? $_SERVER['context'] : (function () {
-			$_SERVER['context'] = new Context();
-		})();
 	}
 
 	public static function isDefaultLink ($url): bool

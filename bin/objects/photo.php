@@ -15,7 +15,7 @@ class Photo extends Attachment
 	private $width  = 0;
 	private $height = 0;
 
-	private $url   = DEFAULT_SCRIPTS_URL.'/images/default.png';
+	private $url   = Project::DEVELOPERS_URL . '/images/default.png';
 	private $query = '';
 
 	private $path  = '';
@@ -44,7 +44,7 @@ class Photo extends Attachment
 				$this->id         = intval($id);
 				$this->access_key = strval($access_key);
 
-				$this->url        = DEFAULT_ATTACHMENTS_URL.'/'.$attachment["query"];
+				$this->url        = Project::ATTACHMENTS_URL . '/' . $attachment["query"];
 				$this->query      = $attachment["query"];
 
 				$this->path       = __DIR__."/../".$attachment["path"];

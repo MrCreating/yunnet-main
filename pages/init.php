@@ -1,29 +1,28 @@
 <?php
 
-require_once __DIR__ . '/../bin/context.php';
 require_once __DIR__ . '/page_templates.php';
 
 /**
  * creates an a context and returns html of selected page.
-*/
+ */
 
 // setting the header
 header('Save-Data: on');
 header('Strict-Transport-Security: max-age=31536000; preload; includeSubDomains');
 
-$context = new Context();
+$context = Context::get();
 $connection = $context->getConnection();
 
 if ($context->isMobile() && explode('.', strtolower($_SERVER['HTTP_HOST']))[0] !== 'm')
-	die(header("Location: ".DEFAULT_MOBILE_URL.$_SERVER['REQUEST_URI']));
+	die(header("Location: ". Project::MOBILE_URL . $_SERVER['REQUEST_URI']));
 if (!$context->isMobile() && explode('.', strtolower($_SERVER['HTTP_HOST']))[0] === 'm')
-	die(header("Location: ".DEFAULT_URL.$_SERVER['REQUEST_URI']));
+	die(header("Location: ". Project::DEFAULT_URL . $_SERVER['REQUEST_URI']));
 
 //Session::start(1)->setAsCurrent();
 
 if (strtoupper($_SERVER['REQUEST_METHOD']) === "POST")
 {
-	if (in_array(REQUESTED_PAGE, get_default_pages()))
+	if (Project::isDefaultLink(REQUESTED_PAGE))
 	{
 		session_write_close();
 		$page = explode('/', REQUESTED_PAGE);

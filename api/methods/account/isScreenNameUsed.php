@@ -18,5 +18,5 @@ if (!$params["screen_name"])
 if (!function_exists('is_screen_used'))
 	require __DIR__ . '/../../../bin/functions/alsettings.php';
 
-die(json_encode(array('response'=>intval(is_screen_used($connection, $params['screen_name'])))));
+die(json_encode(array('response'=>intval(Project::isLinkUsed($connection, $params['screen_name'])))));
 ?>

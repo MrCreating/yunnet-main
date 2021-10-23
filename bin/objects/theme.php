@@ -274,7 +274,7 @@ class Theme extends Attachment
 			'data'     => [
 				'title'       => $this->getTitle(),
 				'description' => $this->getDescription(),
-				'url'         => DEFAULT_THEMES_URL . '/' . $this->getCredentials()
+				'url'         => Project::THEMES_URL . '/' . $this->getCredentials()
 			],
 			'settings' => [
 				'is_private' => intval($this->isPrivate()),

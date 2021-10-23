@@ -16,7 +16,7 @@
 function ban ($connection, $user_id)
 {
 	// getting the cache for LP and services
-	$cache = get_cache();
+	$cache = Cache::getCacheServer();
 
 	// checking current state
 	$res = $connection->prepare("SELECT is_banned FROM ".(intval($user_id) > 0 ? "users.info" : "bots.info")." WHERE id = ? LIMIT 1;");

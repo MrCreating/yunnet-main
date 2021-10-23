@@ -99,6 +99,16 @@ class Context
 		session_write_close();
 		return true;
 	}
+
+	////////////////////////////////////////
+	public static function get (): Context
+	{
+		return isset($_SERVER['context']) ? $_SERVER['context'] : (function () {
+			$_SERVER['context'] = new Context();
+
+			return $_SERVER['context'];
+		})();
+	}
 }
 
 ?>

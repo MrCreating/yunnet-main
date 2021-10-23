@@ -163,12 +163,11 @@ if (isset($_POST["action"]))
 		break;
 
 		case 'set_gender':
-			$gender = intval($_POST['gender']);
+			$result = Context::get()->getCurrentUser()->edit()->setGender(intval($_POST['gender']));
+			if (!$result)
+				die(json_encode(array('error' => 1)));
 
-			if ($gender !== 1 && $gender !== 2)
-				die(json_encode(array('error'=>1)));
-
-			die(json_encode(array('success' => intval($connection->prepare("UPDATE users.info SET gender = ? WHERE id = ? LIMIT 1;")->execute([$gender, $context->getCurrentUser()->getId()])))));
+			die(json_encode(array('success' => 1)));
 		break;
 
 		case 'toggle_new_design':

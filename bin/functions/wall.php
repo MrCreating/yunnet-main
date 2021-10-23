@@ -70,7 +70,9 @@ function get_news ($connection, $user_id)
 
 	}
 
-	usort($result, 'sort_by_time');
+	usort($result, function ($a, $b) {
+		return $a['time'] - $b['time'];
+	});
 	return array_reverse($result);
 }
 
@@ -624,25 +626,6 @@ function delete_comment ($connection, $attachment, $comment_id)
 */
 function set_user_status ($connection, $user_id, $new_status)
 {
-	if (is_empty($new_status))
-	{
-		// if is empty - delete status
-		return $connection->prepare("UPDATE users.info SET status = NULL WHERE id = ? AND is_deleted = 0 AND is_banned = 0 LIMIT 1")->execute([intval($user_id)]);
-	} else
-	{
-		// preparing to update
-		$res = $connection->prepare("UPDATE users.info SET status = :status WHERE id = :id AND is_deleted = 0 AND is_banned = 0 LIMIT 1");
-		$new_status = htmlspecialchars(trim($new_status));
-
-		// binding params
-		$res->bindParam(":status", $new_status, PDO::PARAM_STR);
-		$res->bindParam(":id",     $user_id,    PDO::PARAM_INT);
-
-		// updating!
-		return $res->execute();
-	}
-
-	// errore
-	return false;
+	return Context::get()->getCurrentUser()->edit()->setStatus($new_status);
 }
 ?>

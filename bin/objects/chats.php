@@ -10,7 +10,7 @@ class Chat
 {
 	public $isValid = false;
 	public $title   = "";
-	public $photo   = DEFAULT_SCRIPTS_URL."/images/default.png";
+	public $photo   = Project::DEVELOPERS_URL . "/images/default.png";
 
 	private $uid = 0;
 
@@ -41,9 +41,9 @@ class Chat
 			$this->isValid     = true;
 			$this->title       = $data["title"];
 			$this->permissions = $data["permissions"];
-			$this->link        = DEFAULT_URL . '/chats?c='.$data['link'];
+			$this->link        = Project::DEFAULT_URL . '/chats?c='.$data['link'];
 			if ($data["photo"] && $data["photo"] !== "")
-				$this->photo = DEFAULT_ATTACHMENTS_URL."/".$data["photo"];
+				$this->photo = Project::ATTACHMENTS_URL."/".$data["photo"];
 
 			$this->utils["connection"] = $connection;
 			$this->uid                 = intval($uid);

@@ -1,28 +1,18 @@
 <?php
 
 /**
- * If no Context needed (API, LP, etc) use this file to
- * faster access to the basic functions (such as lang gettings, objects etc)
+ * Initial and most used functions and operations
 */
 
-// default url for images or scripts
-define('DEFAULT_URL', 'https://yunnet.ru');
-define('DEFAULT_MOBILE_URL', 'https://m.yunnet.ru');
-define('DEFAULT_ATTACHMENTS_URL', 'https://d-1.yunnet.ru');
-define('DEFAULT_SCRIPTS_URL', 'https://dev.yunnet.ru');
-define('DEFAULT_THEMES_URL', 'https://themes.yunnet.ru');
-
+// connect the default modules
+require_once __DIR__ . '/context.php';
+require_once __DIR__ . '/platform-tools/cache.php';
 require_once __DIR__ . '/database.php';
 require_once __DIR__ . '/data.php';
 require_once __DIR__ . '/event_manager.php';
 require_once __DIR__ . '/objects/user.php';
 require_once __DIR__ . '/objects/bot.php';
 require_once __DIR__ . '/parsers/attachments.php';
-
-function context ()
-{
-	return Project::getContext();
-}
 
 // returns a page origin for CORS.
 function get_page_origin () 
@@ -78,7 +68,7 @@ function get_language ($connection, $current_user = NULL)
 		}
 	}
 
-	$cache = get_cache();
+	$cache = Cache::getCacheServer();
 	$lang = json_decode($cache->get( 'lang_' . $language_code), true);
 
 	if (!$lang)
@@ -143,7 +133,7 @@ function get_dev_language ($connection)
 			$language_code = 'ru';
 	}
 
-	$cache = get_cache();
+	$cache = Cache::getCacheServer();
 	$lang = json_decode($cache->get( 'lang_dev_' . $language_code ), true);
 
 	if ( !$lang )
@@ -168,28 +158,6 @@ function get_database_connection ()
 	]);
 
 	return $_SERVER['dbConnection'];
-}
-
-// get cache function
-function get_cache () 
-{
-	return Cache::getCacheServer();
-}
-
-// returns a list of default available pages.
-function get_default_pages () 
-{
-	return [
-		'/',         '/notifications', '/friends',
-		'/messages', '/settings',      '/audios',
-		'/edit',     '/login',          '/flex',
-		'/groups',   '/chats',         '/restore',
-		'/walls',    '/themer',        '/themes',
-		'/upload',   '/documents',     '/bots',
-		'/sessions', '/dev',           '/cookies',
-		'/about',    '/register',      '/terms',
-		'/rules',    '/groups',        '/archive'
-	];
 }
 
 // returns user or bot id by screen name
@@ -382,14 +350,6 @@ function nice_string ($number)
 		$count = intval($number/1000000) . "М";
 
 	return $count;
-}
-
-/**
- * Function for usort.
- * Must be time key in arrays.
-*/
-function sort_by_time($a, $b) {
-	return $a['time'] - $b['time'];
 }
 
 // update online time

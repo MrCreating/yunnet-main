@@ -27,7 +27,7 @@ class Session
 		$this->is_valid   = false;
 		$this->is_mobile  = false;
 
-		$cache = get_cache();
+		$cache = Cache::getCacheServer();
 
 		$sessions_list = unserialize($cache->get("sessions_" . $_SESSION['user_id']));
 		if ($sessions_list)
@@ -79,7 +79,7 @@ class Session
 		if (!$this->valid())
 			return false;
 
-		$cache = get_cache();
+		$cache = Cache::getCacheServer();
 
 		$sessions_list = unserialize($cache->get("sessions_" . $this->getCurrentUser()->getId()));
 		if (!$sessions_list)
@@ -171,7 +171,7 @@ class Session
 
 		$_SESSION['user_id'] = $user_id;
 
-		$cache = get_cache();
+		$cache = Cache::getCacheServer();
 
 		$sessions_list = unserialize($cache->get("sessions_" . $user_id));
 		if (!$sessions_list)
@@ -184,7 +184,7 @@ class Session
 			'is_closed'  => false,
 			'id'         => $session_id,
 			'data'       => array (
-				'mobile'  => context()->isMobile(),
+				'mobile'  => Context::get()->isMobile(),
 				'user_id' => $user_id,
 				'time'    => time()
 			)
@@ -206,7 +206,7 @@ class Session
 
 	public static function getList (): array
 	{
-		$cache  = get_cache();
+		$cache  = Cache::getCacheServer();
 		$result = [];
 
 		$sessions_list = unserialize($cache->get("sessions_" . $_SESSION['user_id']));

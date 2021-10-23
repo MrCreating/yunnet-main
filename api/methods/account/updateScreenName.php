@@ -24,11 +24,17 @@ if (!$params["screen_name"])
 if (!function_exists('update_screen_name'))
 	require __DIR__ . '/../../../bin/functions/alsettings.php';
 
-$result = update_screen_name($connection, $context['user_id'], $params['screen_name']);
+$editor = Context::get()->getCurrentUser()->edit();
+
+if (!$editor)
+	die(create_json_error(373, 'Failed to get user editor. Are you sure logged in?'));
+
+$result = $editor->setScreenName($params['screen_name']);
+
 if ($result === -1)
 	die(create_json_error(370, 'This screen name is already in use'));
 
-if ($result === false)
+if ($result === 0)
 	die(create_json_error(372, 'Screen name contains invalid characters'));
 
 die(json_encode(array('response'=>intval($result))));

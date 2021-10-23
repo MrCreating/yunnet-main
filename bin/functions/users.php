@@ -21,28 +21,7 @@ function is_friends ($connection, $owner_id, $user_id)
 // add $user_id to $owner_id's blacklist or remove it.
 function block_user ($connection, $owner_id, $user_id)
 {
-	if ($owner_id === $user_id)
-		return false;
-
-	$res = $connection->prepare("SELECT state FROM users.blacklist WHERE user_id = ? AND added_id = ?;");
-	$res->execute([intval($owner_id), intval($user_id)]);
-
-	$state = $res->fetch(PDO::FETCH_ASSOC)["state"];
-	if ($state === NULL)
-	{
-		return $connection->prepare("INSERT INTO users.blacklist (user_id, added_id, state) VALUES (?, ?, -1);")->execute([intval($owner_id), intval($user_id)]);
-	}
-	if (intval($state) === -1)
-	{
-		return $connection->prepare("UPDATE users.blacklist SET state = 0 WHERE user_id = ? AND added_id = ?;")->execute([intval($owner_id), intval($user_id)]);
-	}
-	else
-	{
-		$connection->prepare("UPDATE users.relationships SET state = 0 WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ?;")->execute([intval($owner_id), intval($user_id), intval($user_id), intval($owner_id)]);
-		$connection->prepare("UPDATE users.relationships SET is_hidden = 0 WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ?;")->execute([intval($owner_id), intval($user_id), intval($user_id), intval($owner_id)]);
-
-		return $connection->prepare("UPDATE users.blacklist SET state = -1 WHERE user_id = ? AND added_id = ?;")->execute([intval($owner_id), intval($user_id)]);
-	}
+	return Context::get()->getCurrentUser()->block($user_id);
 }
 
 // sends a friendship request to $user_id from $owner_id
@@ -206,43 +185,6 @@ function get_friends_list ($connection, $user_id, $section = "friends", $extende
 	return $result;
 }
 
-// updates $user_id's photo
-function update_user_photo ($connection, $user_id, $attachment)
-{
-	return context()->getCurrentUser()->edit()->setPhoto($attachment)->apply();
-	/*if (!class_exists('AttachmentsParser'))
-		require __DIR__ . "/../objects/attachment.php";
-	if (!function_exists('create_post'))
-		require __DIR__ . '/wall.php';
-
-	$photo = (new AttachmentsParser())->getObject($attachment);
-	if (!$photo)
-		return false;
-
-	$query = $photo->getQuery();
-	if (!$query)
-		return false;
-
-	$res = $connection->prepare("UPDATE " . ($user_id > 0 ? "users.info" : "bots.info") . " SET photo_path = :query WHERE id = :id AND is_deleted = 0 LIMIT 1;");
-	$res->bindParam(":query", $query,   PDO::PARAM_STR);
-	$res->bindParam(":id",    $user_id, PDO::PARAM_INT);
-
-	if ($res->execute()) 
-	{
-		create_post($connection, $user_id, $user_id, '', $attachment, 'updated_photo');
-
-		return $photo;
-	}
-
-	return false;*/
-}
-
-// deletes user's photo
-function delete_user_photo ($connection, $user_id)
-{
-	return $connection->prepare("UPDATE " . ($user_id > 0 ? "users.info" : "bots.info") . " SET photo_path = NULL WHERE id = ? AND is_deleted = 0 LIMIT 1;")->execute([intval($user_id)]);
-}
-
 /**
  * Set new profile data
  *
@@ -263,40 +205,10 @@ function update_user_data ($connection, $user_id, $data_type, $new_value)
 	switch ($data_type)
 	{
 		case "first_name":
-			return context()->getCurrentUser()->edit()->setFirstName($new_value)->apply();
-			/*$first_name = explode(' ', capitalize(strtolower($new_value)))[0];
-			if (preg_match("/[^a-zA-Zа-яА-ЯёЁ'-]/ui", $first_name))
-				return -1;
-
-			if (strlen($first_name) < 2 || strlen($first_name) > 32)
-				return -2;
-
-			if (is_empty($first_name))
-				return -3;
-
-			$res = $connection->prepare("UPDATE users.info SET first_name = :first_name WHERE id = :id AND is_deleted = 0 LIMIT 1;");
-
-			$res->bindParam(":first_name", $first_name, PDO::PARAM_STR);
-			$res->bindParam(":id",         $user_id,    PDO::PARAM_INT);
-			return $res->execute();*/
+			return Context::get()->getCurrentUser()->edit()->setFirstName($new_value);
 		break;
 		case "last_name":
-			return context()->getCurrentUser()->edit()->setLastName($new_value)->apply();
-			/*$last_name = explode(' ', capitalize(strtolower($new_value)))[0];
-			if (preg_match("/[^a-zA-Zа-яА-ЯёЁ'-]/ui", $last_name))
-				return -1;
-
-			if (strlen($last_name) < 2 || strlen($last_name) > 32)
-				return -2;
-
-			if (is_empty($last_name))
-				return -3;
-
-			$res = $connection->prepare("UPDATE users.info SET last_name = :last_name WHERE id = :id AND is_deleted = 0 LIMIT 1;");
-
-			$res->bindParam(":last_name", $last_name, PDO::PARAM_STR);
-			$res->bindParam(":id",        $user_id,   PDO::PARAM_INT);
-			return $res->execute();*/
+			return Context::get()->getCurrentUser()->edit()->setLastName($new_value);
 		break;
 		default:
 		break;
@@ -339,7 +251,7 @@ function set_privacy_settings ($connection, $user_id, $group_id, $new_value = 0)
 		4 => 'can_comment_posts'
 	];
 
-	return context()->getCurrentUser()->getSettings()->getSettingsGroup('privacy')->setGroupValue($groups[$group_id], $new_value)->getGroupValue($groups[$group_id]);
+	return Context::get()->getCurrentUser()->getSettings()->getSettingsGroup('privacy')->setGroupValue($groups[$group_id], $new_value)->getGroupValue($groups[$group_id]);
 }
 
 // get users who is blacklisted by $user_id
@@ -370,43 +282,11 @@ function get_blacklist ($connection, $user_id, $count = 30, $offset = 0)
 // set another settings
 function set_user_settings ($connection, $user_id, $setting, $new_value = 0)
 {
-	$push = context()->getCurrentUser()->getSettings()->getSettingsGroup('push');
+	$push = Context::get()->getCurrentUser()->getSettings()->getSettingsGroup('push');
 	if ($setting === 'notifications')
 		return $push->setNotificationsEnabled(boolval(intval($new_value)));
 	if ($setting === 'sound')
 		return $push->setSoundEnabled(boolval(intval($new_value)));
-
-	/*$settings = ["notifications", "sound"];
-	if (!in_array(strtolower($setting), $settings))
-		return false;
-
-	$user     = $user_id > 0 ? new User($user_id) : new Bot($user_id*-1);
-	$settings = $user->getSettings()->getValues();
-
-	$settings->notifications->{strtolower($setting)} = intval(boolval($new_value));
-	$query = $user_id > 0 ? "UPDATE users.info SET settings = :new_settings WHERE id = :user_id AND is_deleted = 0 LIMIT 1;" : "UPDATE bots.info SET settings = :new_settings WHERE id = :user_id AND is_deleted = 0 LIMIT 1;";
-
-	$user_id = intval($user_id > 0 ? $user_id : $user_id*-1);
-	$encoded_settings = json_encode($settings);
-
-	$res = $connection->prepare($query);
-	$res->bindParam(":new_settings", $encoded_settings, PDO::PARAM_STR);
-	$res->bindParam(":user_id",      $user_id,          PDO::PARAM_INT);
-
-	if ($res->execute()) 
-	{
-		$event = [
-			'event' => 'interface_event',
-			'data'  => [
-				'sound' => intval($settings->notifications->sound),
-				'notes' => intval($settings->notifications->notifications)
-			]
-		];
-
-		return emit_event([$user_id], [0], $event);
-	}
-
-	return false;*/
 }
 
 /** 
@@ -506,7 +386,7 @@ function search_users ($connection, $query, $additional_params = [
 // checks if js allowed
 function is_js_allowed ($connection, $user_id)
 {
-	return context()->getCurrentUser()->getSettings()->getSettingsGroup('theming')->isJSAllowed();
+	return Context::get()->getCurrentUser()->getSettings()->getSettingsGroup('theming')->isJSAllowed();
 }
 
 /**
