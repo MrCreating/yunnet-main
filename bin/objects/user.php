@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/entity.php';
 require_once __DIR__ . '/settings.php';
+require_once __DIR__ . '/userInfoEditor.php';
 require_once __DIR__ . '/../data.php';
 require_once __DIR__ . '/../parsers/attachments.php';
 
@@ -152,6 +153,23 @@ class User extends Entity
 		}
 
 		return true;
+	}
+
+	public function setStatus (?string $newStatus = NULL): bool
+	{
+
+	}
+
+	public function block (): bool
+	{
+
+	}
+
+	public function edit (): ?UserInfoEditor
+	{
+		if ($this->getId() !== intval($_SESSION['user_id'])) return NULL;
+
+		return new UserInfoEditor($this);
 	}
 
 	public function getType (): string
@@ -375,9 +393,16 @@ class User extends Entity
 		return $this->online;
 	}
 
-	///////////////////////////////////////////////////////
-	public static function auth (string $login, string $password): User
-	{}
+	////////////////////////////////////////////////////
+	public static function auth (string $login, string $password): ?Entity
+	{
+		
+	}
+
+	public static function authByToken (string $apiToken): ?Entity
+	{
+
+	}
 }
 
 ?>

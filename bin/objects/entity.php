@@ -51,6 +51,50 @@ abstract class Entity
 	{
 		return $this->isValid;
 	}
+
+	///////////////////////////////////////////////////
+	public static function findById (int $user_id): ?Entity
+	{
+		$entity = $user_id < 0 ? new Bot($user_id * -1) : new User($user_id);
+
+		if (!$entity->valid()) $entity = NULL;
+
+		return $entity;
+	}
+
+	public static function findByScreenName (string $screen_name): ?Entity
+	{
+		$entity_id = 0;
+
+		if (substr($screen_name, 0, 2) === "id")
+		{
+			$entity_id = intval(substr($screen_name, 2, strlen($screen_name)));
+		}
+		if (substr($screen_name, 0, 3) === "bot")
+		{
+			$entity_id = intval(substr($screen_name, 3, strlen($screen_name))) * -1;
+		}
+
+		if ($entity_id === 0)
+		{
+			$connection = $_SERVER['dbConnection'];
+			if (!$connection)
+				$connection = get_database_connection();
+
+			$res = $connection->prepare('SELECT id FROM users.info WHERE screen_name = ? UNION SELECT IF(id != "", id * -1, NULL) FROM bots.info WHERE screen_name = ? LIMIT 1');
+
+			if ($res->execute([$screen_name, $screen_name]))
+			{
+				$entity_id = intval($res->fetch(PDO::FETCH_ASSOC)['id']);
+			}
+		}
+
+		$entity = Entity::findById($entity_id);
+
+		if ($entity) return $entity;
+
+		return NULL;
+	}
 }
 
 ?>

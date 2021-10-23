@@ -1,11 +1,6 @@
 <?php
 // connecting modules.
-if (!function_exists('create_notification'))
-	require __DIR__ . "/notifications.php";
-if (!function_exists("emit_event"))
-	require __DIR__ . "/../emitters.php";
-if (!class_exists('Entity'))
-	require __DIR__ . "/../objects/entities.php";
+require_once __DIR__ . "/notifications.php";
 
 /**
  * This file contains a user's functions
@@ -14,43 +9,13 @@ if (!class_exists('Entity'))
 // checks $user_id in the $owner_id's blacklist and returns true or false
 function in_blacklist ($connection, $owner_id, $user_id)
 {
-	// cannot add itself
-	if ($owner_id === $user_id) return false;
-
-	if ($owner_id === 0 || $user_id === 0) return false;
-	if ($user_id === $owner_id) return false;
-	if ($user_id < 0) return false;
-
-	$res = $connection->prepare("SELECT state FROM users.blacklist WHERE user_id = ? AND added_id = ?;");
-	$res->execute(
-		[strval($owner_id), strval($user_id)]
-	);
-
-	$state = intval($res->fetch(PDO::FETCH_ASSOC)["state"]);
-	if ($state === 0)
-		return false;
-
-	return true;
+	return (new User($owner_id))->inBlacklist();
 }
 
 // checks if $user_id is friend with a $owner_id, and returns a true, 
 function is_friends ($connection, $owner_id, $user_id)
 {
-	if ($owner_id === $user_id)
-		return true;
-
-	$res = $connection->prepare("SELECT state FROM users.relationships WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ?;");
-
-	$res->execute([
-		strval($owner_id), strval($user_id),
-		strval($user_id), strval($owner_id)
-	]);
-
-	$state = intval($res->fetch(PDO::FETCH_ASSOC)["state"]);
-	if ($state === 2)
-		return true;
-
-	return false;
+	return (new User($owner_id))->isFriends();
 }
 
 // add $user_id to $owner_id's blacklist or remove it.
@@ -244,7 +209,8 @@ function get_friends_list ($connection, $user_id, $section = "friends", $extende
 // updates $user_id's photo
 function update_user_photo ($connection, $user_id, $attachment)
 {
-	if (!class_exists('AttachmentsParser'))
+	return context()->getCurrentUser()->edit()->setPhoto($attachment)->apply();
+	/*if (!class_exists('AttachmentsParser'))
 		require __DIR__ . "/../objects/attachment.php";
 	if (!function_exists('create_post'))
 		require __DIR__ . '/wall.php';
@@ -268,7 +234,7 @@ function update_user_photo ($connection, $user_id, $attachment)
 		return $photo;
 	}
 
-	return false;
+	return false;*/
 }
 
 // deletes user's photo
@@ -297,7 +263,8 @@ function update_user_data ($connection, $user_id, $data_type, $new_value)
 	switch ($data_type)
 	{
 		case "first_name":
-			$first_name = explode(' ', capitalize(strtolower($new_value)))[0];
+			return context()->getCurrentUser()->edit()->setFirstName($new_value)->apply();
+			/*$first_name = explode(' ', capitalize(strtolower($new_value)))[0];
 			if (preg_match("/[^a-zA-Zа-яА-ЯёЁ'-]/ui", $first_name))
 				return -1;
 
@@ -311,10 +278,11 @@ function update_user_data ($connection, $user_id, $data_type, $new_value)
 
 			$res->bindParam(":first_name", $first_name, PDO::PARAM_STR);
 			$res->bindParam(":id",         $user_id,    PDO::PARAM_INT);
-			return $res->execute();
+			return $res->execute();*/
 		break;
 		case "last_name":
-			$last_name = explode(' ', capitalize(strtolower($new_value)))[0];
+			return context()->getCurrentUser()->edit()->setLastName($new_value)->apply();
+			/*$last_name = explode(' ', capitalize(strtolower($new_value)))[0];
 			if (preg_match("/[^a-zA-Zа-яА-ЯёЁ'-]/ui", $last_name))
 				return -1;
 
@@ -328,7 +296,7 @@ function update_user_data ($connection, $user_id, $data_type, $new_value)
 
 			$res->bindParam(":last_name", $last_name, PDO::PARAM_STR);
 			$res->bindParam(":id",        $user_id,   PDO::PARAM_INT);
-			return $res->execute();
+			return $res->execute();*/
 		break;
 		default:
 		break;
@@ -364,9 +332,6 @@ function get_counters ($connection, $user_id)
 // set's the user's privacy settings
 function set_privacy_settings ($connection, $user_id, $group_id, $new_value = 0)
 {
-	if ($new_value < 0 || $new_value > 2)
-		return false;
-
 	$groups = [
 		1 => 'can_write_messages',
 		2 => 'can_write_on_wall',
@@ -374,32 +339,7 @@ function set_privacy_settings ($connection, $user_id, $group_id, $new_value = 0)
 		4 => 'can_comment_posts'
 	];
 
-	if (!isset($groups[$group_id]))
-		return false;
-
-	if ($new_value < 0 || $new_value > 3) return false;
-
-	$group_name = $groups[$group_id];
-	if (!class_exists('Entity'))
-		require __DIR__ . "/../objects/entities.php";
-
-	if ($group_name === $groups[4] && $new_value > 2) return false;
-
-	$user     = $user_id > 0 ? new User($user_id) : new Bot($user_id*-1);
-	$settings = $user->getSettings()->getValues();
-
-	$settings->privacy->{$group_name} = intval($new_value);
-
-	$query = $user_id > 0 ? "UPDATE users.info SET settings = :new_settings WHERE id = :user_id AND is_deleted = 0 LIMIT 1;" : "UPDATE bots.info SET settings = :new_settings WHERE id = :user_id AND is_deleted = 0 LIMIT 1;";
-
-	$user_id = intval($user_id > 0 ? $user_id : $user_id*-1); 
-	$encoded_settings = json_encode($settings);
-
-	$res = $connection->prepare($query);
-	$res->bindParam(":new_settings", $encoded_settings, PDO::PARAM_STR);
-	$res->bindParam(":user_id",      $user_id,          PDO::PARAM_INT);
-
-	return $res->execute();
+	return context()->getCurrentUser()->getSettings()->getSettingsGroup('privacy')->setGroupValue($groups[$group_id], $new_value)->getGroupValue($groups[$group_id]);
 }
 
 // get users who is blacklisted by $user_id
@@ -430,7 +370,13 @@ function get_blacklist ($connection, $user_id, $count = 30, $offset = 0)
 // set another settings
 function set_user_settings ($connection, $user_id, $setting, $new_value = 0)
 {
-	$settings = ["notifications", "sound"];
+	$push = context()->getCurrentUser()->getSettings()->getSettingsGroup('push');
+	if ($setting === 'notifications')
+		return $push->setNotificationsEnabled(boolval(intval($new_value)));
+	if ($setting === 'sound')
+		return $push->setSoundEnabled(boolval(intval($new_value)));
+
+	/*$settings = ["notifications", "sound"];
 	if (!in_array(strtolower($setting), $settings))
 		return false;
 
@@ -460,7 +406,7 @@ function set_user_settings ($connection, $user_id, $setting, $new_value = 0)
 		return emit_event([$user_id], [0], $event);
 	}
 
-	return false;
+	return false;*/
 }
 
 /** 
@@ -560,10 +506,7 @@ function search_users ($connection, $query, $additional_params = [
 // checks if js allowed
 function is_js_allowed ($connection, $user_id)
 {
-	$res = $connection->prepare("SELECT themes_allow_js FROM users.info WHERE id = ? AND is_deleted = 0 LIMIT 1;");
-	$res->execute([intval($user_id)]);
-
-	return boolval(intval($res->fetch(PDO::FETCH_ASSOC)["themes_allow_js"]));
+	return context()->getCurrentUser()->getSettings()->getSettingsGroup('theming')->isJSAllowed();
 }
 
 /**

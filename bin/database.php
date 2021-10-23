@@ -65,13 +65,13 @@ class DataBaseConnection
 	private $currentConnection = NULL;
 
 	// main costructor. Checks for current connection or creates new.
-	function __construct ($username = "root", $password = "iA22021981_")
+	function __construct ()
 	{
 		if (!isset($_SERVER["dbConnection"]))
 		{
 			try
 			{
-				$this->currentConnection = new PDO("mysql:host=localhost;dbname=users", $username, $password, [
+				$this->currentConnection = new PDO("mysql:host=localhost;dbname=users", Project::DB_USERNAME, Project::DB_PASSWORD, [
 					PDO::ATTR_PERSISTENT => true
 				]);
 

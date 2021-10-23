@@ -28,22 +28,23 @@ if (!in_array($to, $subdomains))
 // defines a page and loads the core context
 define('REQUESTED_PAGE', $requested_page);
 
+require_once __DIR__ . '/../bin/objects/project.php';
 require_once __DIR__ . '/../bin/base_functions.php';
 
 // checking domains.
 switch ($to)
 {
-	case $subdomains[1]:
+	case "api":
 		die(require __DIR__ . '/../api/index.php');
-	case $subdomains[2]:
+	case "dev":
 		die(require __DIR__ . '/../pages/dev/index.php');
-	case $subdomains[3]:
+	case "d-1":
 		die(require __DIR__ . '/../attachments/index.php');
-	case $subdomains[5]:
+	case "lp":
 		die(require __DIR__ . '/../pages/lp/index.php');
-	case $subdomains[6]:
+	case "themes":
 		die(require __DIR__ . '/../attachments/themes.php');
-	case $subdomains[7]:
+	case "auth":
 		die(require __DIR__ . '/../pages/widgets/auth/index.php');
 }
 

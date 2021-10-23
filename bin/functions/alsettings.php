@@ -9,6 +9,7 @@
 // returns false if name is incorrect
 function update_screen_name ($connection, $user_id, $new_value)
 {
+	/*
 	// converting all data provided to int
 	$user_id     = intval($user_id);
 	$selected_id = intval($user_id > 0 ? $user_id : $user_id*-1);
@@ -42,13 +43,24 @@ function update_screen_name ($connection, $user_id, $new_value)
 	$res->bindParam(":user_id",  $selected_id, PDO::PARAM_INT);
 
 	return $res->execute();
+	*/
+
+	$editor = context()->getCurrentUser()->edit();
+	if ($editor)
+	{
+		$result = $editor->setScreenName($new_value);
+		if ($result)
+			return $editor->apply();
+	}
+
+	return false;
 }
 
 // check if screen_name is already in use.
 function is_screen_used ($connection, $screen_name)
 {
 	// connecting module if needed.
-	if (!function_exists('get_default_pages'))
+	/*if (!function_exists('get_default_pages'))
 		require __DIR__ . "/../base_functions.php";
 
 	// get all pages.
@@ -80,7 +92,9 @@ function is_screen_used ($connection, $screen_name)
 		return true;
 
 	// link is free. OK!
-	return false;
+	return false;*/
+
+	return Project::isLinkUsed($screen_name);
 }
 
 ?>

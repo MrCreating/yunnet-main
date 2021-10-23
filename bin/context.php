@@ -13,10 +13,10 @@ class Context
 
 	public function __construct ()
 	{
+		$this->current_connection = (new DataBaseConnection())->getPDOObject();
+
 		$user_id = intval($_SESSION['user_id']);
 		$session = new Session(strval($_SESSION['session_id']));
-	
-		$this->current_connection = (new DataBaseConnection())->getPDOObject();
 
 		$_SERVER['context'] = $this;
 		$_SERVER['dbConnection'] = $this->getConnection();
@@ -63,7 +63,10 @@ class Context
 
 	public function isMobile (): bool
 	{
-		return check_mobile();
+		return preg_match(
+				"/(android|avantgo|blackberry|bolt|boost|cricket|docomo|fone|hiptop|mini|mobi|palm|phone|pie|tablet|up\.browser|up\.link|webos|wos)/i", 
+				$_SERVER["HTTP_USER_AGENT"]
+			);
 	}
 
 	public function getSessions (): array

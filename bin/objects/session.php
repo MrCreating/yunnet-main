@@ -25,7 +25,7 @@ class Session
 		$this->is_logged  = false;
 		$this->is_current = false;
 		$this->is_valid   = false;
-		$this->is_mobile  = check_mobile();		
+		$this->is_mobile  = false;
 
 		$cache = get_cache();
 
@@ -184,7 +184,7 @@ class Session
 			'is_closed'  => false,
 			'id'         => $session_id,
 			'data'       => array (
-				'mobile'  => check_mobile(),
+				'mobile'  => context()->isMobile(),
 				'user_id' => $user_id,
 				'time'    => time()
 			)

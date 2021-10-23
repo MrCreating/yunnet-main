@@ -21,7 +21,9 @@ require_once __DIR__ . '/parsers/attachments.php';
 
 function context ()
 {
-	return $_SERVER['context'];
+	return isset($_SERVER['context']) ? $_SERVER['context'] : (function () {
+		$_SERVER['context'] = new Context();
+	})();
 }
 
 // returns a page origin for CORS.
@@ -163,22 +165,18 @@ function get_database_connection ()
 	if (isset($_SERVER['dbConnection']) && $_SERVER['dbConnection'] instanceof PDO)
 		return $_SERVER['dbConnection'];
 
-	return new PDO("mysql:host=localhost;dbname=users", "root", "iA22021981_", [
+	$_SERVER['dbConnection'] = new PDO("mysql:host=localhost;dbname=users", Project::DB_USERNAME, Project::DB_PASSWORD, [
 		PDO::ATTR_PERSISTENT => false
 	]);
-}
 
-// checks the mobile access
-function check_mobile () {
-	return preg_match(
-				"/(android|avantgo|blackberry|bolt|boost|cricket|docomo|fone|hiptop|mini|mobi|palm|phone|pie|tablet|up\.browser|up\.link|webos|wos)/i", 
-				$_SERVER["HTTP_USER_AGENT"]
-			);
+	return $_SERVER['dbConnection'];
 }
 
 // get cache function
 function get_cache () 
 {
+	//return Cache::getMemcached();
+
 	$mem = new Memcached();
 	$mem->addServer('127.0.0.1', 11211);
 
@@ -224,13 +222,13 @@ function resolve_id_by_name ($connection, $name)
 
 	if ($user_id === 0)
 	{
-		$res = $connection->prepare("SELECT id FROM users.info WHERE screen_name = ?;");
+		$res = $connection->prepare("SELECT id FROM users.info WHERE screen_name = ? LIMIT 1;");
 		$res->execute([$name]);
 
 		$id = intval($res->fetch(PDO::FETCH_ASSOC)['id']);
 		if ($id === 0)
 		{
-			$res = $connection->prepare("SELECT id FROM bots.info WHERE screen_name = ?;");
+			$res = $connection->prepare("SELECT id FROM bots.info WHERE screen_name = ? LIMIT 1;");
 			$res->execute([$name]);
 
 			$id = intval($res->fetch(PDO::FETCH_ASSOC)['id'])*-1;
@@ -238,13 +236,13 @@ function resolve_id_by_name ($connection, $name)
 	}
 	else
 	{
-		$res = $connection->prepare("SELECT id FROM users.info WHERE id = ?;");
+		$res = $connection->prepare("SELECT id FROM users.info WHERE id = ? LIMIT 1;");
 		$res->execute([strval($user_id)]);
 
 		$id = intval($res->fetch(PDO::FETCH_ASSOC)['id']);
 		if ($id === 0)
 		{
-			$res = $connection->prepare("SELECT id FROM bots.info WHERE id = ?;");
+			$res = $connection->prepare("SELECT id FROM bots.info WHERE id = ? LIMIT 1;");
 			$res->execute([strval($user_id*-1)]);
 
 			$id = intval($res->fetch(PDO::FETCH_ASSOC)['id'])*-1;
@@ -302,36 +300,7 @@ function capitalize ($str, $encoding = "UTF-8")
 // checks if user exists
 function user_exists ($connection, $email)
 {
-	$id = 0;
-	if (is_string($email))
-	{
-		$res = $connection->prepare("SELECT id FROM users.info WHERE email = ? LIMIT 1;");
-		$res->execute([$email]);
-	
-		$id = $res->fetch(PDO::FETCH_ASSOC)['id'];
-	}
-	if (is_int($email))
-	{
-		$res = $connection->prepare("SELECT id FROM users.info WHERE id = ? LIMIT 1;");
-		$res->execute([$email]);
-	
-		$id = $res->fetch(PDO::FETCH_ASSOC)['id'];
-
-		if (!$id)
-		{
-			$res = $connection->prepare("SELECT id FROM bots.info WHERE id = ? LIMIT 1;");
-			$res->execute([$email*-1]);
-		
-			$id = $res->fetch(PDO::FETCH_ASSOC)['id'];
-		}
-	}
-
-	if ($id)
-	{
-		return true;
-	}
-
-	return false;
+	return Entity::findById(intval($email)) !== NULL;
 }
 
 // get chat query
