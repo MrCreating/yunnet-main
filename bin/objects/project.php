@@ -11,6 +11,12 @@ class Project
 	// current yunNet. version
 	public const VERSION = 6;
 
+	// memcached IP
+	public const CACHE_IP = "127.0.0.1";
+
+	// memcached PORT
+	public const CACHE_PORT = 11211;
+
 	// default DB username
 	public const DB_USERNAME = "";
 
@@ -55,6 +61,13 @@ class Project
 	public static function getSentMessagesCount (): int
 	{
 		return 0;
+	}
+
+	public static function getContext (): Context
+	{
+		return isset($_SERVER['context']) ? $_SERVER['context'] : (function () {
+			$_SERVER['context'] = new Context();
+		})();
 	}
 
 	public static function isDefaultLink ($url): bool
