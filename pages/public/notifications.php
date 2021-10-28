@@ -1,6 +1,6 @@
 <?php
 
-require __DIR__ . "/../../bin/objects/notification.php";
+require_once __DIR__ . "/../../bin/objects/notification.php";
 
 /**
  * Notifications actions will be here
@@ -18,7 +18,7 @@ if (isset($_POST["action"]))
 			$id = intval($_POST["notification_id"]);
 			if ($id >= 0)
 			{
-				$notification = new Notification($id);
+				$notification = new Notification(Context::get()->getCurrentUser()->getId(), $id);
 
 				if ($notification->valid() && $notification->read())
 					die(json_encode(array('success' => 1)));
@@ -30,7 +30,7 @@ if (isset($_POST["action"]))
 
 			if ($id >= 0)
 			{
-				$notification = new Notification($id);
+				$notification = new Notification(Context::get()->getCurrentUser()->getId(), $id);
 
 				if ($notification->valid() && $notification->hide())
 					die(json_encode(array('success' => 1)));

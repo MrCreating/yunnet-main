@@ -2,7 +2,6 @@
 
 require_once __DIR__ . '/entity.php';
 require_once __DIR__ . '/settings.php';
-require_once __DIR__ . '/../parsers/attachments.php';
 
 class Bot extends Entity 
 {
@@ -17,35 +16,40 @@ class Bot extends Entity
 
 	function __construct (int $bot_id)
 	{
-		$this->currentConnection = new DataBaseConnection();
+		$this->currentConnection = DataBaseManager::getConnection();
 
 		if ($user_id === 0) return;
 
-		$user_info = $this->currentConnection->execute("SELECT id, name, owner_id, screen_name, photo_path, settings, is_verified, is_banned FROM bots.info WHERE id = :bot_id AND is_deleted = 0 LIMIT 1;", new DataBaseParams([new DBRequestParam(":bot_id", $bot_id, PDO::PARAM_INT)]));
-		$user_info = $user_info->{"0"};
+		$res = $this->currentConnection->prepare("SELECT id, name, owner_id, screen_name, photo_path, settings, is_verified, is_banned FROM bots.info WHERE id = ? AND is_deleted = 0 LIMIT 1");
 
-		if ($user_info)
+		if ($res->execute([$bot_id]))
 		{
-			$this->isValid  = true;
-			$this->id = intval($user_info->id);
-
-			if ($user_info->screen_name !== "")
-				$this->screenName = strval($user_info->screen_name);
-
-			$this->name = strval($user_info->name);
-
-			$this->settings = new Settings($this, $user_info);
-
-			$this->isBanned = boolval(intval($user_info->is_banned));
-			$this->isVerified = boolval(intval($user_info->is_verified));
-
-			$this->owner_id = intval($user_info->owner_id);
-
-			if ($user_info->photo_path !== "")
+			$user_info = $res->fetch(PDO::FETCH_ASSOC);
+			if ($user_info)
 			{
-				$photo = (new attachmentsParser())->resolveFromQuery($user_info->photo_path);
-				if ($photo)
-					$this->photo = $photo;
+				$user_info = new Data($user_info);
+
+				$this->isValid  = true;
+				$this->id = intval($user_info->id);
+
+				if ($user_info->screen_name !== "")
+					$this->screenName = strval($user_info->screen_name);
+
+				$this->name = strval($user_info->name);
+
+				$this->settings = new Settings($this, $user_info);
+
+				$this->isBanned = boolval(intval($user_info->is_banned));
+				$this->isVerified = boolval(intval($user_info->is_verified));
+
+				$this->owner_id = intval($user_info->owner_id);
+
+				if ($user_info->photo_path !== "")
+				{
+					$photo = (new attachmentsParser())->resolveFromQuery($user_info->photo_path);
+					if ($photo)
+						$this->photo = $photo;
+				}
 			}
 		}
 	}
@@ -77,10 +81,13 @@ class Bot extends Entity
 
 	public function getRelationsState (int $send_id = 0): int
 	{
-		return intval($this->currentConnection->execute("SELECT state FROM users.bot_relations WHERE user_id = :user_id AND bot_id = :bot_id LIMIT 1;", new DataBaseParams([
-			new DBRequestParam(":user_id", $send_id,       PDO::PARAM_INT),
-			new DBRequestParam(":bot_id",  $this->getId(), PDO::PARAM_INT)
-		]))->{"0"}->state);
+		$res = $this->currentConnection->prepare("SELECT state FROM users.bot_relations WHERE user_id = ? AND bot_id = ? LIMIT 1");
+		if ($res->execute([$send_id, $this->getId()]))
+		{
+			return intval($res->fetch(PDO::FETCH_ASSOC)["state"]);
+		}
+
+		return 0;
 	}
 
 	public function toArray ($fields = ''): array
@@ -139,9 +146,9 @@ class Bot extends Entity
 		{
 			if (!function_exists('get_uid_by_lid')) require __DIR__ . '/../functions/messages.php';
 
-			$uid = intval(get_uid_by_lid($this->currentConnection->getPDOObject(), $this->getId(), $this->getType() === "bot", intval($_SESSION['user_id'])));
+			$uid = intval(get_uid_by_lid($this->currentConnection, $this->getId(), $this->getType() === "bot", intval($_SESSION['user_id'])));
 
-			$result['can_write_messages'] = can_write_to_chat($this->currentConnection->getPDOObject(), $uid, intval($_SESSION['user_id']), [
+			$result['can_write_messages'] = can_write_to_chat($this->currentConnection, $uid, intval($_SESSION['user_id']), [
 				"chat_id" => $this->getId(),
 				"is_bot"  => $this->getType() === "bot"
 			]);
@@ -152,13 +159,13 @@ class Bot extends Entity
 
 			$objectId = $this->type === "bot" ? ($this->getId() * -1) : $this->getId();
 
-			$result['can_write_on_wall'] = can_write_posts($this->currentConnection->getPDOObject(), intval($_SESSION['user_id']), $objectId);
+			$result['can_write_on_wall'] = can_write_posts($this->currentConnection, intval($_SESSION['user_id']), $objectId);
 		}
 		if (in_array("can_invite_to_chat", $resultedFields))
 		{
 			if (!function_exists('can_invite_to_chat')) require __DIR__ . '/../functions/users.php';
 
-			$result['can_invite_to_chat'] = can_invite_to_chat($this->currentConnection->getPDOObject(), intval($_SESSION['user_id']), $this);
+			$result['can_invite_to_chat'] = can_invite_to_chat($this->currentConnection, intval($_SESSION['user_id']), $this);
 		}
 		if (in_array('main_photo_as_object', $resultedFields))
 		{
@@ -169,7 +176,7 @@ class Bot extends Entity
 		{
 			if (!function_exists('is_chat_allowed')) require __DIR__ . '/../functions/messages.php';
 
-			$result['bot_can_write_messages'] = is_chat_allowed($this->currentConnection->getPDOObject(), intval($_SESSION['user_id']), $this->getId());
+			$result['bot_can_write_messages'] = is_chat_allowed($this->currentConnection, intval($_SESSION['user_id']), $this->getId());
 		}
 
 		if (!$this->valid())

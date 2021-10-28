@@ -1,8 +1,5 @@
 <?php
 
-require_once __DIR__ . '/attachment.php';
-require_once __DIR__ . '/../parasers/attachments.php';
-
 /**
  * Comments for posts representation
 */
@@ -11,8 +8,6 @@ class Comment extends Attachment
 {
 	private $owner_id = 0;
 	private $local_id = 0;
-
-	private $isValid = false;
 
 	private $time = 0;
 

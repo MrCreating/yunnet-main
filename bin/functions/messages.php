@@ -5,6 +5,11 @@
  *
 */
 
+require_once __DIR__ . '/../platform-tools/emitters.php';
+require_once __DIR__ . '/../objects/poll.php';
+require_once __DIR__ . '/theming.php';
+require_once __DIR__ . "/users.php";
+
 /**
  * Parsing chat credentials to workable data.
  * 
@@ -43,10 +48,6 @@ function parse_id_from_string ($sel)
 */
 function clear_chat ($connection, $uid, $user_id, $additional = [])
 {
-	// connecting nodules
-	if (!function_exists('emit_event'))
-		require __DIR__ . "/../emitters.php";
-
 	// DEFAULT PARAMS
 	$leaved_time  = 0;
 	$return_time  = 0;
@@ -187,10 +188,6 @@ function get_chat_info ($connection, $uid, $without_bots = false, $without_me = 
 */
 function get_chat_data_by_uid ($connection, $uid, $user_id, $chat_data = [])
 {
-	// connecting modules
-	if (!class_exists('Entity'))
-		require __DIR__ . '/../objects/entities.php';
-
 	// requesting chat params by uid.
 	$res = $connection->prepare("SELECT DISTINCT uid, is_read, notifications, show_pinned_messages, last_read_message_id, lid, leaved_time, return_time, is_leaved, is_kicked, is_muted, cleared_message_id, last_time FROM messages.members_chat_list WHERE uid = ? AND user_id = ? AND lid != 0 ORDER BY last_time DESC LIMIT 1;");
 
@@ -302,11 +299,11 @@ function get_chat_data_by_uid ($connection, $uid, $user_id, $chat_data = [])
 			$chat['chat_info'] = [];
 			if (!$chat_data["is_bot"] && $chat_data["chat_id"] > 0)
 			{
-				$user = new User($connection, $chat_data["chat_id"], '*', $user_id);
-				if (!$user->isAlive) return false;
+				$user = new User($chat_data["chat_id"]);
+				if (!$user->valid()) return false;
 
 				$chat['chat_info']['is_multi_chat'] = false;
-				$chat['chat_info']['data']          = $user->toArray();
+				$chat['chat_info']['data']          = $user->toArray('*');
 			}
 
 			// setting chat metadata
@@ -315,12 +312,12 @@ function get_chat_data_by_uid ($connection, $uid, $user_id, $chat_data = [])
 
 			if ($chat_data["is_bot"] && $chat_data["chat_id"] > 0)
 			{
-				$bot = new Bot($connection, $chat_data["chat_id"], '*', $user_id);
+				$bot = new Bot($chat_data["chat_id"]);
 				if (!$bot->isAlive) return false;
 
 				$chat['chat_info']['is_multi_chat'] = false;
 				$chat['chat_info']['is_bot_chat']   = true;
-				$chat['chat_info']['data']          = $bot->toArray();
+				$chat['chat_info']['data']          = $bot->toArray('*');
 
 				unset($chat['peer_id']);
 				$chat['bot_peer_id'] = intval($chat_data["chat_id"]*-1);
@@ -394,10 +391,6 @@ function get_chats ($connection, $user_id, $offset = 0, $count = 30, $only_chats
 */
 function get_chat_messages ($connection, $uid, $user_id, $offset = 0, $count = 100, $sel = [])
 {
-	// connecting modules
-	if (!class_exists('AttachmentsParser'))
-		require __DIR__ . "/../objects/attachment.php";
-
 	// DEFAULT PARAMS
 	$leaved_time        = 0;
 	$return_time        = 0;
@@ -544,12 +537,6 @@ function get_message_array_by_credentials ($connection, $uid, $local_chat_id, $f
 */
 function message_to_array ($connection, $message, $sel = [], $counter = 0)
 {
-	// connecting modules
-	if (!class_exists('AttachmentsParser'))
-		require __DIR__ . '/../objects/attachment.php';
-	if (!class_exists('Poll'))
-		require __DIR__ . '/../objects/poll.php';
-
 	// max depth - 40.
 	if ($counter > 40) return false;
 
@@ -648,10 +635,6 @@ function message_to_array ($connection, $message, $sel = [], $counter = 0)
 */
 function can_write_to_chat ($connection, $uid, $user_id, $chat_data = [])
 {
-	// connecting modules
-	if (!function_exists('is_friends') || !function_exists('in_blacklist'))
-		require __DIR__ . "/users.php";
-
 	// non-existing chat.
 	if ($user_id === 0) return false;
 
@@ -713,7 +696,7 @@ function can_write_to_chat ($connection, $uid, $user_id, $chat_data = [])
 				if (in_blacklist($connection, $to_id, $user_id)) return false;
 
 				// checking privacy settings.
-				$res = $connection->prepare("SELECT id, settings, is_banned FROM users.info WHERE id = ? AND is_deleted = 0 LIMIT 1;");
+				$res = $connection->prepare("SELECT id, settings_privacy_can_write_messages, is_banned FROM users.info WHERE id = ? AND is_deleted = 0 LIMIT 1;");
 				$res->execute([$to_id]);
 				$info = $res->fetch(PDO::FETCH_ASSOC);
 
@@ -724,7 +707,7 @@ function can_write_to_chat ($connection, $uid, $user_id, $chat_data = [])
 				if (!$info) return false;
 
 				// privacy state
-				$can_write = intval(json_decode($info["settings"], true)["privacy"]["can_write_messages"]);
+				$can_write = intval($info['settings_privacy_can_write_messages']);
 				
 				// 2 - nobody can write to user
 				if ($can_write === 2) return false;
@@ -820,12 +803,6 @@ function get_last_uid ($dialog = true)
 */
 function edit_message ($connection, $uid, $owner_id, $additional, $params, $callback = false)
 {
-	// connect modules.
-	if (!function_exists('emit_event'))
-		require __DIR__ . "/../emitters.php";
-	if (!class_exists('AttachmentsParser'))
-		require __DIR__ . "/../objects/attachment.php";
-
 	$text        = '';
 	$attachments = [];
 	$forwarded   = [];
@@ -1024,14 +1001,6 @@ function edit_message ($connection, $uid, $owner_id, $additional, $params, $call
 */
 function send_message ($connection, $uid, $owner_id, $additional = [], $params, $callback = false)
 {
-	// connect modules.
-	if (!function_exists('emit_event'))
-		require __DIR__ . "/../emitters.php";
-	if (!class_exists('AttachmentsParser'))
-		require __DIR__ . "/../objects/attachment.php";
-	if (!class_exists('Poll'))
-		require __DIR__ . '/../objects/poll.php';
-
 	$text        = '';
 	$attachments = [];
 	$forwarded   = [];
@@ -1116,10 +1085,6 @@ function send_message ($connection, $uid, $owner_id, $additional = [], $params, 
 
 		// keyboard must be valid json
 		if (!$keyboard) return ['error'=>121];
-
-		// connecting modules
-		if (!function_exists('parse_keyboard'))
-			require __DIR__ . '/theming.php';
 
 		$keyboard = parse_keyboard($keyboard);
 		
@@ -1302,10 +1267,6 @@ function send_message ($connection, $uid, $owner_id, $additional = [], $params, 
 */
 function read_chat ($connection, $uid, $owner_id, $additional)
 {
-	// connecting modules
-	if (!function_exists('emit_event'))
-		require __DIR__ . '/../emitters.php';
-
 	// selecting chats info.
 	// DEFAULT PARAMS
 	$leaved_time  = 0;
@@ -1356,10 +1317,6 @@ function read_chat ($connection, $uid, $owner_id, $additional)
 */
 function send_service_message ($connection, $uid, $owner_id, $message_type, $additional = [], $callback = false)
 {
-	// connect modules.
-	if (!function_exists('emit_event'))
-		require __DIR__ . "/../emitters.php";
-
 	$curr_time      = time();
 	$allowed_events = [
 		"mute_user", "unmute_user", "returned_to_chat",
@@ -1514,10 +1471,6 @@ function send_service_message ($connection, $uid, $owner_id, $message_type, $add
 */
 function delete_messages ($connection, $uid, $deleter_id, $message_ids, $delete_for_all = 0, $additional = [], $permissions = null, $me = [])
 {
-	// connect modules.
-	if (!function_exists('emit_event'))
-		require __DIR__ . "/../emitters.php";
-
 	// deletion states
 	$NOT_DELETED = 0;
 	$DELETION_OK = 1;
@@ -1705,4 +1658,5 @@ function is_chat_allowed ($connection, $user_id, $bot_id)
 	// errors?
 	return false;
 }
+
 ?>

@@ -44,9 +44,9 @@ class AttachmentsParser
 		return new Credentials($type, intval($credentials_data[0]), intval($credentials_data[1]), strval($credentials_data[2]));
 	}
 
-	public function getObject ($credentials)
+	public function getObject (?string $credentials): ?Attachment
 	{
-		if (!is_empty($credentials))
+		if ($credentials && !is_empty($credentials))
 		{
 			$resulted_data = $this->parseCredentials($credentials);
 
@@ -82,8 +82,10 @@ class AttachmentsParser
 		return NULL;
 	}
 
-	public function getObjects ($credentials): array
+	public function getObjects (?string $credentials): array
 	{
+		if (!$credentials || is_empty($credentials)) return [];
+
 		$attachments_list = explode(',', trim($credentials));
 		$objects_list     = [];
 
@@ -106,29 +108,28 @@ class AttachmentsParser
 		return $objects_list;
 	}
 
-	public function resolveFromQuery ($query)
+	public function resolveFromQuery (?string $query): ?Attachment
 	{
+		if (!$query || is_empty($query)) return NULL;
+
 		$query = explode('__', substr($query, 0, strlen($query)))[0];
 
-		$connection = new DataBaseConnection();
+		$connection = DataBaseManager::getConnection();
 
-		$result = $connection->execute('SELECT id, owner_id, access_key, type FROM attachments.d_1 WHERE query = :query LIMIT 1;', new DataBaseParams(
-			[new DBRequestParam(":query", $query, PDO::PARAM_STR)]
-		));
-
-		if (!$result) return NULL;
-
-		$dataInfo = $result->{"0"};
-
-		if ($dataInfo)
+		$res = $connection->prepare('SELECT id, owner_id, access_key, type FROM attachments.d_1 WHERE query = ? LIMIT 1');
+		if ($res->execute([$query]))
 		{
-			$object = NULL;
+			$result = $res->fetch(PDO::FETCH_ASSOC);
+			if ($result)
+			{
+				$object = NULL;
 
-			if ($dataInfo->type === "photo")
-				$object = new Photo($dataInfo->owner_id, $dataInfo->id, $dataInfo->access_key);
+				if ($result['type'] === "photo")
+					$object = new Photo(intval($result['owner_id']), intval($result['id']), strval($result['access_key']));
 
-			if ($object && $object->valid())
-				return $object;
+				if ($object && $object->valid())
+					return $object;
+			}
 		}
 
 		return NULL;

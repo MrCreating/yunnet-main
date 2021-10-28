@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/../event_manager.php';
+require_once __DIR__ . '/../platform-tools/event_manager.php';
 
 /**
  * Notification class
@@ -24,13 +24,9 @@ class Notification extends EventEmitter
 
 	public function __construct (int $ownerId, int $notificationId)
 	{
-		$connection = $_SERVER['dbConnection'];
-		if (!$connection)
-			$connection = get_database_connection();
+		$this->currentConnection = DataBaseManager::getConnection();
 
-		$this->currentConnection = $connection;
-
-		$res = $connection->prepare("SELECT type, local_id, data, is_read, is_hidden, owner_id FROM users.notes WHERE local_id = :local_id AND owner_id = :owner_id LIMIT 1;");
+		$res = $this->currentConnection->prepare("SELECT type, local_id, data, is_read, is_hidden, owner_id FROM users.notes WHERE local_id = :local_id AND owner_id = :owner_id LIMIT 1");
 		$res->bindParam(":owner_id", $ownerId,        PDO::PARAM_INT);
 		$res->bindParam(":local_id", $notificationId, PDO::PARAM_INT);
 		
@@ -158,9 +154,7 @@ class Notification extends EventEmitter
 	//////////////////////////////////////
 	public static function create (Entity $entityForCreation, string $type, ?array $additionalData = NULL): ?Notification
 	{
-		$connection = $_SERVER['dbConnection'];
-		if (!$connection)
-			$connection = get_database_connection();
+		$connection = DataBaseManager::getConnection();
 
 		return NULL;
 	}
@@ -170,9 +164,7 @@ class Notification extends EventEmitter
 		$offset = ($offset < 0 || $offset > 30) ? 0 : $offset;
 		$count  = ($count < 0 || $count > 1000) ? 30 : $count;
 
-		$connection = $_SERVER['dbConnection'];
-		if (!$connection)
-			$connection = get_database_connection();
+		$connection = DataBaseManager::getConnection();
 
 		$result = [];
 

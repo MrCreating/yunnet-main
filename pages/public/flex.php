@@ -3,8 +3,8 @@
 require_once __DIR__ . '/../../bin/functions/management.php';
 require_once __DIR__ . '/../../bin/functions/wall.php';
 require_once __DIR__ . '/../../bin/functions/messages.php';
-require_once __DIR__ . '/../../bin/objects/chats.php';
 require_once __DIR__ . '/../../bin/functions/users.php';
+require_once __DIR__ . '/../../bin/objects/chats.php';
 
 if (isset($_POST['action']))
 {
@@ -81,7 +81,7 @@ if (isset($_POST['action']))
 
 	switch ($action) {
 		case 'get_settings':
-			$settings = $context->getCurrentUser()->getSettings()->toArray();
+			$settings = Context::get()->getCurrentUser()->getSettings()->toArray();
 
 			die(json_encode($settings));
 		break;

@@ -19,6 +19,8 @@ if (!$context->isMobile() && explode('.', strtolower($_SERVER['HTTP_HOST']))[0] 
 	die(header("Location: ". Project::DEFAULT_URL . $_SERVER['REQUEST_URI']));
 
 //Session::start(1)->setAsCurrent();
+if (strtoupper($_SERVER['REQUEST_METHOD']) === "GET" && isset($_SESSION['stage']) && intval($_SESSION['stage']) > 2 && REQUESTED_PAGE !== "/register")
+	die(header("Location: ". Project::DEFAULT_URL ."/register"));
 
 if (strtoupper($_SERVER['REQUEST_METHOD']) === "POST")
 {

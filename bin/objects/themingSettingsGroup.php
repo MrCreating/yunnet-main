@@ -1,7 +1,6 @@
 <?php
 
 require_once __DIR__ . '/settingsGroup.php';
-require_once __DIR__ . '/../parsers/attachments.php';
 
 /**
  * Class for Theming settings

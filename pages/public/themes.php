@@ -70,8 +70,8 @@ if (isset($_POST["action"]))
 			$code_type = strtolower(trim($_POST['code_type']));
 			$new_code  = trim(strval($_POST['new_code']));
 
-			$theme = new Theme($connection, 'theme'.$owner_id.'_'.$theme_id);
-			if (!$theme->isValid)
+			$theme = new Theme($owner_id, $theme_id);
+			if (!$theme->valid())
 				die(json_encode(array('error'=>1)));
 
 			$result = update_theme_code($theme, $context->getCurrentUser()->getId(), $code_type, $new_code);

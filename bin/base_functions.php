@@ -2,14 +2,14 @@
 
 /**
  * Initial and most used functions and operations
-*/
+ */
 
 // connect the default modules
-require_once __DIR__ . '/context.php';
+require_once __DIR__ . '/objects/context.php';
 require_once __DIR__ . '/platform-tools/cache.php';
-require_once __DIR__ . '/database.php';
-require_once __DIR__ . '/data.php';
-require_once __DIR__ . '/event_manager.php';
+require_once __DIR__ . '/platform-tools/database.php';
+require_once __DIR__ . '/platform-tools/data.php';
+require_once __DIR__ . '/platform-tools/event_manager.php';
 require_once __DIR__ . '/objects/user.php';
 require_once __DIR__ . '/objects/bot.php';
 require_once __DIR__ . '/parsers/attachments.php';
@@ -38,54 +38,13 @@ function get_page_origin ()
 // get language function
 function get_language ($connection, $current_user = NULL)
 {
-	$language_code = "en";
-
-	if ($current_user)
-	{
-		$language_code = $current_user->getSettings()->getSettingsGroup('account')->getLanguageId();
-	} else
-	{
-		if (isset($_SESSION['lang']))
-		{
-			$language_code = strtolower($_SESSION['lang']);
-		}
-		else
-		{
-			// get language by header
-			$lang = substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2);
-			switch ($lang)
-			{
-				case 'ru':
-					$language_code = "ru";
-				break;
-				case 'en':
-					$language_code = "en";
-				break;
-				default:
-					$language_code = "en";
-				break;
-			}
-		}
-	}
-
-	$cache = Cache::getCacheServer();
-	$lang = json_decode($cache->get( 'lang_' . $language_code), true);
-
-	if (!$lang)
-	{
-		$language_json = file_get_contents(__DIR__.'/languages/' . $language_code);
-
-		$cache->set('lang_' . $language_code, $language_json);
-		$lang = json_decode($language_json, true);
-	}
-
-	return new Data($lang);
+	return Context::get()->getLanguage();
 }
 
 // get rules text
 function get_rules_text ()
 {
-	$lang = get_language($_SERVER['dbConnection'])["id"];
+	$lang = Context::get()->getLanguage()->id;
 
 	return file_get_contents(__DIR__ . '/languages/policy/' . $lang . '/rules');
 }
@@ -93,7 +52,7 @@ function get_rules_text ()
 // get terms text
 function get_terms_text ()
 {
-	$lang = get_language($_SERVER['dbConnection'])["id"];
+	$lang = Context::get()->getLanguage()->id;
 
 	return file_get_contents(__DIR__ . '/languages/policy/' . $lang . '/terms');
 }
@@ -150,14 +109,7 @@ function get_dev_language ($connection)
 // get DB connection class
 function get_database_connection ()
 {
-	if (isset($_SERVER['dbConnection']) && $_SERVER['dbConnection'] instanceof PDO)
-		return $_SERVER['dbConnection'];
-
-	$_SERVER['dbConnection'] = new PDO("mysql:host=localhost;dbname=users", Project::DB_USERNAME, Project::DB_PASSWORD, [
-		PDO::ATTR_PERSISTENT => false
-	]);
-
-	return $_SERVER['dbConnection'];
+	return DataBaseManager::getConnection();
 }
 
 // returns user or bot id by screen name

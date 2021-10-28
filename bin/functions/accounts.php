@@ -1,5 +1,6 @@
 <?php
-require __DIR__ . '/../../lib/vk_audio/autoloader.php';
+
+require_once __DIR__ . '/../../lib/vk_audio/autoloader.php';
 
 use Vodka2\VKAudioToken\AndroidCheckin;
 use Vodka2\VKAudioToken\SmallProtobufHelper;

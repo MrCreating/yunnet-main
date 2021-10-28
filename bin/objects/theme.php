@@ -1,8 +1,6 @@
 <?php
 
 require_once __DIR__ . '/attachment.php';
-require_once __DIR__ . '/../event_manager.php';
-require_once __DIR__ . '/../platform-tools/cache.php';
 
 /**
  * Theme class
@@ -27,15 +25,16 @@ class Theme extends Attachment
 	private $currentConnection = NULL;
 	private $currentCache      = NULL;
 
+	////////////////
+	private $cssPath = NULL;
+	private $jsPath  = NULL;
+	private $apiPath = NULL;
+
 	function __construct (int $owner_id, int $id)
 	{
-		$connection = $_SERVER['dbConnection'];
-		if (!$connection)
-			$connection = get_database_connection();
+		$this->currentConnection = DataBaseManager::getConnection();
 
-		$this->currentConnection = $connection;
-
-		$res = $connection->prepare("SELECT id, owner_id, title, description, path_to_css, path_to_js, path_to_api, is_hidden, is_default FROM users.themes WHERE owner_id = ? AND id = ? AND (is_deleted = 0 OR is_default = 1) LIMIT 1;");
+		$res = $this->currentConnection->prepare("SELECT id, owner_id, title, description, path_to_css, path_to_js, path_to_api, is_hidden, is_default FROM users.themes WHERE owner_id = ? AND id = ? AND (is_deleted = 0 OR is_default = 1) LIMIT 1;");
 
 		if ($res->execute([$owner_id, $id]))
 		{
@@ -47,7 +46,10 @@ class Theme extends Attachment
 				$this->title        = strval($data['title']);
 				$this->description  = strval($data['description']);
 				$this->defaultTheme = boolval(intval($data['is_default']));
-				$this->privateTheme = boolval(intval($data['is_private']));
+				$this->privateTheme = boolval(intval($data['is_hidden']));
+
+				$this->cssPath = __DIR__ . "/../../attachments/themes" . $data["path_to_css"];
+				$this->jsPath  = __DIR__ . "/../../attachments/themes" . $data["path_to_js"];
 
 				$this->isValid      = true;
 
@@ -57,7 +59,8 @@ class Theme extends Attachment
 				$CSSCode = $this->currentCache->getItem($this->getCredentials() . '/css');
 				if (!$CSSCode)
 				{
-					$CSSCode = file_get_contents(__DIR__ . "/../../attachments/themes" . $data["path_to_css"]);
+					$CSSCode = file_get_contents($this->cssPath);
+
 					if ($CSSCode)
 						$this->currentCache->putItem($this->getCredentials() . '/css', $CSSCode);
 				}
@@ -65,7 +68,7 @@ class Theme extends Attachment
 				$JSCode = $this->currentCache->getItem($this->getCredentials() . '/js');
 				if (!$JSCode)
 				{
-					$JSCode = file_get_contents(__DIR__ . "/../../attachments/themes" . $data["path_to_js"]);
+					$JSCode = file_get_contents($this->jsPath);
 					if ($JSCode)
 						$this->currentCache->putItem($this->getCredentials() . '/js', $JSCode);
 				}
@@ -80,7 +83,7 @@ class Theme extends Attachment
 
 				$this->CSSCode  = $CSSCode;
 				$this->JSCode   = $JSCode;
-				//$this->JSONCode = $JSONCode;
+				$this->JSONCode = $JSONCode;
 			}
 		}
 	}
@@ -90,7 +93,7 @@ class Theme extends Attachment
 		if ((!$this->valid() || ($this->isPrivate() && $this->getOwnerId() !== intval($_SESSION['user_id']))) && !$this->isDefault()) return false;
 
 		// setting up theme
-		$res = $this->currentConnection->prepare("UPDATE users.info SET current_theme = ? WHERE id = ? LIMIT 1;");
+		$res = $this->currentConnection->prepare("UPDATE users.info SET settings_theming_current_theme = ? WHERE id = ? LIMIT 1;");
 		if ($res->execute([$this->getCredentials(), intval($_SESSION['user_id'])]))
 		{
 			return $this->eventManager->sendEvent([intval($_SESSION['user_id'])], [0], [
@@ -110,6 +113,8 @@ class Theme extends Attachment
 		if (!$this->valid() || $this->isDefault()) return false;
 
 		$this->isValid = false;
+
+		Theme::reset();
 
 		return $this->currentConnection->prepare('UPDATE users.themes SET is_deleted = 1 WHERE user_id = ? AND is_deleted = 0 AND is_default = 0 LIMIT 1;')
 						  			   ->execute([intval($_SESSION['user_id'])]);
@@ -164,6 +169,13 @@ class Theme extends Attachment
 		return $this->privateTheme;
 	}
 
+	public function setPrivate (bool $private): Theme
+	{
+		$this->privateTheme = $private;
+
+		return $this;
+	}
+
 	public function isDefault (): bool
 	{
 		return $this->defaultTheme;
@@ -182,13 +194,6 @@ class Theme extends Attachment
 	public function hasJSONCode (): bool
 	{
 		return !($this->JSONCode == NULL);
-	}
-
-	public function setPrivate (bool $private): Theme
-	{
-		$this->privateTheme = $private;
-
-		return $this;
 	}
 
 	public function createUTH (): UTHTheme
@@ -211,19 +216,68 @@ class Theme extends Attachment
 		return $this->JSONCode;
 	}
 
-	public function setJSONCode (): Theme
+	public function setJSONCode (): bool
 	{
-		return $this;
+		return false;
 	}
 
-	public function setCSSCode (): Theme
+	public function setCSSCode (string $code)
 	{
-		return $this;
+		if ($code === $this->getCSSCode())
+			return true;
+
+		require __DIR__ . "/../../vendor/autoload.php";
+		try {
+			$css = new Sabberworm\CSS\Parser($code, Sabberworm\CSS\Settings::create()->beStrict());
+			$res = $css->parse();
+
+			if ($res)
+			{
+				$result = intval(file_put_contents($this->cssPath, $code));
+
+				if ($result) {
+					$this->currentCache->putItem($this->getCredentials() . '/css', $code);
+					return true;
+				}
+			}
+		} catch (Sabberworm\CSS\Parsing\UnexpectedTokenException $e) {
+			return $e->getMessage();
+		}
+
+		return false;
 	}
 
-	public function setJSCode (): Theme
+	public function setJSCode (string $code)
 	{
-		return $this;
+		if ($code === $theme->getJSCode())
+			return false;
+
+		require __DIR__ . "/../../vendor/autoload.php";
+		try {
+			$result = Peast\Peast::latest($code, [])->parse();
+			if ($result)
+			{
+				$res = intval(file_put_contents($this->jsPath, $code));
+				if ($res) {
+					$this->currentCache->putItem($this->getCredentials() . '/js', $code);
+					return true;
+				}
+			}
+		} catch (Peast\Syntax\Exception $e) {
+			$message = $e->getMessage();
+			$line    = $e->getPosition()->getLine();
+			$column  = $e->getPosition()->getColumn();
+			$index   = $e->getPosition()->getIndex();
+
+			$full_string = 
+	"SyntaxError: ".$message.
+	" <br>at line: ".$line.", column: ".$column.
+	" <br>at index: ".$index;
+
+			return $full_string;
+		}
+
+		return false;
 	}
 
 	public function apply (): bool
@@ -291,11 +345,9 @@ class Theme extends Attachment
 	////////////////////////////////
 	public static function reset (): bool
 	{
-		$connection = $_SERVER['dbConnection'];
-		if (!$connection)
-			$connection = get_database_connection();
+		$connection = DataBaseManager::getConnection();
 
-		if ($connection->prepare("UPDATE users.info SET current_theme = NULL WHERE id = ? LIMIT 1;")->execute([intval($_SESSION['user_id'])]))
+		if ($connection->prepare("UPDATE users.info SET settings_theming_current_theme = NULL WHERE id = ? LIMIT 1")->execute([intval($_SESSION['user_id'])]))
 		{
 			return (new EventEmitter())->sendEvent([intval($_SESSION['user_id'])], [0], [
 				'event' => 'interface_event',
@@ -359,7 +411,7 @@ class Theme extends Attachment
  * You can edit it as you want! 
 */
 
-// variables can be put here
+/* variables can be put here */
 :root {
 	/* Unread messages color */
     --unreaded-messages-color: initial;
@@ -479,7 +531,7 @@ console.log(`[OK] Theme is working! Fine :)`)
 		$result = [];
 
 		// gettings themes for user_id and that not deleted
-		$res = $connection->prepare("SELECT DISTINCT id, owner_id FROM users.themes WHERE user_id = ? AND (is_deleted = 0 OR is_default = 1) LIMIT ".intval($offset).",".intval($count).";");
+		$res = $connection->prepare("SELECT DISTINCT id, owner_id FROM users.themes WHERE (user_id = ? OR is_default = 1) AND (is_deleted = 0 OR is_default = 1) LIMIT ".intval($offset).",".intval($count).";");
 
 		if ($res->execute([intval($_SESSION['user_id'])]))
 		{

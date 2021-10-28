@@ -1,7 +1,6 @@
 <?php
 
 require_once __DIR__ . '/attachment.php';
-require_once __DIR__ . '/../parsers/attachments.php';
 
 /**
  * Post class

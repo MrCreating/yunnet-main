@@ -2,8 +2,6 @@
 /**
  * File with bot functions
 */
-if (!class_exists('Bot'))
-	require __DIR__ . "/../objects/entities.php";
 
 /**
  * Receives a bots list of $user_id

@@ -1,8 +1,5 @@
 <?php
 
-require_once __DIR__ . '/user.php';
-require_once __DIR__ . '/bot.php';
-
 /**
  * Session class. Valid for tokens and auth.
 */

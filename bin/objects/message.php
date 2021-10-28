@@ -22,12 +22,12 @@ class Message
 
 	public function __construct (Chat $chat, int $localMessageId, bool $ignoreDeletion = false)
 	{
-		$this->currentConnection = new DataBaseConnection();
+		$this->currentConnection = DataBaseManager::getConnection();
 		if ($chat->valid())
 		{
 			$uid = $chat->getUID();
 
-			$res = $this->currentConnection->getPDOObject()->prepare("SELECT local_chat_id, is_edited, time, text, event, new_src, new_title, owner_id, to_id, reply, attachments FROM messages.chat_engine_1 WHERE ".($ignoreDeletion ? "" : "deleted_for_all != 1 AND ")."uid = ? AND local_chat_id = ? ORDER BY local_chat_id DESC LIMIT 1;");
+			$res = $this->currentConnection->prepare("SELECT local_chat_id, is_edited, time, text, event, new_src, new_title, owner_id, to_id, reply, attachments FROM messages.chat_engine_1 WHERE ".($ignoreDeletion ? "" : "deleted_for_all != 1 AND ")."uid = ? AND local_chat_id = ? ORDER BY local_chat_id DESC LIMIT 1;");
 			
 			if ($res->execute([strval($uid), strval($localMessageId)]))
 			{

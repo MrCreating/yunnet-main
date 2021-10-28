@@ -4,15 +4,17 @@
  * functions with user's wall.
 */
 
+require_once __DIR__ . '/../objects/poll.php';
+require_once __DIR__ . '/../objects/post.php';
+require_once __DIR__ . '/../objects/comment.php';
+require_once __DIR__ . "/notifications.php";
+require_once __DIR__ . '/users.php';
 
 /**
  * Getting posts for user
 */
 function get_posts ($connection, $user_id, $my_id = 0, $count = 50, $only_my_posts = false, $offset = 0)
 {
-	if (!class_exists('Post'))
-		require __DIR__ . '/../objects/post.php';
-
 	if (intval($count) > 100 || intval($count) < 1)
 		return false;
 
@@ -47,9 +49,6 @@ function get_posts ($connection, $user_id, $my_id = 0, $count = 50, $only_my_pos
 // get news of user
 function get_news ($connection, $user_id)
 {
-	if (!function_exists('get_friends_list'))
-		require __DIR__ . "/users.php";
-
 	$result = [];
 
 	$friends_list = array_merge([$user_id], get_friends_list($connection, $user_id, null, 0));
@@ -83,9 +82,6 @@ function get_news ($connection, $user_id)
  */
 function get_post_by_id ($connection, $wall_id, $post_id, $user_id = 0)
 {
-	if (!class_exists('Post'))
-		require __DIR__ . '/../objects/post.php';
-
 	$post = new Post(intval($wall_id), intval($post_id));
 	if ($post->valid())
 	{
@@ -128,10 +124,6 @@ function create_comment ($connection, $owner_id, $wall_id, $post_id, $text = '',
 {
 	// if user can not comment - show it.
 	if (!can_comment($connection, $owner_id, $wall_id)) return false;
-
-	// connecting modules
-	if (!class_exists('AttachmentsParser'))
-		require __DIR__ . '/../objects/attachments.php';
 
 	$attachments_string = [];
 	$objects = (new AttachmentsParser())->getObjects($attachments);
@@ -191,12 +183,6 @@ function create_comment ($connection, $owner_id, $wall_id, $post_id, $text = '',
 */
 function get_comment_by_id ($connection, $attachment, $owner_id, $local_id)
 {
-	// connecting modules
-	if (!class_exists('Comment'))
-		require __DIR__ . '/../objects/comment.php';
-	if (!class_exists('AttachmentsParser'))
-		require __DIR__ . '/../objects/attachments.php';
-
 	if (substr($attachment, 0, 4) === "wall")
 	{
 		$post = (new AttachmentsParser())->getObject($attachment);
@@ -246,9 +232,6 @@ function post_exists ($connection, $wall_id, $post_id)
 // likes selected post
 function like_post ($connection, $wall_id, $post_id, $user_id, $post_owner_id)
 {
-	if (!function_exists('create_notification'))
-		require __DIR__ . "/notifications.php";
-
 	if (!post_exists($connection, $wall_id, $post_id)) return false;
 
 	$credentials = "wall" . $wall_id . "_" . $post_id;
@@ -405,10 +388,6 @@ function can_write_posts ($connection, $user_id, $check_id)
 	// current user always can write to itself
 	if (intval($user_id) === intval($check_id)) return true;
 
-	// connecting modules
-	if (!class_exists('Entity'))
-		require __DIR__ . '/../objects/entities.php';
-
 	$object = intval($check_id) > 0 ? new User(intval($check_id)) : new Bot(intval($check_id)*-1);
 
 	// only exists
@@ -421,10 +400,7 @@ function can_write_posts ($connection, $user_id, $check_id)
 
 	/**
 	 * Here we will to check user friendship.
-	 * Connecting users module
 	*/
-	if (!function_exists('is_friends'))
-		require __DIR__ . '/users.php';
 
 	// checking if only friends level set.
 	if ($object->getType() === "user" && $can_write_posts === 1 && is_friends($connection, $check_id, $user_id)) return true;
@@ -448,12 +424,6 @@ function can_write_posts ($connection, $user_id, $check_id)
 */
 function create_post ($connection, $owner_id, $wall_id, $text = '', $attachments = '', $event = '')
 {
-	// connecting modules
-	if (!class_exists('AttachmentsParser'))
-		require __DIR__ . '/../objects/attachments.php';
-	if (!class_exists('Poll'))
-		require __DIR__ . '/../objects/poll.php';
-	
 	if (!is_empty($event))
 	{
 		$allowed_events = ['updated_photo'];
@@ -524,10 +494,6 @@ function create_post ($connection, $owner_id, $wall_id, $text = '', $attachments
 */
 function update_post_data ($connection, $user_id, $wall_id, $post_id, $text = '', $attachments = '')
 {
-	// connecting modules
-	if (!class_exists('AttachmentsParser'))
-		require __DIR__ . '/../objects/attachments.php';
-
 	$attachments_list = [];
 	$objects = (new AttachmentsParser())->getObjects($attachments);
 	foreach ($objects as $index => $attachment) 
@@ -570,11 +536,6 @@ function can_comment ($connection, $user_id, $check_id)
 
 	// always can comment itself
 	if (intval($user_id) === intval($check_id)) return true;
-
-	// getting the settings
-	// connecting modules
-	if (!class_exists('Entity')) require __DIR__ . '/../objects/entities.php';
-	if (!function_exists('is_friends')) require __DIR__ . '/users.php';
 
 	// we always can comment bot posts
 	if (intval($check_id) < 0) return true;

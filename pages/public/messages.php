@@ -1,9 +1,9 @@
 <?php
 
 require_once __DIR__ . '/../../bin/functions/chats.php';
-require_once __DIR__ . "/../../bin/objects/message.php";
 require_once __DIR__ . '/../../bin/functions/messages.php';
 require_once __DIR__ . '/../../bin/functions/users.php';
+require_once __DIR__ . "/../../bin/objects/message.php";
 require_once __DIR__ . '/../../bin/objects/chats.php';
 
 if (isset($_POST["action"]))
@@ -68,10 +68,7 @@ if (isset($_POST["action"]))
 				{
 					if (intval($_POST['permission_' . $index]) >= 0 && intval($_POST['permission_' . $index]) <= 9) $permissions[$index] = intval($_POST['permission_' . $index]);
 				}
-			}
-
-			if (!function_exists('create_chat'))
-				require __DIR__ . "/../../bin/objects/chats.php";
+			}	
 
 			$result = create_chat($connection, $context->getCurrentUser()->getId(), $title, $users, $permissions, $photo);
 			if ($result['error'] < 0 || $result['error'] === false)
@@ -420,9 +417,6 @@ if (isset($_POST["action"]))
 			$pinned_messages = [];
 			if ($uid < 0)
 			{
-				if (!class_exists('Chat'))
-					require __DIR__ . "/../../bin/objects/chats.php";
-
 				$chat = new Chat($connection, $uid);
 				if ($chat->isValid)
 				{

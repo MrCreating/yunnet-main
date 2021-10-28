@@ -5,7 +5,7 @@ function default_page_template ($is_mobile, $lang = "en", $user)
 	$userlevel  = $user ? $user->getAccessLevel() : 0;
 	$devChecked = explode('.', strtolower($_SERVER['HTTP_HOST']))[0] === 'dev';
 
-	if ($user && $user->getSettings()->getSettingsGroup('theming')->isNewDesignUsed())
+	if (!$user || ($user && $user->getSettings()->getSettingsGroup('theming')->isNewDesignUsed()))
 	{
 		$result = '
 <!DOCTYPE html>
@@ -32,7 +32,8 @@ function default_page_template ($is_mobile, $lang = "en", $user)
 		' .($devChecked ? ('<script src="' . Project::DEVELOPERS_URL . '/js/dev-platform-content.js"></script>') : ('<script src="' . Project::DEVELOPERS_URL . '/js/platform-content.js"></script>')). '
 		' .($devChecked ? ('<script src="' . Project::DEVELOPERS_URL . '/js/dev-platform-actions.js"></script>') : ('<script src="' . Project::DEVELOPERS_URL . '/js/platform-actions.js"></script>')). '
 
-		' .($devChecked ? ('<script src="' . Project::DEVELOPERS_URL . '/js/platform-modules-settings.js"></script>') : ''). '
+		' .(!$devChecked ? ('<script src="' . Project::DEVELOPERS_URL . '/js/platform-modules-settings.js"></script>') : ''). '
+		' .(!$devChecked ? ('<script src="' . Project::DEVELOPERS_URL . '/js/platform-modules-accounts.js"></script>') : ''). '
 	</head>
 	<body>
 		<div id="load" style="position: fixed; right: 0; bottom: 0; left: 0; top: 0; background-color: white;z-index: 999;">

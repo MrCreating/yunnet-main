@@ -412,6 +412,7 @@ const themes = {
 				let x = _xmlHttpGet();
 
 				x.open('GET', 'https://themes.yunnet.ru/theme' + Number(owner_id) + '_' + Number(theme_id) + '?mode=' + mode);
+				x.withCredentials = true;
 				x.onreadystatechange = function () {
 					if (x.readyState !== 4) return;
 
@@ -512,6 +513,7 @@ const themes = {
 
 			if (themeCredentials) {
 				let x = _xmlHttpGet();
+				x.withCredentials = true;
 				x.onreadystatechange = function () {
 				    if (x.readyState !== 4) return;
 

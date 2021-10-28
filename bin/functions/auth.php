@@ -1,8 +1,4 @@
 <?php
-if (!class_exists('Entity'))
-	require __DIR__ . '/../objects/entities.php';
-if (!class_exists('Session'))
-	require __DIR__ .'/../objects/session.php';
 
 /**
  * file which contains auth methods!!!

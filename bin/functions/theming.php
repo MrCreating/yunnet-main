@@ -166,51 +166,7 @@ function create_theme ($connection, $owner_id, $title, $description, $is_private
 */
 function update_theme ($connection, $theme, $updater_id, $new_title, $new_description, $private_mode)
 {
-	/*
-	// checking owner_id
-	if ($theme->owner_id !== intval($updater_id)) return false;
-
-	// checking new title
-	if (is_empty($new_title) || strlen($new_title) > 32) return false;
-
-	// checking new descrption
-	if (is_empty($new_description) || strlen($new_description) > 512) return false;
-
-	if ($theme->title !== $new_title)
-	{
-		// write new title to DB
-		$res = $connection->prepare("UPDATE users.themes SET title = :new_title WHERE id = :theme_id AND owner_id = :owner_id LIMIT 1;");
-		$res->bindParam(":new_title", $new_title,       PDO::PARAM_STR);
-		$res->bindParam(":theme_id",  $theme->id,       PDO::PARAM_INT);
-		$res->bindParam(":owner_id",  $theme->owner_id, PDO::PARAM_INT);
-		
-		if (!$res->execute()) return false;
-	}
-	if ($theme->description !== $new_description)
-	{
-		// write new description to DB
-		$res = $connection->prepare("UPDATE users.themes SET description = :new_desc WHERE id = :theme_id AND owner_id = :owner_id LIMIT 1;");
-		$res->bindParam(":new_desc", $new_description, PDO::PARAM_STR);
-		$res->bindParam(":theme_id", $theme->id,       PDO::PARAM_INT);
-		$res->bindParam(":owner_id", $theme->owner_id, PDO::PARAM_INT);
-		
-		if (!$res->execute()) return false;
-	}
-	if (intval($theme->is_private) !== intval($private_mode))
-	{
-		// write new private flag to DB
-		$res = $connection->prepare("UPDATE users.themes SET is_hidden = :is_hidden WHERE id = :theme_id AND owner_id = :owner_id AND is_default != 1 LIMIT 1;");
-		$res->bindParam(":is_hidden", $private_mode,    PDO::PARAM_INT);
-		$res->bindParam(":theme_id",  $theme->id,       PDO::PARAM_INT);
-		$res->bindParam(":owner_id",  $theme->owner_id, PDO::PARAM_INT);
-		
-		if (!$res->execute()) return false;
-	}
-
-	// OK
-	return true;*/
-
-	return $theme->setTitle($new_title)->setDescription($new_description)->apply();
+	return $theme->setTitle($new_title)->setDescription($new_description)->setPrivate($private_mode)->apply();
 }
 
 // update theme code
@@ -219,7 +175,7 @@ function update_theme ($connection, $theme, $updater_id, $new_title, $new_descri
 // return true if theme updated successfully
 function update_theme_code ($theme, $updater_id, $code_type, $code)
 {
-	if (!$theme->isValid || $theme->owner_id !== $updater_id) return false;
+	if (!$theme->valid() || $theme->getOwnerId() !== $updater_id) return false;
 
 	$code_type = strtolower($code_type);
 	if ($code_type !== "js" && $code_type !== "css")
@@ -228,52 +184,13 @@ function update_theme_code ($theme, $updater_id, $code_type, $code)
 	if (is_empty($code))
 		return false;
 
-	require __DIR__ . "/../../vendor/autoload.php";
 	if ($code_type === "js")
 	{
-		if ($code === $theme->getJSCode())
-			return true;
-
-		try {
-			$result = Peast\Peast::latest($code, [])->parse();
-			if ($result)
-			{
-				$res = intval(file_put_contents($theme->path_to_js, $code));
-				if ($res)
-					return true;
-			}
-		} catch (Peast\Syntax\Exception $e) {
-			$message = $e->getMessage();
-			$line    = $e->getPosition()->getLine();
-			$column  = $e->getPosition()->getColumn();
-			$index   = $e->getPosition()->getIndex();
-
-			$full_string = 
-	"SyntaxError: ".$message.
-	" <br>at line: ".$line.", column: ".$column.
-	" <br>at index: ".$index;
-
-			return $full_string;
-		}
+		return $theme->setJSCode($code);
 	}
 	if ($code_type === "css")
 	{
-		if ($code === $theme->getJSCode())
-			return true;
-
-		try {
-			$css  = new Sabberworm\CSS\Parser($code, Sabberworm\CSS\Settings::create()->beStrict());
-			$res  = $css->parse();
-
-			if ($res)
-			{
-				$result = intval(file_put_contents($theme->path_to_css, $code));
-				if ($result)
-					return true;
-			}
-		} catch (Sabberworm\CSS\Parsing\UnexpectedTokenException $e) {
-			return $e->getMessage();
-		}
+		return $theme->setCSSCode($code);
 	}
 
 	return false;

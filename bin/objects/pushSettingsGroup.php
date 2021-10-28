@@ -1,7 +1,6 @@
 <?php
 
 require_once __DIR__ . '/settingsGroup.php';
-require_once __DIR__ . '/../event_manager.php';
 
 /**
  * Class for Psuh settings

@@ -12,24 +12,22 @@ if ($selected_theme === "")
 }
 
 // getting database connection and require Theme object file.
-if (!class_exists('Theme'))
-	require __DIR__ ."/../bin/objects/theme.php";
-if (!class_exists('AttachmentsParser'))
-	require __DIR__ . '/../bin/objects/attachment.php';
-
-require __DIR__ ."/../bin/functions/users.php";
+require_once __DIR__ . '/../bin/parsers/attachments.php';
+require_once __DIR__ ."/../bin/functions/users.php";
 
 // here we will setup headers for CORS
-header('Access-Control-Allow-Origin: '.get_page_origin());
+header('Access-Control-Allow-Origin: ' . get_page_origin());
 header('Access-Control-Allow-Credentials: true');    
 
 // getting DB connection and setup theme.
-$connection = get_database_connection();
+$connection = DataBaseManager::getConnection();
 $theme      = (new AttachmentsParser())->getObject($selected_theme);
 
 if (!$theme || ($theme->isPrivate() && $theme->getOwnerId() !== intval($_SESSION['user_id']) && !$theme->isDefault()))
 {
-	header("Content-Type: application/json"); http_response_code(404); die('[]');
+	header("Content-Type: application/json"); 
+	http_response_code(404); 
+	die('[]');
 }
 
 // theme instance created. Now we can parse params

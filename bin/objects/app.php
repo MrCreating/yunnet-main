@@ -1,6 +1,5 @@
 <?php
 
-require_once __DIR__ . '/../parsers/attachments.php';
 require_once __DIR__ . '/token.php';
 
 /**

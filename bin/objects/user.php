@@ -3,7 +3,7 @@
 require_once __DIR__ . '/entity.php';
 require_once __DIR__ . '/settings.php';
 require_once __DIR__ . '/userInfoEditor.php';
-require_once __DIR__ . '/../parsers/attachments.php';
+require_once __DIR__ . '/../platform-tools/name_worker.php';
 
 /**
  * Default user entity.
@@ -28,68 +28,55 @@ class User extends Entity
 
 	function __construct (int $user_id)
 	{
-		$this->currentConnection = new DataBaseConnection();
-
 		if ($user_id === 0) return;
 
-		$cache = new Cache("users");
+		$this->currentConnection = DataBaseManager::getConnection();
 
-		/*$user_info = $cache->getItem(strval($user_id));
-		if (!$user_info)
-		{*/
-																/*themes,*/
-																/*settings,*/ 
-																/*use_new_design,*/
-																/*current_theme,*/
-																/*show_nav_button,*/ 
-																/*themes_allow_js,*/
+		$res = $this->currentConnection->prepare("SELECT id, first_name, last_name, email, status, is_banned, is_verified, is_online, online_hidden, userlevel, photo_path, screen_name, cookies, half_cookies, gender, settings_account_language, settings_account_is_closed, settings_privacy_can_write_messages, settings_privacy_can_write_on_wall, settings_privacy_can_comment_posts, settings_privacy_can_invite_to_chats, settings_push_notifications, settings_push_sound, settings_theming_js_allowed, settings_theming_new_design, settings_theming_current_theme, settings_theming_menu_items FROM users.info WHERE id = ? AND is_deleted = 0 LIMIT 1");
 
-			$user_info = $this->currentConnection->execute("SELECT id, first_name, last_name, email, status, is_banned, is_verified, is_online, online_hidden, userlevel, photo_path, screen_name, cookies, half_cookies, gender, settings_account_language, settings_account_is_closed, settings_privacy_can_write_messages, settings_privacy_can_write_on_wall, settings_privacy_can_comment_posts, settings_privacy_can_invite_to_chats, settings_push_notifications, settings_push_sound, settings_theming_js_allowed, settings_theming_new_design, settings_theming_current_theme, settings_theming_menu_items FROM users.info WHERE id = :user_id AND is_deleted = 0 LIMIT 1;", new DataBaseParams([new DBRequestParam(":user_id", $user_id, PDO::PARAM_INT)]));
-
-			$user_info = $user_info->{"0"};
-
-			//$cache->putItem(strval($user_id), json_encode($user_info));
-		//} else {
-		//	$user_info = json_decode($user_info);
-		//}
-
-		if ($user_info)
+		if ($res->execute([$user_id]))
 		{
-			$this->isValid = true;
-			$this->settings = new Settings($this, $user_info);
-
-			$this->id = intval($user_info->id);
-			$this->accessLevel = intval($user_info->userlevel);
-
-			$this->isBanned = boolval(intval($user_info->is_banned));
-			$this->isVerified = boolval(intval($user_info->is_verified));
-
-			$this->isOnlineHidden = boolval(intval($user_info->online_hidden));
-
-			$this->status = $user_info->status;
-			$this->email = strval($user_info->email);
-
-			$this->firstName = strval($user_info->first_name);
-			$this->lastName  = strval($user_info->last_name);
-			$this->newDesignAllowed = boolval(intval($user_info->use_new_design));
-
-			if ($user_info->screen_name !== "")
-				$this->screenName = strval($user_info->screen_name);
-
-			$this->gender = intval($user_info->gender);
-
-			if ($user_info->photo_path !== "")
+			$user_info = $res->fetch(PDO::FETCH_ASSOC);
+			if ($user_info)
 			{
-				$photo = (new AttachmentsParser())->resolveFromQuery($user_info->photo_path);
-				if ($photo)
-					$this->photo = $photo;
-			}
+				$user_info = new Data($user_info);
 
-			$this->online = new Data([
-				'lastOnlineTime' => intval($user_info->is_online),
-				'isOnlineHidden' => boolval(intval($user_info->online_hidden)),
-				'isOnline'       => boolval(intval($user_info->is_online) >= time())
-			]);
+				$this->isValid = true;
+				$this->settings = new Settings($this, $user_info);
+
+				$this->id = intval($user_info->id);
+				$this->accessLevel = intval($user_info->userlevel);
+
+				$this->isBanned = boolval(intval($user_info->is_banned));
+				$this->isVerified = boolval(intval($user_info->is_verified));
+
+				$this->isOnlineHidden = boolval(intval($user_info->online_hidden));
+
+				$this->status = $user_info->status;
+				$this->email = strval($user_info->email);
+
+				$this->firstName = strval($user_info->first_name);
+				$this->lastName  = strval($user_info->last_name);
+				$this->newDesignAllowed = boolval(intval($user_info->use_new_design));
+
+				if ($user_info->screen_name !== "")
+					$this->screenName = strval($user_info->screen_name);
+
+				$this->gender = intval($user_info->gender);
+
+				if ($user_info->photo_path !== "")
+				{
+					$photo = (new AttachmentsParser())->resolveFromQuery($user_info->photo_path);
+					if ($photo)
+						$this->photo = $photo;
+				}
+
+				$this->online = new Data([
+					'lastOnlineTime' => intval($user_info->is_online),
+					'isOnlineHidden' => boolval(intval($user_info->online_hidden)),
+					'isOnline'       => boolval(intval($user_info->is_online) >= time())
+				]);
+			}
 		}
 	}
 
@@ -99,7 +86,7 @@ class User extends Entity
 
 		if ($this->getId() === $user_id) return false;
 
-		$res = $this->currentConnection->getPDOObject()->prepare("SELECT state FROM users.relationships WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ?;");
+		$res = $this->currentConnection->prepare("SELECT state FROM users.relationships WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ?;");
 		if ($res->execute([strval($owner_id), strval($user_id), strval($user_id), strval($owner_id)]))
 		{
 			$state = intval($res->fetch(PDO::FETCH_ASSOC)["state"]);
@@ -123,7 +110,7 @@ class User extends Entity
 		if ($this->getId() === $user_id) return false;
 		if ($this->getId() === 0 || $user_id === 0) return false;
 
-		$res = $this->currentConnection->getPDOObject()->prepare("SELECT state FROM users.blacklist WHERE user_id = ? AND added_id = ? LIMIT 1;");
+		$res = $this->currentConnection->prepare("SELECT state FROM users.blacklist WHERE user_id = ? AND added_id = ? LIMIT 1;");
 		if ($res->execute([strval($user_id), strval($this->getId())]))
 		{
 			$state = intval($res->fetch(PDO::FETCH_ASSOC)["state"]);
@@ -143,7 +130,7 @@ class User extends Entity
 
 		if ($user_id < 0) return false;
 
-		$res = $this->currentConnection->getPDOObject()->prepare("SELECT state FROM users.blacklist WHERE user_id = ? AND added_id = ? LIMIT 1;");
+		$res = $this->currentConnection->prepare("SELECT state FROM users.blacklist WHERE user_id = ? AND added_id = ? LIMIT 1;");
 		if ($res->execute([strval($this->getId()), strval($user_id)]))
 		{
 			$state = intval($res->fetch(PDO::FETCH_ASSOC)["state"]);
@@ -158,23 +145,23 @@ class User extends Entity
 	{
 		if ($this->getId() === $user_id) return false;
 
-		$res = $this->currentConnection->getPDOObject()->prepare("SELECT state FROM users.blacklist WHERE user_id = ? AND added_id = ? LIMIT 1;");
+		$res = $this->currentConnection->prepare("SELECT state FROM users.blacklist WHERE user_id = ? AND added_id = ? LIMIT 1;");
 		if ($res->execute([$this->getId(), $user_id]))
 		{
 			$state = (int) $res->fetch(PDO::FETCH_ASSOC)["state"];
 			if ($state === NULL)
 			{
-				return $this->currentConnection->getPDOObject()->prepare("INSERT INTO users.blacklist (user_id, added_id, state) VALUES (?, ?, -1);")->execute([$this->getId(), $user_id]);
+				return $this->currentConnection->prepare("INSERT INTO users.blacklist (user_id, added_id, state) VALUES (?, ?, -1);")->execute([$this->getId(), $user_id]);
 			}
 			if (intval($state) === -1)
 			{
-				return $this->currentConnection->getPDOObject()->prepare("UPDATE users.blacklist SET state = 0 WHERE user_id = ? AND added_id = ? LIMIT 1;")->execute([$this->getId(), $user_id]);
+				return $this->currentConnection->prepare("UPDATE users.blacklist SET state = 0 WHERE user_id = ? AND added_id = ? LIMIT 1;")->execute([$this->getId(), $user_id]);
 			} else
 			{
 				if (
-					$this->currentConnection->getPDOObject()->prepare("UPDATE users.relationships SET state = 0 WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ? LIMIT 1;")->execute([$this->getId(), $user_id, $user_id, $this->getId()]) &&
-					$this->currentConnection->getPDOObject()->prepare("UPDATE users.relationships SET is_hidden = 0 WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ? LIMIT 1;")->execute([$this->getId(), $user_id, $user_id, $this->getId()]) &&
-					$this->currentConnection->getPDOObject()->prepare("UPDATE users.blacklist SET state = -1 WHERE user_id = ? AND added_id = ? LIMIT 1;")->execute([$this->getId(), $user_id])
+					$this->currentConnection->prepare("UPDATE users.relationships SET state = 0 WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ? LIMIT 1;")->execute([$this->getId(), $user_id, $user_id, $this->getId()]) &&
+					$this->currentConnection->prepare("UPDATE users.relationships SET is_hidden = 0 WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ? LIMIT 1;")->execute([$this->getId(), $user_id, $user_id, $this->getId()]) &&
+					$this->currentConnection->prepare("UPDATE users.blacklist SET state = -1 WHERE user_id = ? AND added_id = ? LIMIT 1;")->execute([$this->getId(), $user_id])
 				)
 				{
 					return true;
@@ -269,7 +256,7 @@ class User extends Entity
 			{
 				if (!function_exists('can_access_closed')) require __DIR__ . '/../functions/users.php';
 
-				$result['can_access_closed'] = can_access_closed($this->currentConnection->getPDOObject(), intval($_SESSION['user_id']), $this->getId());
+				$result['can_access_closed'] = can_access_closed($this->currentConnection, intval($_SESSION['user_id']), $this->getId());
 			}
 			if (in_array("is_me_blacklisted", $resultedFields))
 			{
@@ -287,15 +274,15 @@ class User extends Entity
 			{
 				if (!function_exists('get_friendship_state')) require __DIR__ . '/../functions/users.php';
 
-				$result['friend_state'] = get_friendship_state($this->currentConnection->getPDOObject(), $this->getId(), intval($_SESSION['user_id']));
+				$result['friend_state'] = get_friendship_state($this->currentConnection, $this->getId(), intval($_SESSION['user_id']));
 			}
 			if (in_array("can_write_messages", $resultedFields)) 
 			{
 				if (!function_exists('get_uid_by_lid')) require __DIR__ . '/../functions/messages.php';
 
-				$uid = intval(get_uid_by_lid($this->currentConnection->getPDOObject(), $this->getId(), $this->getType() === "bot", intval($_SESSION['user_id'])));
+				$uid = intval(get_uid_by_lid($this->currentConnection, $this->getId(), $this->getType() === "bot", intval($_SESSION['user_id'])));
 
-				$result['can_write_messages'] = can_write_to_chat($this->currentConnection->getPDOObject(), $uid, intval($_SESSION['user_id']), [
+				$result['can_write_messages'] = can_write_to_chat($this->currentConnection, $uid, intval($_SESSION['user_id']), [
 					"chat_id" => $this->getId(),
 					"is_bot"  => $this->getType() === "bot"
 				]);
@@ -306,13 +293,13 @@ class User extends Entity
 
 				$objectId = $this->getType() === "bot" ? ($this->getId() * -1) : $this->getId();
 
-				$result['can_write_on_wall'] = can_write_posts($this->currentConnection->getPDOObject(), intval($_SESSION['user_id']), $objectId);
+				$result['can_write_on_wall'] = can_write_posts($this->currentConnection, intval($_SESSION['user_id']), $objectId);
 			}
 			if (in_array("can_invite_to_chat", $resultedFields))
 			{
 				if (!function_exists('can_invite_to_chat')) require __DIR__ . '/../functions/users.php';
 
-				$result['can_invite_to_chat'] = can_invite_to_chat($this->currentConnection->getPDOObject(), intval($_SESSION['user_id']), $this);
+				$result['can_invite_to_chat'] = can_invite_to_chat($this->currentConnection, intval($_SESSION['user_id']), $this);
 			}
 			if (in_array('main_photo_as_object', $resultedFields))
 			{
@@ -321,9 +308,6 @@ class User extends Entity
 			}
 			if (in_array("name_cases", $resultedFields))
 			{
-				if (!class_exists('Name'))
-					require __DIR__ . '/../name_worker.php';
-
 				$name = new Name($this->getLastName(), $this->getFirstName(), '', $this->getGender() === 1 ? 'm' : 'f');
 
 				$result['name_cases'] = [
@@ -412,14 +396,57 @@ class User extends Entity
 	}
 
 	////////////////////////////////////////////////////
-	public static function auth (string $login, string $password): ?Entity
+	public static function findByEMAIL (string $email): ?User
 	{
-		
+		$res = DataBaseManager::getConnection()->prepare('SELECT id FROM users.info WHERE email = ? LIMIT 1');
+
+		if ($res->execute([$email]))
+		{
+			$id = intval($res->fetch(PDO::FETCH_ASSOC)['id']);
+
+			if ($id <= 0)
+				return NULL;
+
+			$user = new User($id);
+
+			if ($user->valid())
+				return $user;
+		}
+
+		return NULL;
 	}
 
-	public static function authByToken (string $apiToken): ?Entity
+	public static function create (string $firstName, string $lastName, string $email, string $passwordHash, int $gender): ?User
 	{
+		$reg_time   = time();
+		$connection = DataBaseManager::getConnection();
 
+		$res = $connection->prepare("INSERT INTO users.info (first_name, last_name, password, email, gender, settings_account_language, registration_date, is_online) VALUES (:first_name, :last_name, :password, :email, :gender, :lang, :reg_time, :online_time);");
+
+		$res->bindParam(":first_name",  $firstName,                        PDO::PARAM_STR);
+		$res->bindParam(":last_name",   $lastName,                         PDO::PARAM_STR);
+		$res->bindParam(":password",    $passwordHash,                     PDO::PARAM_STR);
+		$res->bindParam(":email",       $email,                            PDO::PARAM_STR);
+		$res->bindParam(":gender",      $gender,                           PDO::PARAM_INT);
+		$res->bindParam(":lang",        Context::get()->getLanguage()->id, PDO::PARAM_STR);
+		$res->bindParam(":reg_time",    $reg_time,                         PDO::PARAM_INT);
+		$res->bindParam(":online_time", $reg_time,                         PDO::PARAM_INT); 
+
+		if ($res->execute())
+		{
+			$res = $connection->prepare("SELECT LAST_INSERT_ID()");
+
+			if ($res->execute())
+			{
+				$user_id = intval($res->fetch(PDO::FETCH_ASSOC)["LAST_INSERT_ID()"]);
+
+				$user = new User($user_id);
+				if ($user->valid())
+					return $user;
+			}
+		}
+
+		return NULL;
 	}
 }
 

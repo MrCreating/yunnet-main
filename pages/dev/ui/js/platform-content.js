@@ -1,8 +1,154 @@
 unt.pages = new Object({
-	auth: function (internalData) {},
-	registrer: function (internalData) {},
-	restore: function (internalData) {},
-	banned: function (internalData) {},
+	auth: function (internalData) {
+		unt.components.navPanel ? unt.components.navPanel.hide() : null;
+		let menu = unt.components.menuElement;
+
+		let authContainer = document.createElement('div');
+		authContainer.style.width = '100%';
+
+		let cookielol = document.createElement('div');
+		authContainer.classList.add('unselectable');
+		authContainer.appendChild(cookielol);
+		cookielol.style.marginBottom = '20px';
+
+		let cookie = document.createElement('img');
+		cookie.src = '/favicon.ico';
+		cookielol.appendChild(cookie);
+		cookie.width = cookie.height = 96;
+		cookie.classList.add('circle');
+
+		let authCard = document.createElement('div');
+		authContainer.appendChild(authCard);
+
+		let authResultMessage = document.createElement('div');
+		authResultMessage.style.marginBottom = '10px';
+		authResultMessage.style.padding = '10px';
+		authResultMessage.innerText = unt.settings.lang.getValue('auth_welcome');
+		authCard.appendChild(authResultMessage);
+
+		authCard.classList.add('card');
+
+		authContainer.style.textAlign = '-webkit-center';
+		authContainer.style.position = 'absolute';
+		authContainer.style.left = '50%';
+		authContainer.style.marginRight = '-50%';
+		authContainer.style.transform = 'translate(-50%, -50%)';
+		authContainer.style.top = '40%';
+		authCard.style.padding = '20px';
+
+		if (!unt.tools.isMobile()) {
+			authContainer.style.maxWidth = '40%';
+			authContainer.style.minWidth = '35%';
+		} else {
+			authContainer.style.maxWidth = '100%';
+			authContainer.style.minWidth = '40%';
+
+			if (window.screen.width >= 500)
+				authCard.style.width = parseInt(window.screen.width / 2) + 'px';
+			else
+				authCard.style.width = window.screen.width + 'px';
+		}
+
+		let authForm = unt.actions.authForm();
+		authForm.onauthresult = function (authResult) {
+			if (authResult === -1) {
+				return authResultMessage.innerText = unt.settings.lang.getValue('auth_failed');
+			}
+			if (authResult === 0) {
+				return authResultMessage.innerHTML = unt.settings.lang.getValue('upload_error');
+			}
+			if (authResult === 1) {
+				let loader = unt.components.loaderElement();
+				document.body.innerHTML = '';
+
+				loader.style.position = 'absolute';
+				loader.style.left = '50%';
+				loader.style.marginRight = '-50%';
+				loader.style.transform = 'translate(-50%, -50%)';
+				loader.style.top = '45%';
+
+				document.body.appendChild(loader);
+
+				return setTimeout(function () {
+					return window.location.reload();
+				}, 1000);
+			}
+		}
+
+		authCard.appendChild(authForm);
+		menu.appendChild(authContainer);
+	},
+	register: function (internalData) {
+		if (unt.settings.users.current)
+			return unt.actions.linkWorker.go('/');
+
+		unt.components.navPanel ? unt.components.navPanel.hide() : null;
+		let menu = unt.components.menuElement;
+
+		let registerDiv = document.createElement('div');
+		menu.appendChild(registerDiv);
+		registerDiv.style.marginTop = '100px';
+
+		let button = unt.components.cardButton(unt.icons.backArrow, unt.settings.lang.getValue('logout'), function () {
+			return unt.actions.dialog(unt.settings.lang.getValue('logout'), unt.settings.lang.getValue('confirm_exit'), true, true).then(function (response) {
+				if (response) {
+					return unt.tools.Request({
+						url: '/register',
+						method: 'POST',
+						data: (new POSTData()).append('action', 'close_session').build(),
+						success: function (response) {
+							try {
+								response = JSON.parse(response);
+								if (response.response)
+									return unt.actions.linkWorker.go('/');
+							} catch (e) {
+								return unt.toast({html: unt.settings.lang.getValue('upload_error')});
+							}
+						},
+						error: function () {
+							return unt.toast({html: unt.settings.lang.getValue('upload_error')});
+						}
+					});
+				}
+			});
+		});
+		button.hide();
+
+		let cardDivForm = document.createElement('div');
+		cardDivForm.classList.add('card');
+		cardDivForm.style.padding = '10px';
+
+		registerDiv.appendChild(button);
+		registerDiv.appendChild(cardDivForm);
+
+		let loader = unt.components.loaderElement();
+		cardDivForm.appendChild(loader);
+		cardDivForm.style.textAlign = '-webkit-center';
+
+		return unt.tools.Request({
+			url: '/register',
+			method: 'POST',
+			data: (new POSTData()).append('action', 'get_state').build(),
+			success: function (response) {
+				try {
+					response = JSON.parse(response);
+
+					return unt.modules.accountActions.register(response.closed ? -1 : response.state, registerDiv, cardDivForm, button);
+				} catch (e) {
+					return unt.toast({html: unt.settings.lang.getValue('upload_error')});
+				}
+			},
+			error: function () {
+				return unt.toast({html: unt.settings.lang.getValue('upload_error')});
+			}
+		});
+	},
+	restore: function (internalData) {
+		unt.components.navPanel ? unt.components.navPanel.hide() : null;
+	},
+	banned: function (internalData) {
+		unt.components.navPanel ? unt.components.navPanel.hide() : null;
+	},
 	news: function (internalData) {
 		document.title = unt.settings.lang.getValue('news');
 		let menu = unt.components.menuElement;
@@ -212,6 +358,8 @@ unt.pages = new Object({
 		document.title = unt.settings.lang.getValue('edit');
 	},
 	profile: function (internalData) {
+		unt.components.navPanel ? unt.components.navPanel.show() : null;
+
 		document.title = unt.settings.lang.getValue('profile');
 		let menu = unt.components.menuElement;
 
@@ -273,20 +421,22 @@ unt.pages = new Object({
 			let iconDiv = document.createElement('div');
 			statusDiv.appendChild(iconDiv);
 
-			let icon = unt.settings.users.current.user_id == user.user_id ? unt.icons.edit : unt.icons.profileStatus;
+			let icon = unt.settings.users.current && unt.settings.users.current.user_id == user.user_id ? unt.icons.edit : unt.icons.profileStatus;
 			iconDiv.innerHTML = icon;
 			iconDiv.getElementsByTagName('svg')[0].style.marginTop = '4px';
 
 			let statusTextDiv = document.createElement('div');
 			statusDiv.classList.add('unselectable');
-			statusTextDiv.innerText = user.status ? user.status : (unt.settings.users.current.user_id == user.user_id ? unt.settings.lang.getValue('edit_status') : '');
+			statusTextDiv.innerText = user.status ? user.status : (unt.settings.users.current && unt.settings.users.current.user_id == user.user_id ? unt.settings.lang.getValue('edit_status') : '');
 			statusDiv.appendChild(statusTextDiv);
 			statusDiv.style.paddingTop = '20px';
 			iconDiv.style.marginRight = '15px';
 
-			if (!user.status && unt.settings.users.current.user_id != user.user_id) statusDiv.hide();
+			if (!user.status && unt.settings.users.current && unt.settings.users.current.user_id != user.user_id) statusDiv.hide();
+			if (!user.status && !unt.settings.users.current) statusDiv.hide();
+
 			statusDiv.addEventListener('click', function () {
-				if (unt.settings.users.current.user_id === user.user_id)
+				if (unt.settings.users.current && unt.settings.users.current.user_id === user.user_id)
 					return unt.settings.users.current.edit.status().then(function (newStatus) {
 						if (newStatus.isEmpty())
 							statusTextDiv.innerText = unt.settings.lang.getValue('edit_status');
@@ -333,7 +483,56 @@ unt.pages = new Object({
 
 			let actionsMenu = unt.components.downfallingOptionsMenu(unt.icons.downArrow, unt.settings.lang.getValue('actions'));
 			if (!unt.settings.users.current)
-				actionsMenu = unt.components.cardButton(unt.icons.forbidden, unt.settings.lang,getValue('login_to_continue'), new Function());
+				actionsMenu = unt.components.cardButton(unt.icons.forbidden, unt.settings.lang.getValue('login_to_continue'), function () {
+					let win = unt.components.windows.createImportantWindow({
+						title: unt.settings.lang.getValue('logstart')
+					});
+
+					let menu = win.getMenu();
+
+					let authResultMessage = document.createElement('div');
+					authResultMessage.style.marginBottom = '10px';
+					authResultMessage.style.padding = '10px';
+					authResultMessage.innerText = unt.settings.lang.getValue('login_to_continue');
+					menu.appendChild(authResultMessage);
+
+					let authForm = unt.actions.authForm();
+					authForm.onauthresult = function (authResult) {
+						if (authResult === -1) {
+							return authResultMessage.innerText = unt.settings.lang.getValue('auth_failed');
+						}
+						if (authResult === 0) {
+							return authResultMessage.innerHTML = unt.settings.lang.getValue('upload_error');
+						}
+						if (authResult === 1) {
+							win.close();
+
+							return setTimeout(function () {
+								let loader = unt.components.loaderElement();
+								document.body.innerHTML = '';
+
+								loader.style.position = 'absolute';
+								loader.style.left = '50%';
+								loader.style.marginRight = '-50%';
+								loader.style.transform = 'translate(-50%, -50%)';
+								loader.style.top = '45%';
+
+								document.body.appendChild(loader);
+
+								return setTimeout(function () {
+									return window.location.reload();
+								}, 1000);
+							}, 1000);
+						}
+					}
+
+					menu.appendChild(authForm);
+
+					menu.style.padding = '10px';
+					menu.style.textAlign = 'center';
+
+					return win.show();
+				});
 
 			let fastAction = null;
 			if (!fastAction && user.can_write_messages && unt.settings.users.current && user.user_id !== unt.settings.users.current.user_id)
@@ -345,10 +544,13 @@ unt.pages = new Object({
 					return unt.actions.linkWorker.go('/edit');
 				}), fastAction.id = 'edit';
 
-			if (!user.is_banned && user.account_type === 'user' && !user.is_me_blacklisted && !user.is_blacklisted && user.friend_state && user.friend_state.state === 0) {
+			if (!unt.settings.users.current)
+				fastAction = null;
+
+			if (unt.settings.users.current && !user.is_banned && user.account_type === 'user' && !user.is_me_blacklisted && !user.is_blacklisted && user.friend_state && user.friend_state.state === 0) {
 				actionsMenu.addOption(unt.settings.lang.getValue('add_to_the_friends'), new Function());
 			}
-			if (!user.is_banned && user.account_type === 'user' && !user.is_me_blacklisted && !user.is_blacklisted && user.friend_state && user.friend_state.state === 1) {
+			if (unt.settings.users.current && !user.is_banned && user.account_type === 'user' && !user.is_me_blacklisted && !user.is_blacklisted && user.friend_state && user.friend_state.state === 1) {
 				let initier = user.friend_state.user1;
 				let accepter = user.friend_state.user2;
 				if (initier === unt.settings.users.current.user_id) {
@@ -357,11 +559,11 @@ unt.pages = new Object({
 					actionsMenu.addOption(unt.settings.lang.getValue('accept_request'), new Function());
 				}
 			}
-			if (user.friend_state && user.friend_state.state === 2) {
+			if (unt.settings.users.current && user.friend_state && user.friend_state.state === 2) {
 				actionsMenu.addOption(unt.settings.lang.getValue('delete_friend'), new Function());
 			}
 
-			if (!user.is_banned && user.account_type === 'user' && user.can_access_closed && !user.is_me_blacklisted && !user.is_blacklisted) {
+			if (unt.settings.users.current && !user.is_banned && user.account_type === 'user' && user.can_access_closed && !user.is_me_blacklisted && !user.is_blacklisted) {
 				actionsMenu.addOption(unt.settings.lang.getValue('show_friends'), function () {
 					return unt.actions.linkWorker.go('/friends?id=' + user.user_id);
 				});
@@ -370,7 +572,7 @@ unt.pages = new Object({
 			if (fastAction)
 				actionsDiv.appendChild(fastAction);
 
-			if (unt.settings.current.account.is_closed && user.user_id === unt.settings.users.current.user_id) {
+			if (unt.settings.users.current && unt.settings.current.account.is_closed && user.user_id === unt.settings.users.current.user_id) {
 				let closedProfileWarning = unt.components.cardButton(unt.icons.lock, unt.settings.lang.getValue('closed_profile'), function () {
 					return unt.actions.dialog(unt.settings.lang.getValue('closed_profile'), unt.settings.lang.getValue('open_profile_attention'), false, true).then(function (response) {
 						if (response)
@@ -438,8 +640,6 @@ unt.pages = new Object({
 	},
 	wall: function (internalData) {
 		document.title = unt.settings.lang.getValue('wall');
-
-
 	},
 	photo: function (internalData) {
 		document.title = unt.settings.lang.getValue('photo');

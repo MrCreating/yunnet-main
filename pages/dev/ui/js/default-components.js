@@ -6,6 +6,10 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 function _xmlHttpGet() { let e; try {e = new ActiveXObject("Msxml2.XMLHTTP")} catch (t) { try {e = new ActiveXObject("Microsoft.XMLHTTP");} catch (t) {e = !1;}}; return e || "undefined" == typeof XMLHttpRequest || (e = new XMLHttpRequest()), e; }
 
+String.prototype.capitalize = function () {
+  return this.charAt(0).toUpperCase() + this.slice(1).toLowerCase();
+}
+
 String.prototype.isEmpty = function () {
   let e = this.split("\n").join("");
     if ("" == e.split(" ").join("")) return true;

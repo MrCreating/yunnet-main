@@ -1,9 +1,5 @@
 <?php
 
-require_once __DIR__ . '/../event_manager.php';
-require_once __DIR__ . '/user.php';
-require_once __DIR__ . '/bot.php';
-
 /**
  * Chat class.
  * Repesenta dual-chats and multichats
@@ -35,7 +31,7 @@ class Chat extends EventEmitter
 	{
 		$user_id = /*intval($_SESSION['user_id'])*/1;
 
-		$this->currentConnection = new DataBaseConnection();
+		$this->currentConnection = DataBaseManager::getConnection();
 
 		$chat_data = $this->parseId($peer_id);
 		if (!$chat_data) return;
@@ -69,7 +65,6 @@ class Chat extends EventEmitter
 		if ($this->isMultiChat())
 		{
 			$res = $this->currentConnection
-						->getPDOObject()
 						->prepare("SELECT DISTINCT user_id, is_muted, is_leaved, invited_by, leaved_time, is_kicked, permissions_level, lid, cleared_message_id FROM messages.members_chat_list WHERE uid = ? ORDER BY permissions_level DESC;");
 
 			if ($res->execute([$this->uid]))
@@ -214,7 +209,7 @@ class Chat extends EventEmitter
 		if ($this->last_message !== NULL)
 			return $this->last_message;
 
-		$connection = $this->currentConnection->getPDOObject();
+		$connection = $this->currentConnection;
 
 		$res = $connection->prepare("SELECT DISTINCT uid, leaved_time, return_time, is_leaved, is_kicked, is_muted, cleared_message_id, last_time FROM messages.members_chat_list WHERE uid = ? AND user_id = ? AND lid != 0 ORDER BY last_time DESC LIMIT 1;");
 
@@ -279,7 +274,7 @@ class Chat extends EventEmitter
 		if ($this->uid !== NULL)
 			return $this->uid;
 
-		$connection = $this->currentConnection->getPDOObject();
+		$connection = $this->currentConnection;
 		$local_id   = $this->getPeerId();
 		$is_bot     = $this->isBotChat();
 		$user_id    = /*intval($_SESSION['user_id'])*/1;

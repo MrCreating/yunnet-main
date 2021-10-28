@@ -5,6 +5,10 @@
  * for chats management
 */
 
+require_once __DIR__ . '/../functions/messages.php';
+require_once __DIR__ . '/../functions/users.php';
+require_once __DIR__ . '/../functions/messages.php';
+
 // class which describes the MULTIPLE chat
 class Chat
 {
@@ -156,9 +160,6 @@ class Chat
 	{
 		$permissions = $this->getPermissions();
 		$members     = $this->getMembers(true);
-
-		if (!function_exists('send_service_message'))
-			require __DIR__ . '/../functions/messages.php';
 
 		$connection = $this->utils["connection"];
 		if (!$connection || !$this->isValid)
@@ -378,13 +379,6 @@ class Permissions
 // returns false if unknown error
 function create_chat ($connection, $creator_id, $title, $users_list, $customPermissions = null, $chatPhoto = null)
 {
-	if (!function_exists('is_friends'))
-		require __DIR__ . '/../functions/users.php';
-	if (!class_exists('User'))
-		require __DIR__ . '/entities.php';
-	if (!function_exists('get_last_uid'))
-		require __DIR__ . '/../functions/messages.php';
-
 	$users = [];
 	$title = trim($title);
 

@@ -4,8 +4,7 @@
  * Polls module file.
 */
 
-if (!class_exists('Poll'))
-	require __DIR__ . '/../objects/poll.php';
+require_once __DIR__ . '/../objects/poll.php';
 
 /**
  * Creates a poll

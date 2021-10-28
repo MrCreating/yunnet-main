@@ -75,7 +75,7 @@ if (isset($_POST['action']))
 			*/
 			if ($currentStage === 1)
 			{
-				$email = strval($_POST["email"]);
+				$email = strval(trim($_POST["email"]));
 				if (is_empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 96)
 				{
 					die(json_encode(array(
@@ -83,23 +83,28 @@ if (isset($_POST['action']))
 					)));
 				}
 
-				if (user_exists($connection, $email))
+				if (User::findByEMAIL($email) !== NULL)
 				{
 					die(json_encode(array(
 						'error_code' => 2,
-						'error_message' => str_replace('%first_name%', htmlspecialchars($_SESSION["first_name"]), $context->lang['found_user'])
+						'error_message' => Context::get()->getLanguage()->found_user
 					)));
 				}
 
 				$_SESSION["email"] = $email;
 				$_SESSION["code"]  = rand(100000, 999999);
+				$_SESSION["next_code_time"] = time() + 300;
 				$_SESSION["stage"] = 2;
 
-				mail($email, $context->lang['email_activation'], str_replace(array('%username%', '%code%'), array(htmlspecialchars($_SESSION["first_name"]), strval($_SESSION["code"])), $context->lang['email_message']));
-
-				die(json_encode(array(
-					"stage" => 2
-				)));
+				if (mail($email, Context::get()->getLanguage()->email_activation, str_replace(array('%username%', '%code%'), array(htmlspecialchars($_SESSION["first_name"]), strval($_SESSION["code"])), Context::get()->getLanguage()->email_message)))
+				{
+					die(json_encode(array(
+						"stage" => 2
+					)));
+				} else
+				{
+					die(json_encode(array('error' => 1)));
+				}
 			}
 
 			/**
@@ -108,7 +113,7 @@ if (isset($_POST['action']))
 			if ($currentStage === 2)
 			{
 				$code = intval($_POST['email_code']);
-				if ($code < 100000)
+				if ($code < 100000 || $code > 999999)
 					die(json_encode(array(
 						'error_code' => 3
 					)));
@@ -146,60 +151,31 @@ if (isset($_POST['action']))
 				if ($password !== $repeat_password)
 					die(json_encode(array(
 						'error_code' => 6,
-						'error_message' => str_replace('%first_name%', htmlspecialchars($_SESSION["first_name"]), $context->lang['found_bad_password'])
+						'error_message' => Context::get()->getLanguage()->found_bad_password
 					)));
 
 				// temporaly constant.
-				$gender = 1;
+				$gender = intval($_POST['gender']) !== 1 && intval($_POST['gender']) !== 2 ? 1 : intval($_POST['gender']);
 
 				$_SESSION["password"] = password_hash($password, PASSWORD_DEFAULT);
 				$_SESSION["gender"]   = $gender;
 
-				if (user_exists($connection, $_SESSION["email"]))
+				if (User::findByEMAIL($_SESSION['email']))
 				{
 					unset($_SESSION["code"]);
 					unset($_SESSION["email"]);
+					unset($_SESSION["password"]);
+					unset($_SESSION["gender"]);
 
 					$_SESSION["stage"] = 1;
 					die(json_encode(array(
 						'error_code' => 4,
-						'new_stage'  => 1,
-						'error_message' => str_replace('%first_name%', htmlspecialchars($_SESSION["first_name"]), $context->lang['found_user'])
+						'stage'  => 1,
+						'error_message' => Context::get()->getLanguage()->found_user
 					)));
 				}
-
-				// creating the same account...
-				$res = $connection->prepare("INSERT INTO users.info (first_name, last_name, password, email, gender, registration_date, is_online) VALUES (:first_name, :last_name, :password, :email, :gender, :reg_time, :online_time);");
-
-				$reg_time = time();
-
-				$first_name = strval($_SESSION['first_name']);
-				$last_name  = strval($_SESSION['last_name']);
-				$password   = strval($_SESSION['password']);
-				$email      = strval($_SESSION['email']);
-
-				$res->bindParam(":first_name",  $first_name, PDO::PARAM_STR);
-				$res->bindParam(":last_name",   $last_name,  PDO::PARAM_STR);
-				$res->bindParam(":password",    $password,   PDO::PARAM_STR);
-				$res->bindParam(":email",       $email,      PDO::PARAM_STR);
-				$res->bindParam(":gender",      $gender,     PDO::PARAM_INT);
-				$res->bindParam(":reg_time",    $reg_time,   PDO::PARAM_INT);
-				$res->bindParam(":online_time", $reg_time,   PDO::PARAM_INT);
-				if (!$res->execute())
-				{
-					die(json_encode(array(
-						'error_code' => 10
-					)));
-				}
-
-				$res = $connection->prepare("SELECT LAST_INSERT_ID();");
-				$res->execute();
-
-				$user_id = intval($res->fetch(PDO::FETCH_ASSOC)["LAST_INSERT_ID()"]);
 
 				$_SESSION["stage"] = 4;
-				$_SESSION["user_saved"] = $user_id;
-
 				die(json_encode(array(
 					'stage' => 4
 				)));
@@ -210,9 +186,17 @@ if (isset($_POST['action']))
 			*/
 			if ($currentStage === 4)
 			{
-				$user_id = intval($_SESSION["user_saved"]);
+				$first_name = strval($_SESSION['first_name']);
+				$last_name  = strval($_SESSION['last_name']);
+				$password   = strval($_SESSION['password']);
+				$email      = strval($_SESSION['email']);
+				$gender     = intval($_SESSION['gender']);
 
-				Session::start($user_id)->setAsCurrent();
+				$user = User::create($first_name, $last_name, $email, $password, $gender);
+
+				$_SESSION = [];
+				if ($user && $user->valid())
+					Session::start($user->getId())->setAsCurrent();
 
 				// ok!!!!
 				die(json_encode(array(

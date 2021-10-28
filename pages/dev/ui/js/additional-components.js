@@ -106,6 +106,107 @@ class URLParser {
 }
 
 unt.actions = new Object({
+	authForm: function () {
+		let authForm = document.createElement('form');
+		authForm.action = '/login';
+
+		let loginField = unt.components.textField(unt.settings.lang.getValue('email'));
+		loginField.getInput().type = 'text';
+		loginField.getInput().name = 'email';
+		let passField = unt.components.textField(unt.settings.lang.getValue('password'));
+		passField.getInput().type = 'password';
+		passField.getInput().name = 'password';
+
+		authForm.appendChild(loginField);
+		authForm.appendChild(passField);
+
+		let authActionsDiv = document.createElement('div');
+		authForm.appendChild(authActionsDiv);
+		authActionsDiv.style.display = 'table-caption';
+
+		let registerLink = document.createElement('a');
+		registerLink.innerText = unt.settings.lang.getValue('regstart');
+		authActionsDiv.appendChild(registerLink);
+		registerLink.href = '/register';
+
+		authActionsDiv.appendChild(document.createElement('br'));
+		authActionsDiv.appendChild(document.createElement('br'));
+
+		let authButton = document.createElement('button');
+		authButton.type = 'submit';
+		authButton.classList.add('btn');
+		authButton.classList.add('btn-large');
+		authActionsDiv.appendChild(authButton);
+
+		let loginText = document.createElement('div');
+		authButton.appendChild(loginText);
+		loginText.innerText = unt.settings.lang.getValue('logstart');
+
+		let loaderElement = unt.components.loaderElement().setColor('white');
+		loaderElement.getElementsByTagName('svg')[0].style.marginTop = '18%';
+		authButton.appendChild(loaderElement);
+		loaderElement.style.display = 'none';
+
+		let isPending = false;
+
+		authForm.addEventListener('submit', function (event) {
+			event.preventDefault();
+			if (isPending) return;
+
+			isPending = true;
+			loginText.style.display = 'none';
+			loaderElement.style.display = '';
+			loginField.disable();
+			passField.disable();
+
+			return unt.tools.Request({
+				url: '/login',
+				method: 'POST',
+				data: (new POSTData()).append('action', 'login').append('email', loginField.getInput().value).append('password', passField.getInput().value).build(),
+				withCredentials: true,
+				success: function (response) {
+					isPending = false;
+					loginText.style.display = '';
+					loaderElement.style.display = 'none';
+					loginField.enable();
+					passField.enable();
+
+					try {
+						response = JSON.parse(response);
+						if (response.error)
+							if (authForm.onauthresult)
+								return authForm.onauthresult(-1);
+							else
+								return unt.toast({html: unt.settings.lang.getValue('auth_failed')});
+
+						if (authForm.onauthresult)
+							return authForm.onauthresult(1);
+						else
+							return unt.toast({html: 'OK'}), window.location.reload();
+					} catch (e) {
+						if (authForm.onauthresult)
+							return authForm.onauthresult(0);
+
+						return unt.toast({html: unt.settings.lang.getValue('upload_error')});
+					}
+				},
+				error: function () {
+					isPending = false;
+					loginText.style.display = '';
+					loaderElement.style.display = 'none';
+					loginField.enable();
+					passField.enable();
+
+					if (authForm.onauthresult)
+						return authForm.onauthresult(0);
+
+					return unt.toast({html: unt.settings.lang.getValue('upload_error')});
+				}
+			});
+		});
+
+		return authForm;
+	},
 	dialog: function (header, title, fullScreen = false, asImportantWindow = false) {
 		return new Promise(function (resolve) {
 			let contentWindow = document.createElement('div');
@@ -212,7 +313,7 @@ unt.actions = new Object({
 						event.stopPropagation();
 						event.preventDefault();
 
-						if (unt.tools.isMobile()) {
+						if (unt.settings.users.current && unt.tools.isMobile()) {
 							unt.Sidenav.getInstance(document.getElementById('user-navigation')).close();
 						}
 
@@ -226,16 +327,18 @@ unt.actions = new Object({
 			}
 
 			unt.components.navPanel ? unt.components.navPanel.setTitle(document.title) : '';
-			if (unt.actions.linkWorker.returnable()) {
-				unt.components.navPanel.getBackButton().style.display = '';
+			if (unt.settings.users.current) {
+				if (unt.actions.linkWorker.returnable()) {
+					unt.components.navPanel.getBackButton().style.display = '';
 
-				if (unt.tools.isMobile())
-					unt.components.navPanel.getMenuButton().style.display = 'none';
-			} else {
-				unt.components.navPanel.getBackButton().style.display = 'none';
+					if (unt.tools.isMobile())
+						unt.components.navPanel.getMenuButton().style.display = 'none';
+				} else {
+					unt.components.navPanel.getBackButton().style.display = 'none';
 
-				if (unt.tools.isMobile())
-					unt.components.navPanel.getMenuButton().style.display = '';
+					if (unt.tools.isMobile())
+						unt.components.navPanel.getMenuButton().style.display = '';
+				}
 			}
 		}
 	})
@@ -300,7 +403,8 @@ unt.icons = new Object({
 	addPerson: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none"/><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>',
 	messagesOk: '<svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><g><rect fill="none" height="24" width="24" x="0"/><path d="M17.34,20l-3.54-3.54l1.41-1.41l2.12,2.12l4.24-4.24L23,14.34L17.34,20z M12,17c0-3.87,3.13-7,7-7c1.08,0,2.09,0.25,3,0.68 V4c0-1.1-0.9-2-2-2H4C2.9,2,2,2.9,2,4v18l4-4h6v0c0-0.17,0.01-0.33,0.03-0.5C12.01,17.34,12,17.17,12,17z"/></g></svg>',
 	wallPost: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none"/><path d="M4 4h7V2H4c-1.1 0-2 .9-2 2v7h2V4zm6 9l-4 5h12l-3-4-2.03 2.71L10 13zm7-4.5c0-.83-.67-1.5-1.5-1.5S14 7.67 14 8.5s.67 1.5 1.5 1.5S17 9.33 17 8.5zM20 2h-7v2h7v7h2V4c0-1.1-.9-2-2-2zm0 18h-7v2h7c1.1 0 2-.9 2-2v-7h-2v7zM4 13H2v7c0 1.1.9 2 2 2h7v-2H4v-7z"/></svg>',
-	comments: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none"/><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg>'
+	comments: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none"/><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg>',
+	backArrow: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none"/><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>'
 });
 
 unt.components = new Object({
@@ -1297,8 +1401,6 @@ unt.components = new Object({
 		}
 	}),
 	createNavigationPanel: function () {
-		if (!unt.settings.users.current) return null;
-
 		let navFixed = document.createElement('div');
 		navFixed.classList.add('navbar-fixed');
 
@@ -1323,6 +1425,7 @@ unt.components = new Object({
 
 			let i = document.createElement('i');
 			a.appendChild(i);
+			i.style.marginRight = '15px';
 			i.innerHTML = '<svg id="nav_burger_icon" class="unt_icon" style="fill: white" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"></path><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path></svg><svg id="nav_back_arrow_icon" style="fill: white; display: none" class="unt_icon" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"></path><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"></path></svg>';
 			i.getElementsByTagName('svg')[0].addEventListener('click', function () {
 				unt.Sidenav.getInstance(document.getElementById('user-navigation')).open();
@@ -1331,9 +1434,12 @@ unt.components = new Object({
 				unt.actions.linkWorker.returnable() ? history.back() : '';
 			});
 
+			if (!unt.settings.users.current) {
+				i.getElementsByTagName('svg')[0].style.display = 'none';
+			}
+
 			let titleDiv = document.createElement('div');
 			a.appendChild(titleDiv);
-			titleDiv.style.marginLeft = '15px';
 
 			navFixed.setTitle = function (title) {
 				titleDiv.innerText = title;
@@ -1356,7 +1462,7 @@ unt.components = new Object({
 
 			let logoWrapper = document.createElement('div');
 			navContainer.appendChild(logoWrapper);
-			logoWrapper.style = 'width: 25%';
+			logoWrapper.style = unt.settings.users.current ? 'width: 25%' : 'width: 20%';
 
 			let logoContainer = document.createElement('div');
 			logoWrapper.appendChild(logoContainer);
@@ -1414,80 +1520,83 @@ unt.components = new Object({
 			partialActionsContainer.classList.add('right');
 			partialActions.appendChild(partialActionsContainer);
 
-			let userInfoActionContainer = document.createElement('a');
-			userInfoActionContainer.classList.add('dropdown-trigger');
-			userInfoActionContainer.style.cursor = 'pointer';
-			userInfoActionContainer.classList.add('unselectable');
-			userInfoActionContainer.classList.add('valign-wrapper');
-			userInfoActionContainer.style.width = '100%';
-			partialActionsContainer.appendChild(userInfoActionContainer);
+			if (unt.settings.users.current) {
+				let userInfoActionContainer = document.createElement('a');
 
-			let userImage = document.createElement('img');
-			userInfoActionContainer.appendChild(userImage);
-			userImage.classList.add('circle');
-			userImage.width = userImage.height = 28;
-			userImage.src = unt.settings.users.current.photo_url;
+				userInfoActionContainer.classList.add('dropdown-trigger');
+				userInfoActionContainer.style.cursor = 'pointer';
+				userInfoActionContainer.classList.add('unselectable');
+				userInfoActionContainer.classList.add('valign-wrapper');
+				userInfoActionContainer.style.width = '100%';
+				partialActionsContainer.appendChild(userInfoActionContainer);
 
-			let userCredentials = document.createElement('div');
-			userCredentials.style.marginLeft = '15px';
-			userCredentials.style.fontSize = '90%';
-			userCredentials.innerText = unt.settings.users.current.first_name + ' ' + unt.settings.users.current.last_name;
-			userInfoActionContainer.appendChild(userCredentials);
+				let userImage = document.createElement('img');
+				userInfoActionContainer.appendChild(userImage);
+				userImage.classList.add('circle');
+				userImage.width = userImage.height = 28;
+				userImage.src = unt.settings.users.current.photo_url;
 
-			let arrowButton = document.createElement('i');
-			userInfoActionContainer.appendChild(arrowButton);
-			arrowButton.innerHTML = unt.icons.downArrow;
-			arrowButton.style.marginLeft = arrowButton.style.marginRight = '10px';
-			arrowButton.getElementsByTagName('svg')[0].style.fill = 'white';
-			arrowButton.getElementsByTagName('svg')[0].style.marginTop = '13px';
+				let userCredentials = document.createElement('div');
+				userCredentials.style.marginLeft = '15px';
+				userCredentials.style.fontSize = '90%';
+				userCredentials.innerText = unt.settings.users.current.first_name + ' ' + unt.settings.users.current.last_name;
+				userInfoActionContainer.appendChild(userCredentials);
 
-			let ulDropdownContent = document.createElement('ul');
-			ulDropdownContent.classList.add('dropdown-content');
-			ulDropdownContent.id = 'actionsId';
-			userInfoActionContainer.setAttribute('data-target', ulDropdownContent.id);
-			partialActionsContainer.appendChild(ulDropdownContent);
+				let arrowButton = document.createElement('i');
+				userInfoActionContainer.appendChild(arrowButton);
+				arrowButton.innerHTML = unt.icons.downArrow;
+				arrowButton.style.marginLeft = arrowButton.style.marginRight = '10px';
+				arrowButton.getElementsByTagName('svg')[0].style.fill = 'white';
+				arrowButton.getElementsByTagName('svg')[0].style.marginTop = '13px';
 
-			let userInfoContent = document.createElement('li');
-			ulDropdownContent.appendChild(userInfoContent);
+				let ulDropdownContent = document.createElement('ul');
+				ulDropdownContent.classList.add('dropdown-content');
+				ulDropdownContent.id = 'actionsId';
+				userInfoActionContainer.setAttribute('data-target', ulDropdownContent.id);
+				partialActionsContainer.appendChild(ulDropdownContent);
 
-			let currentUserProfileLink = document.createElement('a');
-			userInfoContent.appendChild(currentUserProfileLink);
-			currentUserProfileLink.href = '/' + (unt.settings.users.current.screen_name ? unt.settings.users.current.screen_name : ('id' + unt.settings.users.current.user_id));
+				let userInfoContent = document.createElement('li');
+				ulDropdownContent.appendChild(userInfoContent);
 
-			let infoDiv = document.createElement('div');
-			infoDiv.classList.add('valign-wrapper');
-			currentUserProfileLink.appendChild(infoDiv);
+				let currentUserProfileLink = document.createElement('a');
+				userInfoContent.appendChild(currentUserProfileLink);
+				currentUserProfileLink.href = '/' + (unt.settings.users.current.screen_name ? unt.settings.users.current.screen_name : ('id' + unt.settings.users.current.user_id));
 
-			let userImageDrop = document.createElement('img');
-			infoDiv.appendChild(userImageDrop);
-			userImageDrop.classList.add('circle');
-			userImageDrop.width = userImage.height = 28;
-			userImageDrop.src = unt.settings.users.current.photo_url;
-			userImageDrop.style.marginRight = '15px';
+				let infoDiv = document.createElement('div');
+				infoDiv.classList.add('valign-wrapper');
+				currentUserProfileLink.appendChild(infoDiv);
 
-			let userCredentialsInfo = document.createElement('div');
-			userCredentialsInfo.innerText = unt.settings.users.current.first_name + ' ' + unt.settings.users.current.last_name;
-			infoDiv.appendChild(userCredentialsInfo);
+				let userImageDrop = document.createElement('img');
+				infoDiv.appendChild(userImageDrop);
+				userImageDrop.classList.add('circle');
+				userImageDrop.width = userImage.height = 28;
+				userImageDrop.src = unt.settings.users.current.photo_url;
+				userImageDrop.style.marginRight = '15px';
 
-			let dividerLi = document.createElement('li');
-			dividerLi.classList.add('divider');
-			ulDropdownContent.appendChild(dividerLi);
+				let userCredentialsInfo = document.createElement('div');
+				userCredentialsInfo.innerText = unt.settings.users.current.first_name + ' ' + unt.settings.users.current.last_name;
+				infoDiv.appendChild(userCredentialsInfo);
 
-			let logoutButtonLi = document.createElement('li');
-			ulDropdownContent.appendChild(logoutButtonLi);
+				let dividerLi = document.createElement('li');
+				dividerLi.classList.add('divider');
+				ulDropdownContent.appendChild(dividerLi);
 
-			let logoutButton = document.createElement('a');
-			logoutButtonLi.appendChild(logoutButton);
-			logoutButton.innerText = unt.settings.lang.getValue('logout');
-			logoutButton.addEventListener('click', function () {
-				return unt.actions.dialog(unt.settings.lang.getValue('logout_q'), unt.settings.lang.getValue('logout_qq'), true, true).then(function (response) {
-					if (response) {
-						unt.toast({html: unt.settings.lang.getValue('logout_q') + '...'});
+				let logoutButtonLi = document.createElement('li');
+				ulDropdownContent.appendChild(logoutButtonLi);
 
-						return unt.settings.users.current.logout();
-					}
+				let logoutButton = document.createElement('a');
+				logoutButtonLi.appendChild(logoutButton);
+				logoutButton.innerText = unt.settings.lang.getValue('logout');
+				logoutButton.addEventListener('click', function () {
+					return unt.actions.dialog(unt.settings.lang.getValue('logout_q'), unt.settings.lang.getValue('logout_qq'), true, true).then(function (response) {
+						if (response) {
+							unt.toast({html: unt.settings.lang.getValue('logout_q') + '...'});
+
+							return unt.settings.users.current.logout();
+						}
+					});
 				});
-			});
+			}
 
 			navFixed.setTitle = function (title) {
 				currentPage.innerText = title;
@@ -1513,11 +1622,12 @@ unt.components = new Object({
 
 		unt.components.mainBlock = mainDiv;
 
-		if (unt.settings.users.current) {
-			let navPanel = unt.components.createNavigationPanel();
-			mainDiv.appendChild(navPanel);
-			unt.components.navPanel = navPanel;
-		}
+		let navPanel = unt.components.createNavigationPanel();
+		mainDiv.appendChild(navPanel);
+		unt.components.navPanel = navPanel;
+
+		if (!unt.settings.users.current)
+			unt.components.navPanel.hide();
 
 		let menuContainer = document.createElement('div');
 		let collectionUl = document.createElement('ul');
@@ -1654,6 +1764,8 @@ unt.components = new Object({
 				resultedMenuPlaceholder.classList = ['col s12'];
 				resultedMenuPlaceholder.style.padding = 0;
 				resultedMenuPlaceholder.style.height = '100%';
+				resultedMenuPlaceholder.style.maxWidth = '60%';
+				resultedMenuPlaceholder.style.margin = 'auto';
 				menuContainer.appendChild(resultedMenuPlaceholder);
 
 				resultedMenuPlaceholder.style.paddingLeft = '7px';
