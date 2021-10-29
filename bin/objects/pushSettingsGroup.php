@@ -14,8 +14,10 @@ class PushSettingsGroup extends SettingsGroup
 	private bool $notificationsEnabled;
 	private bool $soundEnabled;
 
-	public function __construct ($connection, array $params = [])
+	public function __construct (Entity $user, PDO $connection, array $params = [])
 	{
+		$this->currentEntity     = $user;
+
 		$this->type              = "push";
 		$this->currentConnection = $connection;
 		$this->eventEmitter      = new EventEmitter();

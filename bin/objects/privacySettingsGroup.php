@@ -12,8 +12,10 @@ class PrivacySettingsGroup extends SettingsGroup
 
 	private array $privacyValues;
 
-	public function __construct ($connection, array $params = [])
+	public function __construct (Entity $user, PDO $connection, array $params = [])
 	{
+		$this->currentEntity     = $user;
+		
 		$this->type              = "privacy";
 		$this->currentConnection = $connection;
 

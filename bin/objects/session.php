@@ -84,10 +84,13 @@ class Session
 
 		if ($sessions_list[$this->getId()])
 		{
-			if ($this->isCloseable())
+			if ($this->isCloseable() || intval($_SESSION['restore_stage']) === 3)
 			{
 				unset($sessions_list[$this->getId()]);
 				$cache->set("sessions_" . $this->getCurrentUser()->getId(), serialize($sessions_list));
+
+				if ($this->getId() === $_SESSION['session_id'])
+					$_SESSION = [];
 
 				return true;
 			}

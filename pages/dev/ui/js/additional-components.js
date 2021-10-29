@@ -111,7 +111,7 @@ unt.actions = new Object({
 		authForm.action = '/login';
 
 		let loginField = unt.components.textField(unt.settings.lang.getValue('email'));
-		loginField.getInput().type = 'text';
+		loginField.getInput().type = 'email';
 		loginField.getInput().name = 'email';
 		let passField = unt.components.textField(unt.settings.lang.getValue('password'));
 		passField.getInput().type = 'password';
@@ -128,6 +128,14 @@ unt.actions = new Object({
 		registerLink.innerText = unt.settings.lang.getValue('regstart');
 		authActionsDiv.appendChild(registerLink);
 		registerLink.href = '/register';
+
+		let delimDiv = document.createElement('br');
+		authActionsDiv.appendChild(delimDiv);
+
+		let restoreLink = document.createElement('a');
+		restoreLink.innerText = unt.settings.lang.getValue('forgot_password');
+		authActionsDiv.appendChild(restoreLink);
+		restoreLink.href = '/restore';
 
 		authActionsDiv.appendChild(document.createElement('br'));
 		authActionsDiv.appendChild(document.createElement('br'));
@@ -152,6 +160,16 @@ unt.actions = new Object({
 		authForm.addEventListener('submit', function (event) {
 			event.preventDefault();
 			if (isPending) return;
+
+			if (loginField.getText().isEmpty())
+				return loginField.getInput().classList.add('wrong');
+			else
+				loginField.getInput().classList.remove('wrong');
+
+			if (passField.getText().isEmpty())
+				return passField.getInput().classList.add('wrong');
+			else
+				passField.getInput().classList.remove('wrong');
 
 			isPending = true;
 			loginText.style.display = 'none';

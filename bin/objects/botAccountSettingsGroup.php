@@ -12,8 +12,10 @@ class BotAccountSettingsGroup extends SettingsGroup
 
 	private string $currentLangId;
 
-	public function __construct ($connection, array $params = [])
+	public function __construct (Entity $user, PDO $connection, array $params = [])
 	{
+		$this->currentEntity     = $user;
+		
 		$this->type              = "account";
 		$this->currentConnection = $connection;
 

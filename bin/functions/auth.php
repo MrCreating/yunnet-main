@@ -202,24 +202,7 @@ function auth_user ($connection, $email, $password)
 */
 function check_password ($connection, $user_id, $old_password, $new_password = null)
 {
-	// password may be longer than 6.
-	if (is_empty($old_password) || strlen($old_password) < 6 || strlen($old_password) > 64)
-		return false;
-
-	if ($new_password)
-	{
-		if (is_empty($new_password) || strlen($new_password) < 6 || strlen($old_password) > 64)
-			return false;
-	}
-
-	$res = $connection->prepare("SELECT password FROM users.info WHERE id = ? AND is_deleted = 0 LIMIT 1;");
-	$res->execute([intval($user_id)]);
-
-	// old account password
-	$old_password_hash = strval($res->fetch(PDO::FETCH_ASSOC)["password"]);
-	
-	// return result;
-	return password_verify($old_password, $old_password_hash);
+	return (new User($user_id))->getSettings()->getSettingsGroup('security')->isPasswordCorrect($old_password);
 }
 
 /**
@@ -233,21 +216,7 @@ function check_password ($connection, $user_id, $old_password, $new_password = n
 */
 function change_password ($connection, $user_id, $old_password, $new_password)
 {
-	// new password hash
-	$new_password = password_hash($new_password, PASSWORD_DEFAULT);
-
-	// updating the password
-	$res = $connection->prepare("UPDATE users.info SET password = :new_password WHERE id = :user_id AND is_deleted = 0 LIMIT 1;");
-	$res->bindParam(":new_password", $new_password, PDO::PARAM_STR);
-	$res->bindParam(":user_id",      $user_id,      PDO::PARAM_INT);
-	
-	if ($res->execute())
-	{
-		return $connection->prepare("UPDATE apps.tokens SET is_deleted = 1 WHERE owner_id = ?;")->execute([$user_id]);
-	}
-
-	// error
-	return false;
+	return (new User($user_id))->getSettings()->getSettingsGroup('security')->setPassword($new_password);
 }
 
 /**

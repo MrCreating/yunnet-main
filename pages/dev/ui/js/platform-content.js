@@ -145,6 +145,70 @@ unt.pages = new Object({
 	},
 	restore: function (internalData) {
 		unt.components.navPanel ? unt.components.navPanel.hide() : null;
+
+		if (unt.settings.users.current)
+			return unt.actions.linkWorker.go('/');
+
+		unt.components.navPanel ? unt.components.navPanel.hide() : null;
+		let menu = unt.components.menuElement;
+
+		let restoreDiv = document.createElement('div');
+		menu.appendChild(restoreDiv);
+		restoreDiv.style.marginTop = '100px';
+
+		let button = unt.components.cardButton(unt.icons.backArrow, unt.settings.lang.getValue('logout'), function () {
+			return unt.actions.dialog(unt.settings.lang.getValue('logout'), unt.settings.lang.getValue('confirm_exit'), true, true).then(function (response) {
+				if (response) {
+					return unt.tools.Request({
+						url: '/restore',
+						method: 'POST',
+						data: (new POSTData()).append('action', 'close_session').build(),
+						success: function (response) {
+							try {
+								response = JSON.parse(response);
+								if (response.response)
+									return unt.actions.linkWorker.go('/');
+							} catch (e) {
+								return unt.toast({html: unt.settings.lang.getValue('upload_error')});
+							}
+						},
+						error: function () {
+							return unt.toast({html: unt.settings.lang.getValue('upload_error')});
+						}
+					});
+				}
+			});
+		});
+		button.hide();
+
+		let cardDivForm = document.createElement('div');
+		cardDivForm.classList.add('card');
+		cardDivForm.style.padding = '10px';
+
+		restoreDiv.appendChild(button);
+		restoreDiv.appendChild(cardDivForm);
+
+		let loader = unt.components.loaderElement();
+		cardDivForm.appendChild(loader);
+		cardDivForm.style.textAlign = '-webkit-center';
+
+		return unt.tools.Request({
+			url: '/restore',
+			method: 'POST',
+			data: (new POSTData()).append('action', 'get_state').build(),
+			success: function (response) {
+				try {
+					response = JSON.parse(response);
+
+					return unt.modules.accountActions.restore(response.closed ? -1 : response.state, restoreDiv, cardDivForm, button);
+				} catch (e) {
+					return unt.toast({html: unt.settings.lang.getValue('upload_error')});
+				}
+			},
+			error: function () {
+				return unt.toast({html: unt.settings.lang.getValue('upload_error')});
+			}
+		});
 	},
 	banned: function (internalData) {
 		unt.components.navPanel ? unt.components.navPanel.hide() : null;
