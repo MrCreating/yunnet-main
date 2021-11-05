@@ -50,7 +50,9 @@ if (isset($_POST['action']))
 			break;
 
 			case 'clear':
-				die(json_encode(array('response' => intval($chat->clear()))));
+				$chat->clear();
+
+				die(json_encode(array()));
 			break;
 
 			case 'set_user_level':
@@ -232,6 +234,23 @@ if (isset($_POST['action']))
 
 				die(json_encode(array('response' => 1)));
 			break;
+
+			case 'save_message':
+				if ($chat->canWrite() !== 1)
+					die(json_encode(array('error' => 1)));
+
+				$message = $chat->findMessageById(intval($_POST['message_id']));
+				if ($message)
+				{
+					$message->setText(strval($_POST['text']));
+					$message->setAttachments((new AttachmentsParser())->getObjects($_POST['attachments']));
+
+					if ($message->apply() === 1)
+					{
+						die(json_encode(array('id' => $message->getId())));
+					}
+				}
+			break;
 			
 			default:
 			break;
@@ -321,10 +340,6 @@ if (isset($_POST["action"]))
 
 	switch ($action)
 	{
-		case 'save_message':
-			require __DIR__ . '/../form/modules/save_message.php';
-		break;
-
 		case "delete_messages":
 			$chat_data = parse_id_from_string($_REQUEST['s']);
 			if (!$chat_data)

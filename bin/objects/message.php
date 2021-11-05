@@ -200,8 +200,103 @@ class Message
 		return false;
 	}
 
-	public function apply (): Message
-	{}
+	public function apply (): int
+	{
+		if ($this->getOwnerId() !== intval($_SESSION['user_id'])) return 0;
+
+		$can_write_messages = $this->boundChat->canWrite();
+
+		if ($can_write_messages === 0) return -1;
+		if ($can_write_messages === -1) return -2;
+		if ($this->boundChat->getType() === 'conversation' && $can_write_messages === -2)
+		{
+			if (!$this->boundChat->addUser(intval($_SESSION['user_id']))) return -1;
+		}
+
+		$attachments_list = $this->getAttachments();
+		$text             = $this->getText();
+
+		if (is_empty($text) && count($attachments_list) === 0) return -3;
+		if (strlen($text) > 4096) return 0;
+		if (count($attachments_list) > 10) return -5;
+
+		$done_text    = trim($text);
+		$current_time = $this->getTime();
+		$done_atts    = '';
+
+		foreach ($attachments_list as $key => $value) {
+			$done_atts .= $value->getCredentials();
+		}
+
+		$companion_id = $this->boundChat->getType() === 'dialog' ? ($this->boundChat->getCompanion()->getType() === 'bot' ? $this->boundChat->getCompanion()->getId() * -1 : $this->boundChat->getCompanion()->getId()) : 0;
+
+		$res = $this->currentConnection->prepare("UPDATE messages.chat_engine_1 SET text = ?, attachments = ?, reply = ?, is_edited = 1 WHERE uid = ? AND local_chat_id = ? LIMIT 1");
+
+		if (!$res->execute([
+			$done_text,
+			'',
+			$done_atts,
+			$this->boundChat->getUID(),
+			$this->getId()
+		])) return -9;
+
+		$atts_array = [];
+		foreach ($attachments_list as $index => $attachment)
+		{
+			$atts_array[] = $attachment->toArray();
+		}
+
+		$event = [
+			'event' => 'edit_message',
+			'message' => [
+				'from_id'     => $this->getOwnerId(),
+				'id'          => $this->getId(),
+				'type'        => 'message',
+				'text'        => $done_text,
+				'time'        => $this->getTime(),
+				'attachments' => $atts_array,
+				'fwd'         => [],
+				'is_edited'   => 1
+			],
+			'uid' => $this->boundChat->getUID()
+		];
+
+		$user_ids  = [];
+		$local_ids = [];
+
+		if ($this->boundChat->getType() === 'dialog')
+		{
+			if (intval($_SESSION['user_id']) === $this->boundChat->getCompanion()->getId())
+			{
+				$user_ids  = [intval($_SESSION['user_id'])];
+				$local_ids = [intval($_SESSION['user_id'])];
+			} else
+			{
+				$user_ids  = [intval($_SESSION['user_id']), $companion_id];
+				$local_ids = [$companion_id, intval($_SESSION['user_id'])];
+			}
+
+			if ($this->boundChat->getType() === 'dialog' && $this->boundChat->getCompanion()->getType() === 'bot')
+			{
+				if (intval($_SESSION['user_id']) < 0)
+					$event['bot_peer_id'] = intval($_SESSION['user_id']);
+				if ($companion_id < 0)
+					$event['bot_peer_id'] = $companion_id;
+			}
+		} else
+		{
+			$member_ids = $this->boundChat->getMembers();
+
+			foreach ($member_ids as $index => $user_info) {
+				$user_ids[]  = $user_info->user_id;
+				$local_ids[] = $user_info->local_id;
+			}
+		}
+
+		$this->boundChat->sendEvent($user_ids, $local_ids, $event, $this->getOwnerId());
+
+		return 1;
+	}
 
 	public function getOwnerId (): int
 	{
