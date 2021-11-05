@@ -77,7 +77,7 @@ if (isset($_POST['action']))
 		break;
 	}
 
-	if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
+	if (!Context::get()->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
 	switch ($action) {
 		case 'get_settings':
@@ -229,10 +229,10 @@ if (isset($_POST['action']))
 		break;
 	}
 
-	die(json_encode(array('error' => 1)));
+	if (!$dev) 
+		die(json_encode(array('error' => 1)));
 }
 
 if (!$dev) 
 	die(json_encode(array('flex' => 1)));
-
 ?>

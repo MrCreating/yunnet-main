@@ -1,418 +1,651 @@
 <?php
 
+require_once __DIR__ . '/../functions/messages.php';
+require_once __DIR__ . '/message.php';
+require_once __DIR__ . '/dialog.php';
+require_once __DIR__ . '/conversation.php';
+
 /**
- * Chat class.
- * Repesenta dual-chats and multichats
+ * Base chat class.
+ * Used for dialog and conversations
 */
 
-class Chat extends EventEmitter
+abstract class Chat extends EventEmitter
 {
-	private $currentConnection = NULL;
+	protected int $uid;
+	protected int $peer_id;
+	protected int $lastReadMsgId;
 
-	private $peer_id     = NULL;
-	private $is_bot_chat = NULL;
-	private $uid         = NULL;
-	private $members     = NULL;
+	protected bool $isValid;
+	protected bool $is_read;
 
-	private $last_message = NULL;
-	private $can_write    = NULL;
+	protected bool $notifications_enabled;
 
-	private $is_leaved   = NULL;
-	private $is_kicked   = NULL;
-	private $is_muted    = NULL;
+	protected string $type;
 
-	private $leaved_time = NULL;
-	private $cleared_msg = NULL;
+	protected $currentConnection;
 
-	private $isValid    = false;
+	abstract public function canWrite (): int;
 
-	////////////////////////////////////////////////////////////////////////////////////////////
-	public function __construct (string $peer_id)
+	public function __construct (string $localId)
 	{
-		$user_id = /*intval($_SESSION['user_id'])*/1;
-
+		$this->isValid = false;
 		$this->currentConnection = DataBaseManager::getConnection();
 
-		$chat_data = $this->parseId($peer_id);
-		if (!$chat_data) return;
+		$this->notifications_enabled = true;
+		$this->is_read               = true;
+		$this->type                  = 'chat';
 
-		$this->peer_id     = $chat_data['chat_id'];
-		$this->is_bot_chat = $chat_data['is_bot'];
+		$is_bot_dialog = false;
+		$is_multi_chat = false;
+		$local_chat_id = 0;
 
-		$this->uid = $this->getUID();
-		if ($this->uid)
-			$this->isValid = true;
-
-		$this->members      = $this->getMembers();
-		$this->can_write    = $this->canWrite();
-		$this->last_message = $this->getLastMessage();
-	}
-
-	public function getMembers (): array
-	{
-		$user_id = /*intval($_SESSION['user_id'])*/1;
-		$send_id = $this->getPeerId();
-		$is_bot  = $this->isBotChat();
-
-		if ($is_bot)
-			$send_id = $send_id * -1;
-
-		if (is_array($this->members))
-			return $this->members;
-
-		$result = [];
-
-		if ($this->isMultiChat())
+		if (substr($localId, 0, 1) === "b")
 		{
-			$res = $this->currentConnection
-						->prepare("SELECT DISTINCT user_id, is_muted, is_leaved, invited_by, leaved_time, is_kicked, permissions_level, lid, cleared_message_id FROM messages.members_chat_list WHERE uid = ? ORDER BY permissions_level DESC;");
-
-			if ($res->execute([$this->uid]))
-			{
-				$data = $res->fetchAll(PDO::FETCH_ASSOC);
-
-				if ($data)
-				{
-					foreach ($data as $index => $user_info) 
-					{
-						$current_user_id = intval($user_info['user_id']);
-						$user_object = $current_user_id > 0 ? new User($current_user_id) : new Bot($current_user_id * -1);
-
-						$user_object->chatInfo = new Data([
-							'localId'   => intval($user_info["lid"]),
-							'invitedBy' => intval($user_info["invited_by"]),
-							'flags'   => [
-								'isMuted'  => intval($user_info["permissions_level"]) === 9 ? false : intval($user_info["is_muted"]),
-								'isLeaved' => intval($user_info["is_leaved"]),
-								'isKicked' => intval($user_info["permissions_level"]) === 9 ? false : intval($user_info["is_kicked"]),
-								'level'    => intval($user_info["permissions_level"])
-							]
-						]);
-
-						if ($current_user_id === $user_id)
-						{
-							$this->is_kicked   = intval($user_info["permissions_level"]) === 9 ? false : boolval(intval($user_info["is_kicked"]));
-							$this->is_leaved   = boolval(intval($user_info["is_leaved"]));
-							$this->is_muted    = intval($user_info["permissions_level"]) === 9 ? false : boolval(intval($user_info["is_muted"]));
-							$this->leaved_time = intval($user_info["leaved_time"]);
-							$this->cleared_msg = intval($user_info["cleared_message_id"]);
-						}
-
-						$result[$user_object->getId()] = $user_object;
-					}
-				}
-			}
-		} else
+			$is_bot_dialog = true;
+			$is_multi_chat = false;
+			$local_chat_id = intval(substr($localId, 1, strlen($localId))) * -1;
+		} else if (intval($localId) < 0)
 		{
-			$current_user = $user_id > 0 ? new User($user_id) : new Bot($user_id * -1);
-			$conversator  = $send_id > 0 ? new User($send_id) : new Bot($send_id * -1);
-
-			$result = [$current_user, $conversator];
+			$is_bot_dialog = false;
+			$is_multi_chat = true;
+			$local_chat_id = intval($localId);
+		} else if (intval($localId) > 0)
+		{
+			$is_bot_dialog = false;
+			$is_multi_chat = false;
+			$local_chat_id = intval($localId);
 		}
 
-		return $result;
-	}
+		$res = $this->currentConnection->prepare($is_bot_dialog ? "SELECT is_read, last_read_message_id, uid FROM messages.members_chat_list WHERE lid = ? AND uid > 0 AND user_id = ? LIMIT 1" : "SELECT is_read, last_read_message_id, uid FROM messages.members_chat_list WHERE lid = ? AND user_id = ? LIMIT 1");
 
-	public function canWrite ()
-	{
-		if (!$this->valid())
-			return false;
-
-		if ($this->can_write !== NULL)
-			return boolval($this->can_write);
-
-		$user_id = /*intval($_SESSION['user_id'])*/1;
-		$send_id = $this->getPeerId();
-		$is_bot  = $this->isBotChat();
-
-		if ($is_bot)
-			$send_id = $send_id * -1;
-
-		// current user or send destination not exists
-		if ($user_id === 0 || $send_id === 0) return false;
-
-		// if it is a not multi-chat or chat not exists and not multi-chat
-		if ($this->uid > 0 || $this->uid === NULL)
+		if ($res->execute([$local_chat_id, $_SESSION['user_id']]))
 		{
-			// if bot writes to user firstly
-			if ($user_id < 0)
+			$result = $res->fetch(PDO::FETCH_ASSOC);
+			if (isset($result['uid']))
 			{
-				$bot = new Bot($user_id);
-
-				if ($bot->valid())
-				{
-					$relations = $bot->getRelationsState($send_id);
-					if (!$relations || $relations === -1) return false;
-
-					return true;
-				}
+				$this->uid = intval($result['uid']);
 			} else
 			{
-				// if user writes to bot or another user
+				$this->uid = 0;
+			}
 
-				//$with = $this->getMembers()[1];
+			$this->peer_id       = intval($local_chat_id);
+			$this->is_read       = intval($result['is_read']);
+			$this->lastReadMsgId = intval($result['last_read_message_id']);
+		}
+	}
 
-				// to bot
-				if ($is_bot)
+	public function getLastReadMessageId (): int
+	{
+		return $this->lastReadMsgId;
+	}
+
+	public function getUID (): int
+	{
+		return $this->uid ? $this->uid : 0;
+	}
+
+	public function getLocalPeerId (): int
+	{
+		return $this->peer_id;
+	}
+
+	public function getType (): string
+	{
+		return $this->type;
+	}
+
+	public function valid (): bool
+	{
+		return boolval($this->isValid);
+	}
+
+	public function isNotificationsEnabled (): bool
+	{
+		return $this->notifications_enabled;
+	}
+
+	public function setNotificationsEnabled (): bool
+	{
+		$this->notifications_enabled = !$this->notifications_enabled;
+
+		return $this->currentConnection->prepare("UPDATE messages.members_chat_list SET notifications = ? WHERE uid = ? AND user_id = ? LIMIT 1")->execute([intval($this->notifications_enabled), $this->uid, intval($_SESSION['user_id'])]);
+	}
+
+	public function clear (): bool
+	{
+		$last_message = $this->getLastMessage();
+		if ($last_message)
+		{
+			$last_message_id = $last_message->getId();
+			$this->read($last_message_id);
+
+			if ($this->currentConnection->prepare("UPDATE messages.members_chat_list SET hidden = 1, cleared_message_id = ? WHERE user_id = ? AND uid = ? LIMIT 1")->execute([$last_message_id, intval($_SESSION['user_id']), $this->uid]))
+			{
+				$event = [
+					'event' => 'cleared_chat'
+				];
+
+				if ($this->getType() === 'dialog' && $this->getCompanion()->getType() === 'bot')
 				{
-					$with = new Bot($user_id);
-
-					$can_write_to_bot = $with->getSettings()->getSettingsGroup('privacy')->getGroupValue('can_write_messages');
-					if ($can_write_to_bot === 2 && ($with->getOwnerId() !== $user_id)) return false;
-
-					return true;
+					$event['bot_peer_id'] = $this->getCompanion()->getId() * -1;
 				} else
 				{
-					// to user
-					// always can write to itself
-					if ($send_id === $user_id) return true;
-
-					$with = new User($send_id);
-
-					if ($with->valid())
-					{
-						if ($with->isBanned()) return false;
-
-						//if ($with->isBlocked() || $with->inBlacklist()) return false;
-
-						$can_write_to_user = $with->getSettings()->getSettingsGroup('privacy')->getGroupValue('can_write_messages');
-
-						if ($can_write_to_user === NULL || $can_write_to_user === 0) return true;
-						if ($can_write_to_user === 1/* && $with->isFriend()*/) return true;
-					}
+					$event['peer_id'] = $this->getLocalPeerId();
 				}
-			}
-		} else
-		{
-			// multi-chat
-			if ($this->isKicked()) return false;
-			if ($this->isLeaved()) return 2;
-			if ($this->isMuted()) return 1;
 
-			return true;
+				return $this->sendEvent([intval($_SESSION['user_id'])], [0], $event);
+			}
 		}
 
 		return false;
 	}
 
-	public function sendMessage (string $text, array $attachments, array $fwd): bool
-	{}
-
-	public function sendServiceMessage (string $eventType, User $destination = NULL): bool
-	{}
-
-	public function getMessages (int $offset, int $count): array
-	{}
-
-	public function getLastMessage (): ?Message
+	public function isRead (): bool
 	{
-		if ($this->last_message !== NULL)
-			return $this->last_message;
+		return $this->is_read;
+	}
 
-		$connection = $this->currentConnection;
+	public function read (int $messageId = 0): bool
+	{
+		$last_read_message_id = $messageId <= 0 ? $this->getLastReadMessageId() : $messageId;
 
-		$res = $connection->prepare("SELECT DISTINCT uid, leaved_time, return_time, is_leaved, is_kicked, is_muted, cleared_message_id, last_time FROM messages.members_chat_list WHERE uid = ? AND user_id = ? AND lid != 0 ORDER BY last_time DESC LIMIT 1;");
-
-		if ($res->execute([intval($this->uid), /*intval($_SESSION['user_id'])*/1]))
+		if (
+			$this->currentConnection->prepare("UPDATE messages.members_chat_list SET is_read = 1, last_read_message_id = ? WHERE user_id = ? AND uid = ? LIMIT 1000")->execute([$last_read_message_id, intval($_SESSION['user_id']), $this->uid]) &&
+			$this->currentConnection->prepare("UPDATE messages.members_chat_list SET hidden = 0 WHERE uid = ? AND user_id = ? AND is_leaved = 0 AND is_kicked = 0 LIMIT 1000")->execute([$this->uid, intval($_SESSION['user_id'])])
+		)
 		{
-			$chat = $res->fetch(PDO::FETCH_ASSOC);
-			if ($chat)
+			if (intval($_SESSION['user_id']) < 0)
+				return true;
+
+			$event = [
+				'event' => 'dialog_read'
+			];
+
+			if ($this->getType() === 'dialog' && $this->getCompanion()->getType() === 'bot')
 			{
-				$uid         = intval($chat["uid"]);
-				$leaved_time = intval($chat["leaved_time"]);
-				$return_time = intval($chat["return_time"]);
-				$is_leaved   = intval($chat["is_leaved"]);
-				$is_kicked   = intval($chat["is_kicked"]);
-				$is_muted    = intval($chat["is_muted"]);
-				$cl_msg_id   = intval($chat["cleared_message_id"]);
+				$event['bot_peer_id'] = $this->getCompanion()->getId() * -1;
+			} else
+			{
+				$event['peer_id'] = $this->getLocalPeerId();
+			}
 
-				$query = $this->getFinalChatQuery($uid, $leaved_time, $return_time, $is_leaved, $is_kicked, true, $cl_msg_id);
+			return $this->sendEvent([intval($_SESSION['user_id'])], [0], $event);
+		}
 
-				$res = $connection->prepare($query);
-				if ($res->execute())
-				{
-					$data = $res->fetch(PDO::FETCH_ASSOC)["local_chat_id"];
-					if ($data !== NULL)
-					{
-						$local_id = intval($data);
+		return false;
+	}
 
-						return new Message($this, $local_id);
-					}
-				}
+	public function sendMessage (string $text = '', string $attachments = '', string $fwd = '', string $payload = ''): int
+	{
+		$can_write_messages = $this->canWrite();
+
+		if ($can_write_messages === 0) return -1;
+		if ($can_write_messages === -1) return -2;
+		if ($this->getType() === 'conversation' && $can_write_messages === -2)
+		{
+			if (!$this->addUser(intval($_SESSION['user_id']))) return -1;
+		}
+
+		$attachments_list = (new AttachmentsParser())->getObjects($attachments);
+
+		if (is_empty($text) && count($attachments_list) === 0) return -3;
+
+		if (strlen($text) > 4096)
+		{
+			$text_list = explode_length($text, 4096);
+			foreach ($text_list as $index => $text_part) {
+				if ($index >= 10) break;
+
+				if ($index === (count($text_list) - 1))
+					return $this->sendMessage($text_part, $attachments, $fwd, $payload);
+				else
+					$this->sendMessage($text_part);
 			}
 		}
+		if (count($attachments_list) > 10) return -5;
+
+		$done_text    = trim($text);
+		$current_time = time();
+		$done_atts    = '';
+
+		foreach ($attachments_list as $key => $value) {
+			$done_atts .= $value->getCredentials();
+		}
+
+		if (!$this->uid && $this->getType() === 'dialog')
+		{
+			$this->uid = get_last_uid() + 1;
+			if (!$this->uid)return -6;
+
+			$companion_id = $this->getCompanion()->getId();
+
+			if (!$this->currentConnection->prepare("INSERT INTO messages.members_chat_list (user_id, lid, uid, cleared_message_id, last_time) VALUES (?, ?, ?, 0, ?)")->execute([intval($_SESSION['user_id']), $companion_id, $this->uid, $current_time]) || 
+				!$this->currentConnection->prepare("INSERT INTO messages.members_chat_list (user_id, lid, uid, cleared_message_id, last_time) VALUES (?, ?, ?, 0, ?)")->execute([$companion_id, intval($_SESSION['user_id']), $this->uid, $current_time])
+			) return -7;
+		} else if (!$this->uid && $this->getType() === 'conversation')
+		{
+			return -10;
+		}
+
+		$companion_id = $this->getType() === 'dialog' ? ($this->getCompanion()->getType() === 'bot' ? $this->getCompanion()->getId() * -1 : $this->getCompanion()->getId()) : 0;
+
+		$local_message_id = intval(get_local_chat_id($this->uid));
+		if (!$local_message_id) return -8;
+
+		$res = $this->currentConnection->prepare("INSERT INTO messages.chat_engine_1 (
+			uid, owner_id, local_chat_id, text, attachments, reply, time, flags, to_id
+		) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)");
+
+		if (!$res->execute([
+			$this->uid,
+			intval($_SESSION['user_id']),
+			$local_message_id,
+			$done_text,
+			'',
+			$done_atts,
+			$current_time,
+			$companion_id
+		])) return -9;
+
+		$atts_array = [];
+		foreach ($attachments_list as $index => $attachment)
+		{
+			$atts_array[] = $attachment->toArray();
+		}
+
+		$event = [
+			'event' => 'new_message',
+			'message' => [
+				'from_id'     => intval($_SESSION['user_id']),
+				'id'          => $local_message_id,
+				'type'        => 'message',
+				'text'        => $done_text,
+				'time'        => $current_time,
+				'attachments' => $atts_array,
+				'fwd'         => []
+			],
+			'uid' => $this->uid
+		];
+
+		if (!is_empty($payload) && strlen($payload) < 1024)
+			$event['payload'] = $payload;
+
+		$user_ids  = [];
+		$local_ids = [];
+
+		if ($this->getType() === 'dialog')
+		{
+			if (intval($_SESSION['user_id']) === $this->getCompanion()->getId())
+			{
+				$user_ids  = [intval($_SESSION['user_id'])];
+				$local_ids = [intval($_SESSION['user_id'])];
+			} else
+			{
+				$user_ids  = [intval($_SESSION['user_id']), $companion_id];
+				$local_ids = [$companion_id, intval($_SESSION['user_id'])];
+			}
+
+			if ($this->getType() === 'dialog' && $this->getCompanion()->getType() === 'bot')
+			{
+				if (intval($_SESSION['user_id']) < 0)
+					$event['bot_peer_id'] = intval($_SESSION['user_id']);
+				if ($companion_id < 0)
+					$event['bot_peer_id'] = $companion_id;
+			}
+		} else
+		{
+			$member_ids = $this->getMembers();
+
+			foreach ($member_ids as $index => $user_info) {
+				$user_ids[]  = $user_info->user_id;
+				$local_ids[] = $user_info->local_id;
+			}
+		}
+
+		$this->sendEvent($user_ids, $local_ids, $event, intval($_SESSION['user_id']));
+
+		$this->currentConnection->prepare("UPDATE messages.members_chat_list SET hidden = 0, is_read = 0, last_time = ? WHERE uid = ? AND is_leaved = 0 AND is_kicked = 0")->execute([$current_time, $this->uid]);
+
+		if (intval($_SESSION['user_id']) > 0 && $this->getType() === 'dialog' && $this->getCompanion()->getType() === 'bot')
+		{
+			toggle_send_access($this->currentConnection, intval($_SESSION['user_id']), $companion_id);
+		}
+
+		return $this->read() ? $local_message_id : $local_message_id;
+	}
+
+	public function sendServiceMessage (string $event, ?int $entity_id = NULL, ?string $new_src = NULL, ?string $new_title = NULL): int
+	{
+		$current_time = time();
+
+		$allowed_events = [
+			"mute_user", "unmute_user", "returned_to_chat",
+			"join_by_link", "leaved_chat", "updated_photo",
+			"deleted_photo", "kicked_user", "invited_user",
+			"change_title", "chat_create"
+		];
+
+		if (!in_array($event, $allowed_events)) return -15;
+
+		if (!$this->uid && $this->getType() === 'dialog')
+		{
+			$this->uid = get_last_uid() + 1;
+			if (!$this->uid)return -6;
+
+			$companion_id = $this->getCompanion()->getId();
+
+			if (!$this->currentConnection->prepare("INSERT INTO messages.members_chat_list (user_id, lid, uid, cleared_message_id, last_time) VALUES (?, ?, ?, 0, ?)")->execute([intval($_SESSION['user_id']), $companion_id, $this->uid, $current_time]) || 
+				!$this->currentConnection->prepare("INSERT INTO messages.members_chat_list (user_id, lid, uid, cleared_message_id, last_time) VALUES (?, ?, ?, 0, ?)")->execute([$companion_id, intval($_SESSION['user_id']), $this->uid, $current_time])
+			) return -7;
+		} else if (!$this->uid && $this->getType() === 'conversation')
+		{
+			return -10;
+		}
+
+		$companion_id = $this->getType() === 'dialog' ? ($this->getCompanion()->getType() === 'bot' ? $this->getCompanion()->getId() * -1 : $this->getCompanion()->getId()) : 0;
+
+		$local_message_id = intval(get_local_chat_id($this->uid));
+		if (!$local_message_id) return -8;
+
+		$res = $this->currentConnection->prepare("INSERT INTO messages.chat_engine_1 (
+			uid, owner_id, local_chat_id, text, attachments, reply, time, flags, to_id, event, new_src, new_title
+		) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)");
+
+		if (!$res->execute([
+			$this->uid,
+			intval($_SESSION['user_id']),
+			$local_message_id,
+			'',
+			'',
+			'',
+			$current_time,
+			$entity_id,
+			$event,
+			$new_src ? $new_src : '',
+			$new_title ? $new_title : ''
+		])) return -9;
+
+		$event = [
+			'event' => 'new_message',
+			'message' => [
+				'from_id' => intval($_SESSION['user_id']),
+				'id'      => $local_message_id,
+				'type'    => 'service_message',
+				'time'    => $current_time,
+				'action' => [
+					'type' => strtolower($event),
+				]
+			]
+		];
+
+		if ($entity_id)
+			$event['message']['action']['to_id'] = $entity_id;
+		if ($new_src)
+			$event["message"]["action"]["new_photo_url"] = $new_src;
+		if ($new_title)
+			$event["message"]["action"]["new_title"] = $new_title;
+
+		$user_ids  = [];
+		$local_ids = [];
+
+		if ($this->getType() === 'dialog')
+		{
+			if (intval($_SESSION['user_id']) === $this->getCompanion()->getId())
+			{
+				$user_ids  = [intval($_SESSION['user_id'])];
+				$local_ids = [intval($_SESSION['user_id'])];
+			} else
+			{
+				$user_ids  = [intval($_SESSION['user_id']), $companion_id];
+				$local_ids = [$companion_id, intval($_SESSION['user_id'])];
+			}
+
+			if ($this->getType() === 'dialog' && $this->getCompanion()->getType() === 'bot')
+			{
+				if (intval($_SESSION['user_id']) < 0)
+					$event['bot_peer_id'] = intval($_SESSION['user_id']);
+				if ($companion_id < 0)
+					$event['bot_peer_id'] = $companion_id;
+			}
+		} else
+		{
+			$member_ids = $this->getMembers();
+
+			foreach ($member_ids as $index => $user_info) {
+				$user_ids[]  = $user_info->user_id;
+				$local_ids[] = $user_info->local_id;
+			}
+		}
+
+		$this->sendEvent($user_ids, $local_ids, $event, intval($_SESSION['user_id']));
+
+		$this->currentConnection->prepare("UPDATE messages.members_chat_list SET hidden = 0, is_read = 0, last_time = ? WHERE uid = ? AND is_leaved = 0 AND is_kicked = 0")->execute([$current_time, $this->uid]);
+
+		return $local_message_id;
+	}
+
+	public function findMessageById (int $messageId): ?Message
+	{
+		$message = new Message($this, $messageId);
+
+		if ($message->valid() && !$message->isDeleted())
+			return $message;
 
 		return NULL;
 	}
 
-	public function clear (): bool
-	{}
-
-	public function addUser (Entity $user): bool
-	{}
-
-	public function removeUser (Entity $user): bool
-	{}
-
-	public function toggleWriteAccess (Entity $to): bool
-	{}
-
-	public function setTitle (string $newTitle): bool
-	{}
-
-	public function setPhoto (?Photo $newPhoto): bool
-	{}
-
-	public function getTitle (): ?string
-	{}
-
-	public function getPhoto (): ?Photo
-	{}
-
-	public function getUID ()
-	{
-		if ($this->uid !== NULL)
-			return $this->uid;
-
-		$connection = $this->currentConnection;
-		$local_id   = $this->getPeerId();
-		$is_bot     = $this->isBotChat();
-		$user_id    = /*intval($_SESSION['user_id'])*/1;
-
-		if ($is_bot && $local_id > 0)
-			$local_id = $local_id * -1;
-
-		$result = $this->isBotChat() ? 
-					$connection->prepare("SELECT uid FROM messages.members_chat_list WHERE lid = ? AND uid > 0 AND user_id = ? LIMIT 1;") : 
-					$connection->prepare("SELECT uid FROM messages.members_chat_list WHERE lid = ? AND user_id = ? LIMIT 1;");
-
-		if ($result->execute([$local_id, $user_id]))
-		{
-			$uid = $result->fetch(PDO::FETCH_ASSOC)["uid"];
-			if ($uid)
-			{
-				return intval($uid);
-			}
-		}
-
-		return $this->uid;
-	}
-
-	public function getLeavedTime (): int
-	{
-		return intval($this->leaved_time);
-	}
-
-	public function isKicked (): bool
-	{
-		if (!$this->isMultiChat()) return false;
-
-		return boolval($this->is_kicked);
-	}
-
-	public function isLeaved (): bool
-	{
-		if (!$this->isMultiChat()) return false;
-
-		return boolval($this->is_leaved);
-	}
-
-	public function isMuted (): bool
-	{
-		if (!$this->isMultiChat()) return false;
-
-		return boolval($this->is_muted);
-	}
-
-	public function getPeerId (): int
-	{
-		return intval($this->peer_id);
-	}
-
-	public function isMultiChat (): bool
-	{
-		return $this->valid() && $this->uid < 0 && !$this->isBotChat();
-	}
-
-	public function isBotChat (): bool
-	{
-		return $this->valid() && $this->is_bot_chat;
-	}
-
-	public function valid (): bool
-	{
-		return $this->isValid;
-	}
-
 	public function toArray (): array
 	{
-		return [];
-	}
-	////////////////////////////////////////////////////////////////////////////////////////////
+		$chat = [];
 
-	///////////////////////////// PRIVATE MESSAGES METHODS /////////////////////////////////////
-	private function parseId ($id): ?array
-	{
-		// default result.
-		$result = intval($id);
-		$is_bot = false;
-
-		// if it is not integer - it may be a bot chat.
-		if ($result === 0)
+		if ($this->getType() === 'dialog' && $this->getCompanion()->getType() === 'bot')
 		{
-			$result = intval(explode('b', $id)[1]);
-
-			if ($result > 0) $is_bot = true;
+			$chat['bot_peer_id'] = $this->getCompanion()->getId() * -1;
+		} else
+		{
+			$chat['peer_id'] = $this->getLocalPeerId();
 		}
 
-		// if it is already 0 - it is incorrect string!
-		if ($result === 0) 
-			return NULL;
+		$last_message = $this->getLastMessage();
 
-		// parsed data.
-		return ['chat_id' => $result, 'is_bot'  => $is_bot];
-	}
+		$chat['metadata'] = [
+			'is_read_by_me' => intval($this->isRead()),
+			'notifications' => intval($this->isNotificationsEnabled())
+		];
 
-	private function getFinalChatQuery ($uid, $leaved_time, $return_time, $is_leaved, $is_kicked, $last_message = true, $cleared_message_id = 0, $offset = 0, $count = 100)
-	{
-		$user_id = /*intval($_SESSION['user_id'])*/1;
+		if (!$this->isRead())
+			$chat['metadata']['unread_count'] = $last_message ? ($last_message->getId() - $this->getLastReadMessageId()) : 0;
 
 		if ($last_message)
-			$last_message = ' DESC LIMIT 1';
-		else
-			$last_message = ' DESC LIMIT '.intval($offset).', '.intval($count);
+			$chat['last_message'] = $last_message->toArray();
 
-		$query = "SELECT local_chat_id/*, is_edited, time, text, event, new_src, new_title, owner_id, to_id, reply, attachments, keyboard*/ FROM messages.chat_engine_1 WHERE deleted_for_all != 1 AND local_chat_id > ".$cleared_message_id." AND (deleted_for NOT LIKE '%".intval($user_id).",%' OR deleted_for IS NULL) AND uid = ".$uid." ORDER BY local_chat_id".$last_message.";";
+		$chat['chat_info'] = [
+			'is_multi_chat' => intval($this->getType() === 'conversation'),
+			'is_bot_chat'   => intval($this->getType() === 'dialog' && $this->getCompanion()->getType() === 'bot'),
+			'data'          => []
+		];
 
-		if ($uid < 0)
+		if ($this->getType() === 'dialog')
 		{
-			if ($is_kicked || $is_leaved)
-			{
-				$query = 'SELECT local_chat_id/*, is_edited, time, text, event, new_src, new_title, owner_id, to_id, reply, attachments, keyboard*/ FROM messages.chat_engine_1 WHERE deleted_for_all != 1 AND local_chat_id > '.$cleared_message_id.' AND (deleted_for NOT LIKE "%'.intval($user_id).',%" OR deleted_for IS NULL) AND uid = '.$uid.' AND time <= '.$leaved_time.' ORDER BY local_chat_id'.$last_message.';';
-			} else {
-				if (!$is_leaved && $return_time !== 0) 
-				{
-					$query = 'SELECT local_chat_id/*, is_edited, time, text, event, new_src, new_title, owner_id, to_id, reply, attachments, keyboard*/ FROM messages.chat_engine_1 WHERE deleted_for_all != 1 AND local_chat_id > '.$cleared_message_id.' AND uid = '.$uid.' AND (deleted_for NOT LIKE "%'.intval($user_id).',%" OR deleted_for IS NULL) AND (time <= '.$leaved_time.' OR time >= '.$return_time.') ORDER BY local_chat_id'.$last_message.';';
-								
-					if ($leaved_time === 0)
-					{
-						$query = 'SELECT local_chat_id/*, is_edited, time, text, event, new_src, new_title, owner_id, to_id, reply, attachments, keyboard*/ FROM messages.chat_engine_1 WHERE (deleted_for NOT LIKE "%'.intval($user_id).',%" OR deleted_for IS NULL) AND deleted_for_all != 1 AND local_chat_id > '.$cleared_message_id.' AND uid = '.$uid.' OR uid = '.$uid.' AND time >= '.$return_time.' AND (deleted_for NOT LIKE "%'.intval($user_id).',%" OR deleted_for IS NULL) ORDER BY local_chat_id'.$last_message.';';
-					}
-				}
+			$chat['chat_info']['data'] = $this->getCompanion()->toArray('*');
+		}
+		if ($this->getType() === 'conversation')
+		{
+			if ($this->isPinnedMessageShown())
+				$chat['metadata']['show_pinned_messages'] = 1;
+
+			$chat['metadata']['permissions'] = [
+				'is_kicked' => intval($this->isKicked()),
+				'is_leaved' => intval($this->isLeaved()),
+				'is_muted'  => intval($this->isMuted())
+			];
+
+			$chat['chat_info']['data'] = [
+				'access_level' => $this->getAccessLevel(),
+				'permissions'  => json_decode(json_encode($this->getPermissions()), true),
+				'title'        => $this->getTitle(),
+				'photo_url'    => $this->getPhoto() ? $this->getPhoto()->getLink() : Project::DEVELOPERS_URL . '/images/default.png'
+			];
+
+			if (!$this->isKicked() && !$this->isLeaved())
+				$chat['chat_info']['data']['members_count'] = count($this->getMembers());
+		}
+
+		return $chat;
+	}
+
+	public function getLastMessage (): ?Message
+	{
+		if (!method_exists($this, 'getMessages')) return NULL;
+
+		$message = $this->getMessages(1)[0];
+
+		return $message ? $message : NULL;
+	}
+
+	////////////////////////////////////////////
+	public static function getList (int $count = 30, int $offset = 0, int $showOnly = 0): array
+	{
+		$result = [];
+
+		if ($showOnly < 0 || $showOnly > 2) $showOnly = 0;
+		if ($count > 100) $count = 100;
+		if ($count < 0) $count = 1;
+		if ($offset < 0) $offset = 0;
+
+		$connection = DataBaseManager::getConnection();
+
+		/**
+		 * showOnly
+		 * 0 - all
+		 * 1 - conversations
+		 * 2 - dialogs
+		*/
+
+		$query = "SELECT DISTINCT uid, lid, last_time FROM messages.members_chat_list WHERE hidden = 0 AND user_id = ? AND lid != 0 ORDER BY last_time DESC LIMIT ".intval($offset).",".intval($count);
+
+		if ($showOnly === 1)
+			$query = "SELECT DISTINCT uid, lid, last_time FROM messages.members_chat_list WHERE hidden = 0 AND user_id = ? AND lid != 0 AND uid < 0 ORDER BY last_time DESC LIMIT ".intval($offset).",".intval($count);
+		if ($showOnly === 2)
+			$query = "SELECT DISTINCT uid, lid, last_time FROM messages.members_chat_list WHERE hidden = 0 AND user_id = ? AND lid != 0 AND uid > 0 ORDER BY last_time DESC LIMIT ".intval($offset).",".intval($count);
+
+		$res = $connection->prepare($query);
+		if ($res->execute([intval($_SESSION['user_id'])]))
+		{
+			$local_chat_ids = $res->fetchAll(PDO::FETCH_ASSOC);
+
+			foreach ($local_chat_ids as $index => $local_dialog_id) {
+				$uid = intval($local_dialog_id['uid']);
+				$lid = intval($local_dialog_id['lid']);
+
+				$resulted_local_id = $uid > 0 && $lid < 0 ? ("b" . $lid * -1) : $lid;
+
+				$dialog = self::findById($resulted_local_id);
+				if ($dialog)
+					$result[] = $dialog;
 			}
 		}
 
-		return $query;
+		return $result;
 	}
-	////////////////////////////////////////////////////////////////////////////////////////////
 
-	/// static members ///
-	public static function create (string $title, array $members, Permissions $permissions): bool
-	{}
+	public static function create (string $title, array $users_list, ?Photo $photo, ?array $permissions_list = []): int
+	{
+		$title = trim($title);
+		if (is_empty($title) || strlen($title) > 64) return -1;
 
-	// get chats list
-	public static function getList (int $offset, int $count): array
-	{}
+		$creator_id = intval($_SESSION['user_id']);
+		if ($creator_id <= 0) return -3;
+
+		$resulted_users = [$creator_id];
+		foreach ($users_list as $index => $user_id) 
+		{
+			if ($index > 500) break;
+
+			if (!in_array($user_id, $resulted_users))
+				$resulted_users[] = intval($user_id);
+		}
+
+		$url = $photo && $photo->valid() ? $photo->getQuery() : '';
+
+		if (count($resulted_users) < 2 || count($resulted_users) > 1000)
+			return -2;
+
+		$permissions = [
+			'can_change_title'  => 4,
+			'can_change_photo'  => 4,
+			'can_kick'          => 7,
+			'can_invite'        => 7,
+			'can_invite_bots'   => 8,
+			'can_mute'          => 5,
+			'can_pin_message'   => 4,
+			'delete_messages_2' => 7,
+			'can_change_levels' => 9,
+			'can_link_join'     => 0
+		];
+
+		foreach ($permissions as $permissionName => $value)
+		{
+			if (isset($permissions_list[$permissionName]))
+			{
+				if (intval($permissions_list[$permissionName]) >= 0 && intval($permissions_list[$permissionName]) <= 9) 
+					$permissions[$permissionName] = intval($permissions_list[$permissionName]);
+			}
+		}
+
+		$uid = get_last_uid(false);
+		if (!$uid) return -4;
+
+		$connection = DataBaseManager::getConnection();
+		if ($connection->prepare("INSERT INTO messages.members_engine_1 (uid, title, permissions, photo) VALUES (?, ?, ?, ?)")->execute([
+			$uid,
+			$title,
+			serialize($permissions),
+			$url
+		]))
+		{
+			$my_local_chat_id = 0;
+
+			foreach ($resulted_users as $index => $user_id) 
+			{
+				$entity = Entity::findById($user_id);
+				if (!$entity || $entity->isBanned()) continue;
+				if (!$entity->canInviteToChat()) continue;
+
+				$user_permissions_level = $user_id === $creator_id ? 9 : 0;
+
+				$res = $connection->prepare('SELECT lid FROM messages.members_chat_list WHERE user_id = ? ORDER BY lid LIMIT 1');
+				if ($res->execute([$user_id]))
+				{
+					$lid = intval($res->fetch(PDO::FETCH_ASSOC)["lid"]) - 1;
+					if ($user_id === intval($_SESSION['user_id']))
+						$my_local_chat_id = $lid;
+
+					$connection->prepare('INSERT INTO messages.members_chat_list (user_id, lid, uid, cleared_message_id, invited_by, permissions_level, last_time) VALUES (?, ?, ?, 0, ?, ?, ?)')->execute([$user_id, $lid, $uid, $creator_id, $user_permissions_level, time()]);
+				}
+			}
+
+			$chat = Chat::findById($my_local_chat_id);
+			if (!$chat || !$chat->valid()) return -8;
+
+			if ($chat->sendServiceMessage("chat_create", $creator_id, NULL, $title) >= 0)
+				return $my_local_chat_id * -1;
+		}
+
+		return -7;
+	}
+
+	public static function findById (string $localId): ?Chat
+	{
+		$dialog = intval($localId) < 0 ? new Conversation($localId) : new Dialog($localId);
+
+		if ($dialog->valid())
+			return $dialog;
+
+		return NULL;
+	}
 }
 
 ?>

@@ -1,13 +1,28 @@
 <?php
-header("Content-Type: application/json");
 
-session_write_close();
+require_once __DIR__ . '/../bin/objects/api.php';
+
+$api = API::get()->setContentType('application/json');
+if (!$api->valid())
+	$api->sendError(-1, 'Authentication failed: access key is invalid');
+if ($api->getOwner()->isBanned())
+	$api->sendError(-30, 'Authentication failed: account is banned');
+
+$api->callMethod($api->getRequestedMethod(), $api->getRequestParams(), function (?APIResponse $result, ?APIException $error) {
+	if ($error !== null)
+		return $error->send();
+
+	if ($result !== null)
+		return $result->send();
+
+	return $api->sendError(-10, 'Internal server error');
+});
+
+$api->sendError(-2, 'API is temporally unavailable');
+/*session_write_close();
 parse_str(explode("?", $_SERVER["REQUEST_URI"])[1], $_REQUEST);
 $_REQUEST = array_merge($_REQUEST, $_POST);
 
-/**
- * API server.
-*/
 require __DIR__ . '/../bin/functions/dev_functions.php';
 require __DIR__ . '/../bin/taskmanager/index.php';
 
@@ -81,30 +96,6 @@ if (!isset($registered_methods[$method_group]) || !in_array($method_name, $regis
 	die(create_json_error(1, 'Unknown method passed'));
 }
 
-/**
-$method_groups = [
-	'account',  'chats', 'friends',
-	'messages', 'news',  'realtime',
-	'uploads',  'users', 'wall',
-	'notificatons', 'auth'
-];
-
-// Setting up groups and permissions
-$permissions = $context["permissions"];
-$friends_group = [
-	$method_groups[2], $method_groups[8]
-];
-$messages_groups = [
-	$method_groups[1], $method_groups[3]
-];
-$settings_groups = [
-	$method_groups[5], $method_groups[6] 
-];
-$manage_groups = [
-	$method_groups[0]
-];
-*/
-
 try 
 {
 	die(require __DIR__ . '/methods/' . $method_group . '/' . $method_name . '.php');
@@ -113,5 +104,5 @@ try
 	die(create_json_error(-100, 'Internal server error'));
 }
 
-die(create_json_error(-100, 'Internal server error'));
+die(create_json_error(-100, 'Internal server error'));*/
 ?>

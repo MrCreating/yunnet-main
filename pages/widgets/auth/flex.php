@@ -6,10 +6,9 @@
 
 $dev = true;
 
-require __DIR__ . '/../../public/flex.php';
-
-if (!class_exists('App'))
-	require __DIR__ . '/../../../bin/objects/app.php';
+require_once __DIR__ . '/../../../bin/objects/app.php';
+require_once __DIR__ . '/../../../bin/functions/auth.php';
+require_once __DIR__ . '/../../public/flex.php';
 
 /**
  * Get apps by ID.
@@ -28,14 +27,14 @@ if ($action === 'get_app_by_id')
 }
 if ($action === 'resolve_auth')
 {
-	header('Access-Control-Allow-Origin: '.get_page_origin());
+	header('Access-Control-Allow-Origin: ' . get_page_origin());
 	header('Access-Control-Allow-Credentials: true');
 
-	if (!$context->isLogged())
+	if (!Context::get()->allowToUseUnt())
 		die(json_decode(array('error' => 1)));
 
 	$app_id   = intval($_POST['app_id']);
-	$owner_id = $context->getCurrentUser()->getId();
+	$owner_id = Context::get()->getCurrentUser()->getId();
 
 	$perms    = explode(',', strval($_POST['permissions']));
 	$permissions = [];
@@ -46,9 +45,6 @@ if ($action === 'resolve_auth')
 
 		$permissions[] = strval($id);
 	}
-
-	if (!function_exists('create_token'))
-		require __DIR__ . '/../../../bin/functions/auth.php';
 
 	$result = create_token($connection, $owner_id, $app_id, $permissions);
 

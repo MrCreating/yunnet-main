@@ -13,7 +13,6 @@ if ($selected_theme === "")
 
 // getting database connection and require Theme object file.
 require_once __DIR__ . '/../bin/parsers/attachments.php';
-require_once __DIR__ ."/../bin/functions/users.php";
 
 // here we will setup headers for CORS
 header('Access-Control-Allow-Origin: ' . get_page_origin());
@@ -74,7 +73,7 @@ switch ($mode) {
 	case 'js':
 
 		// checking js code evaluation allowance
-		$allow_state = is_js_allowed($connection, $_SESSION["user_id"]);
+		$allow_state = Context::get()->getCurrentUser()->getSettings()->getSettingsGroup('theming')->isJSAllowed();
 		if (!$allow_state)
 		{
 			header("Content-Type: application/json");

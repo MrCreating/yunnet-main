@@ -36,61 +36,6 @@ function parse_id_from_string ($sel)
 }
 
 /**
- * Clear the chat.
- *
- * @return true if chat cleared, or false if error.
- * @throws Event. It send event for user.
- *
- * Parameters:
- * @param $uid - uid of the chat.
- * @param $user_id - user_id which cleares the chat.
- * @param $additional - array who must contain result of parse_id_from_string() function call.
-*/
-function clear_chat ($connection, $uid, $user_id, $additional = [])
-{
-	// DEFAULT PARAMS
-	$leaved_time  = 0;
-	$return_time  = 0;
-	$is_leaved    = 0;
-	$is_kicked    = 0;
-	$last_message = 0;
-
-	$res = $connection->prepare("SELECT is_leaved, is_kicked, return_time, leaved_time FROM messages.members_chat_list WHERE uid = ? AND user_id = ?;");
-	$res->execute([$uid, $user_id]);
-
-	// selecting data of this chat.
-	$result = $res->fetch(PDO::FETCH_ASSOC);
-
-	// chat not exists!!!
-	if (!$result)
-		return false;
-
-	// setting new params
-	$is_leaved   = intval($result["is_leaved"]);
-	$is_kicked   = intval($result["is_kicked"]);
-	$return_time = intval($result["return_time"]);
-	$leaved_time = intval($result["leaved_time"]);
-
-	// setting up last_message_id;
-	$res = $connection->prepare(get_chat_query($uid, $leaved_time, $return_time, $is_leaved, $is_kicked, $user_id, true, 0)); $res->execute([$user_id]);
-
-	// read the chat and send event.
-	read_chat($connection, $uid, $user_id, $additional);
-	$event = [
-		'event' => 'cleared_chat'
-	];
-	$additional["is_bot"] ? $event["bot_peer_id"] = intval($additional["chat_id"]) : $event["peer_id"] = intval($additional["chat_id"]);
-	emit_event([$user_id], [0], $event);
-
-	// resolved id. Clearing.
-	$connection->prepare("UPDATE messages.members_chat_list SET cleared_message_id = ? WHERE user_id = ? AND uid = ? LIMIT 1;")->execute([intval($res->fetch(PDO::FETCH_ASSOC)["local_chat_id"]), intval($user_id), intval($uid)]);
-	$connection->prepare("UPDATE messages.members_chat_list SET hidden = 1 WHERE user_id = ? AND uid = ? LIMIT 1;")->execute([intval($user_id), intval($uid)]);
-
-	// cleared.
-	return true;
-}
-
-/**
  * Receives uid of the chat by lid.
  * @return uid of the chat.
  *
@@ -333,181 +278,6 @@ function get_chat_data_by_uid ($connection, $uid, $user_id, $chat_data = [])
 	}
 
 	return false;
-}
-
-/**
- * Gets 50 first chats of selected $user_id
- * who is not clear and have a previewable message.
- * @return array with chats.
- *
- * Parameters:
- * @param $user_id - user id who chat will get.
-*/
-function get_chats ($connection, $user_id, $offset = 0, $count = 30, $only_chats = false)
-{
-	// max 100 chats per call
-	if (intval($count) < 1 || intval($count) > 100) return [];
-
-	// requesting all chats list.
-	$res = $connection->prepare("SELECT DISTINCT uid, last_time FROM messages.members_chat_list WHERE hidden = 0 AND user_id = ? AND lid != 0".($only_chats ? ' AND uid < 0' : '')." ORDER BY last_time DESC LIMIT ".intval($offset).",".intval($count).";");
-
-	$res->execute([intval($user_id)]);
-	$chats = $res->fetchAll(PDO::FETCH_ASSOC);
-
-	// selecting unique chat uids.
-	$uids = [];
-	foreach ($chats as $key => $value) 
-	{
-		if (!in_array(intval($value['uid']), $uids))
-		{
-			$uids[] = intval($value['uid']);
-		}
-	}
-
-	// parsing it and get chats data
-	$result = [];
-	foreach ($uids as $index => $uid) 
-	{
-		$chat = get_chat_data_by_uid($connection, $uid, $user_id);
-
-		if (!$chat) continue;
-		if (!$chat["last_message"]) continue;
-
-		$result[] = $chat;
-	}
-
-	return $result;
-}
-
-/**
- * Gets messages list (100) of selected $uid
- * @return array with messages
- *
- * Parameters
- * @param $uid - uid of the chat
- * @param $user_id - userid who get the chat
- * @param start_offset, end_offset - offsets
- * @param $sel - array - result of parse_id_from_string() function call
-*/
-function get_chat_messages ($connection, $uid, $user_id, $offset = 0, $count = 100, $sel = [])
-{
-	// DEFAULT PARAMS
-	$leaved_time        = 0;
-	$return_time        = 0;
-	$is_leaved          = 0;
-	$is_kicked          = 0;
-
-	// checking chat info for selected user.
-	$res = $connection->prepare("SELECT is_leaved, is_kicked, return_time, leaved_time, cleared_message_id, keyboard_onetime, keyboard_created FROM messages.members_chat_list WHERE uid = ? AND user_id = ? LIMIT 1;");
-	$res->execute([strval($uid), strval($user_id)]);
-	$result = $res->fetch(PDO::FETCH_ASSOC);
-
-	// if not chat exists.
-	if (!$result) return false;
-
-	// setting new params.
-	$is_leaved          = intval($result["is_leaved"]);
-	$is_kicked          = intval($result["is_kicked"]);
-	$return_time        = intval($result["return_time"]);
-	$leaved_time        = intval($result["leaved_time"]);
-	$cleared_message_id = intval($result["cleared_message_id"]);
-
-	// getting chat query
-	$res = $connection->prepare(get_chat_query($uid, $leaved_time, $return_time, $is_kicked, $is_leaved, $user_id, false, $cleared_message_id, $offset, $count));
-	$res->execute([strval($user_id)]);
-
-	// keyboard params
-	$keyboard_created = boolval(intval($result["keyboard_created"]));
-	if ($keyboard_created)
-	{
-		$keyboard_onetime = intval($result["keyboard_onetime"]);
-		$keyboard_loaded  = false;
-		$keyboard         = false;
-		$last_keyboard_id = 0;
-
-		if ($keyboard_onetime > 1)
-		{
-			$res_k = $connection->prepare("SELECT keyboard FROM messages.chat_engine_1 WHERE uid = ? AND local_chat_id = ? LIMIT 1;");
-			$res_k->execute([$uid, $keyboard_onetime]);
-			$data = $res_k->fetch(PDO::FETCH_ASSOC)["keyboard"];
-			if ($data && $data !== "hide")
-			{
-				$keyboard = $data;
-				$keyboard_loaded = true;
-			}
-		}
-	}
-
-	// fetching messages
-	$res      = $res->fetchAll(PDO::FETCH_ASSOC);
-	$res_done = [];
-	foreach ($res as $index => $message)
-	{
-		// convert message to standartized array
-		$msg = message_to_array($connection, $message, $sel);
-		if ($msg)
-		{
-			if ($keyboard_onetime === 1 && $keyboard_created && !$keyboard_loaded && $msg['keyboard'])
-			{
-				if ($msg["id"] > $last_keyboard_id)
-				{
-					if ($msg['keyboard'] !== '"hide"' && $msg['keyboard'] !== 'hide')
-					{
-						$keyboard = $msg['keyboard'];
-						$last_keyboard_id = $msg["id"];
-					}
-				}
-			}
-			unset($msg['keyboard']);
-
-			$res_done[] = $msg;
-		}
-	}
-	if ($keyboard === "hide") $keyboard = [];
-
-	// load onetime!
-	if ($keyboard_created && $keyboard && $keyboard_onetime === 1) $keyboard_loaded = true;
-
-	// add keyboard
-	if ($keyboard_created && $keyboard && $keyboard_loaded) $res_done[0]['keyboard'] = json_decode($keyboard);
-
-	// return messages.
-	read_chat($connection, $uid, $user_id, $sel);
-	return array_reverse($res_done);
-}
-
-/**
- * Gets pinned messages from the chat
- * @return array with message objects
- *
- * Parameters:
- * @param $uid - global id of chat
-*/
-function get_pinned_messages ($connection, $uid)
-{
-	$res = $connection->prepare("SELECT local_chat_id, is_edited, time, text, event, new_src, new_title, owner_id, to_id, reply, attachments, keyboard FROM messages.members_engine_1 WHERE uid = ? AND deleted_for_all != 1 ORDER BY local_chat_id LIMIT 100;");
-
-	if ($res->execute([intval($uid)]))
-	{
-		$data = $res->fetchAll(PDO::FETCH_ASSOC);
-
-		$res_done = [];
-		foreach ($data as $index => $message)
-		{
-			// convert message to standartized array
-			$msg = message_to_array($connection, $message, $sel);
-			if ($msg)
-			{
-				unset($msg['keyboard']);
-
-				$res_done[] = $msg;
-			}
-		}
-
-		return $res_done;
-	}
-
-	return [];
 }
 
 /**
@@ -1229,11 +999,9 @@ function send_message ($connection, $uid, $owner_id, $additional = [], $params, 
 	{
 		if ($keyboard["keyboard"])
 		{
-			$connection->prepare("UPDATE messages.members_chat_list SET keyboard_created = 1 WHERE uid = ? AND is_leaved = 0 AND is_kicked = 0 AND user_id > 0;")->execute([intval($uid)]);
-			$connection->prepare("UPDATE messages.members_chat_list SET keyboard_onetime = ? WHERE uid = ? AND is_leaved = 0 AND is_kicked = 0 AND user_id > 0;")->execute([$keyboard["params"]["oneTime"] ? 1 : intval($local_chat_id), intval($uid)]);
+			$connection->prepare("UPDATE messages.members_chat_list SET keyboard_created = 1, keyboard_onetime = ? WHERE uid = ? AND is_leaved = 0 AND is_kicked = 0 AND user_id > 0;")->execute([$keyboard["params"]["oneTime"] ? 1 : intval($local_chat_id), intval($uid)]);
 		} else 
 		{
-
 			$res = $connection->prepare("SELECT keyboard_onetime FROM messages.members_chat_list WHERE uid = ? AND is_leaved = 0 AND is_kicked = 0 AND user_id > 0 LIMIT 1;");
 			$res->execute([intval($uid)]);
 
@@ -1243,9 +1011,7 @@ function send_message ($connection, $uid, $owner_id, $additional = [], $params, 
 		}
 	}
 
-	$connection->prepare("UPDATE messages.members_chat_list SET last_time = ? WHERE uid = ? AND is_leaved = 0 AND is_kicked = 0;")->execute([time(), intval($uid)]);
-	$connection->prepare("UPDATE messages.members_chat_list SET hidden = 0 WHERE uid = ? AND is_leaved = 0 AND is_kicked = 0;")->execute([intval($uid)]);
-	$connection->prepare("UPDATE messages.members_chat_list SET is_read = 0 WHERE uid = ? AND is_leaved = 0 AND is_kicked = 0;")->execute([intval($uid)]);
+	$connection->prepare("UPDATE messages.members_chat_list SET hidden = 0, is_read = 0, last_time = ? WHERE uid = ? AND is_leaved = 0 AND is_kicked = 0;")->execute([time(), intval($uid)]);
 
 	if ($owner_id > 0 && $additional['is_bot'])
 	{
@@ -1297,9 +1063,7 @@ function read_chat ($connection, $uid, $owner_id, $additional)
 
 	$local_chat_id = intval($res->fetch(PDO::FETCH_ASSOC)['local_chat_id']);
 
-	$connection->prepare("UPDATE messages.members_chat_list SET last_read_message_id = ? WHERE user_id = ? AND uid = ? LIMIT 1000;")->execute([intval($local_chat_id), intval($owner_id), intval($uid)]);
-	$connection->prepare("UPDATE messages.members_chat_list SET hidden = 0 WHERE uid = ? AND user_id = ? AND is_leaved = 0 AND is_kicked = 0 LIMIT 1000;")->execute([intval($uid), intval($owner_id)]);
-	$connection->prepare("UPDATE messages.members_chat_list SET is_read = 1 WHERE user_id = ? AND uid = ? LIMIT 1000;")->execute([intval($owner_id), intval($uid)]);
+	$connection->prepare("UPDATE messages.members_chat_list SET hidden = 0, is_read = 1, last_read_message_id = ? WHERE user_id = ? AND uid = ? LIMIT 1000;")->execute([intval($local_chat_id), intval($owner_id), intval($uid)]);
 
 	// bot is not read the chats.
 	if (intval($owner_id) <= 0) return true;	
@@ -1449,157 +1213,9 @@ function send_service_message ($connection, $uid, $owner_id, $message_type, $add
 		emit_event($user_ids, $lids, $event, $owner_id);
 	}
 
-	$connection->prepare("UPDATE messages.members_chat_list SET last_time = ? WHERE uid = ? AND is_leaved = 0 AND is_kicked = 0;")->execute([time(), intval($uid)]);
-	$connection->prepare("UPDATE messages.members_chat_list SET hidden = 0 WHERE uid = ? AND is_leaved = 0 AND is_kicked = 0;")->execute([intval($uid)]);
-	$connection->prepare("UPDATE messages.members_chat_list SET is_read = 0 WHERE uid = ? AND is_leaved = 0 AND is_kicked = 0;")->execute([intval($uid)]);
+	$connection->prepare("UPDATE messages.members_chat_list SET is_read = 0, hidden = 0, last_time = ? WHERE uid = ? AND is_leaved = 0 AND is_kicked = 0;")->execute([time(), intval($uid)]);
 
 	return $local_chat_id;
-}
-
-/**
- * Delete messages for all or only for selected user
- * @return array with array like ($message_id => $delete_state);
- *
- * Parameters:
- * @param $uid - uid of chat from where messages must be deleted
- * @param $deleter_id - user_id who deletes the message
- * @param $message_ids - array with message ids.
- * @param $delete_for_all - flag who sets delete for all or not
- * @param $additional - result of parse_id_from_string() function call
- * @param $permissions - Permissions class instance
- * @param $me - object of current user in chat.
-*/
-function delete_messages ($connection, $uid, $deleter_id, $message_ids, $delete_for_all = 0, $additional = [], $permissions = null, $me = [])
-{
-	// deletion states
-	$NOT_DELETED = 0;
-	$DELETION_OK = 1;
-
-	// selecting unique messaging ids.
-	$messages = [];
-	foreach ($message_ids as $index => $id) {
-		if (intval($id) !== 0)
-			$messages[] = intval($id);
-	}
-
-	// done states.
-	$result = [];
-	foreach ($messages as $index => $message_id)
-	{
-		// selecting message.
-		$res = $connection->prepare('SELECT owner_id, deleted_for FROM messages.chat_engine_1 WHERE (deleted_for NOT LIKE "%'.intval($deleter_id).',%" OR deleted_for IS NULL) AND deleted_for_all != 1 AND local_chat_id = ? AND uid = ?;');
-		$res->execute([intval($message_id), intval($uid)]);
-		$data = $res->fetch(PDO::FETCH_ASSOC);
-
-		// checking owner_id
-		$owner_id = intval($data["owner_id"]);
-
-		// if not message exists.
-		if (!$owner_id)
-		{
-			$result[strval($message_id)] = $NOT_DELETED;
-			continue;
-		}
-
-		// checking in chat
-		if ($uid > 0)
-		{
-			// for deletion you must be owner of message in dialog.
-			if ($owner_id !== $deleter_id && $delete_for_all)
-			{
-				$result[strval($message_id)] = $NOT_DELETED;
-				continue;
-			}
-		} else
-		{
-			// in multi-chat you must have permission to delete other messages
-			if ($owner_id !== $deleter_id && $delete_for_all)
-			{
-				if ($permissions->getValue("delete_messages_2") > $me["flags"]["level"])
-				{
-					$result[strval($message_id)] = $NOT_DELETED;
-					continue;
-				}
-			}
-		}
-
-		// here we can delete message.
-		$result[strval($message_id)] = $DELETION_OK;
-
-		// delete for all
-		if ($delete_for_all)
-		{
-			$connection->prepare("UPDATE messages.chat_engine_1 SET deleted_for_all = 1 WHERE local_chat_id = ? AND uid = ?;")->execute([intval($message_id), intval($uid)]);
-		}
-		else
-		{
-
-			// delete for me only.
-			$deleted_for = strval($data["deleted_for"]);
-			$deleted_for .= intval($deleter_id).',';
-
-			$res = $connection->prepare("UPDATE messages.chat_engine_1 SET deleted_for = :deleted_for WHERE local_chat_id = :local_chat_id AND uid = :uid;");
-
-			$res->bindParam(":deleted_for",   $deleted_for, PDO::PARAM_STR);
-			$res->bindParam(":uid",           $uid,         PDO::PARAM_INT);
-			$res->bindParam(":local_chat_id", $message_id,  PDO::PARAM_INT);
-			$res->execute();
-		}
-	}
-
-	// send event.
-	$event = [
-		'event'       => 'message_delete',
-		'message_ids' => $result
-	];
-
-	if ($uid < 0) $to_id = 0;
-	$user_ids = [];
-	$lids     = [];
-
-	if ($delete_for_all)
-	{
-		if ($uid > 0)
-		{
-			$to_id = intval($additional["chat_id"]);
-			if ($additional["is_bot"])
-				$to_id = intval($additional["chat_id"])*-1;
-
-			$user_ids = [$deleter_id, $to_id];
-			$lids     = [$to_id, $deleter_id];
-
-			if (($deleter_id < 0 || $to_id < 0) && $uid > 0)
-			{
-				if ($deleter_id < 0)
-					$event["bot_peer_id"] = $deleter_id;
-
-				if ($to_id < 0)
-					$event["bot_peer_id"] = $to_id;
-			}
-		}
-		else
-		{
-			$chat_data = get_chat_info($connection, $uid);
-
-			$user_ids = $chat_data["members"];
-			$lids     = $chat_data["local_chat_ids"];
-		}
-	} else {
-		$user_ids[] = $deleter_id;
-		if ($deleter_id < 0)
-			$event["bot_peer_id"] = $deleter_id;
-		if ($to_id < 0)
-			$event["bot_peer_id"] = $to_id;
-
-		$to_id = intval($additional["chat_id"]);
-		if ($additional["is_bot"])
-			$to_id = intval($additional["chat_id"])*-1;
-
-		$lids[] = $to_id;
-	}
-
-	emit_event($user_ids, $lids, $event, $deleter_id);
-	return $result;
 }
 
 /**

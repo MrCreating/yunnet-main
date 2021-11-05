@@ -1,15 +1,14 @@
 <?php
-require __DIR__ . '/../../../bin/context.php';
-require __DIR__ . '/../../page_templates.php';
-
-$context = new Context();
+$context = Context::get();
 $connection = $context->getConnection();
+
+require_once __DIR__ . '/../../page_templates.php';
 
 if (REQUESTED_PAGE === '/flex')
 {
-	die(require __DIR__ . '/flex.php');
+	die(require_once __DIR__ . '/flex.php');
 }
 
-die(default_page_template($context->isMobile(), $context->getLanguage()->id, $context->getCurrentUser()));
+die(default_page_template(Context::get()->isMobile(), Context::get()->getLanguage()->id, Context::get()->getCurrentUser()));
 
 ?>

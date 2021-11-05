@@ -23,27 +23,25 @@ class App
 
 	function __construct (int $app_id)
 	{
-		$connection = $_SERVER['dbConnection'];
-		if (!$connection)
-			$connection = get_database_connection();
+		$this->currentConnection = DataBaseManager::getConnection();;
 
-		$this->currentConnection = $connection;
-
-		$res = $connection->prepare("SELECT id, title, owner_id, description, photo_path, direct_auth, creation_time FROM apps.info WHERE id = ? AND is_deleted != 1 LIMIT 1;");
-		$res->execute([intval($app_id)]);
-		$data = $res->fetch(PDO::FETCH_ASSOC);
-
-		if ($data)
+		$res = $this->currentConnection->prepare("SELECT id, title, owner_id, description, photo_path, direct_auth, creation_time FROM apps.info WHERE id = ? AND is_deleted != 1 LIMIT 1");
+		if ($res->execute([$app_id]))
 		{
-			$this->isValid           = true;
-			$this->id                = intval($data["id"]);
-			$this->title             = strval($data["title"]);
-			$this->directAuthEnabled = boolval($data['direct_auth']);
-			$this->creation_time     = intval($data['creation_time']);
-			$this->description       = strval($data["description"]);
+			$data = $res->fetch(PDO::FETCH_ASSOC);
 
-			$this->owner_id = intval($data['owner_id']);
-			$this->photo    = $data['photo_path'] !== '' ? (new AttachmentsParser())->resolveFromQuery($data['photo_path']) : NULL;
+			if ($data)
+			{
+				$this->isValid           = true;
+				$this->id                = intval($data["id"]);
+				$this->title             = strval($data["title"]);
+				$this->directAuthEnabled = boolval($data['direct_auth']);
+				$this->creation_time     = intval($data['creation_time']);
+				$this->description       = strval($data["description"]);
+
+				$this->owner_id = intval($data['owner_id']);
+				$this->photo    = $data['photo_path'] !== '' ? (new AttachmentsParser())->resolveFromQuery($data['photo_path']) : NULL;
+			}
 		}
 	}
 

@@ -87,7 +87,7 @@ class User extends Entity
 		if ($this->getId() === $user_id) return false;
 
 		$res = $this->currentConnection->prepare("SELECT state FROM users.relationships WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ?;");
-		if ($res->execute([strval($owner_id), strval($user_id), strval($user_id), strval($owner_id)]))
+		if ($res->execute([strval($this->getId()), strval($user_id), strval($user_id), strval($this->getId())]))
 		{
 			$state = intval($res->fetch(PDO::FETCH_ASSOC)["state"]);
 
@@ -180,6 +180,19 @@ class User extends Entity
 	public function getType (): string
 	{
 		return "user";
+	}
+
+	public function canInviteToChat (): bool
+	{
+		if ($this->getId() === intval($_SESSION['user_id'])) return true;
+
+		if (!$this->valid()) return false;
+		if (!$this->isFriends()) return false;
+
+		$invitation = $this->getSettings()->getSettingsGroup('privacy')->getGroupValue('can_invite_to_chats');
+		if (!$invitation || $invitation === 1) return true;
+
+		return false;
 	}
 
 	public function toArray ($fields = ''): array
@@ -297,9 +310,7 @@ class User extends Entity
 			}
 			if (in_array("can_invite_to_chat", $resultedFields))
 			{
-				if (!function_exists('can_invite_to_chat')) require __DIR__ . '/../functions/users.php';
-
-				$result['can_invite_to_chat'] = can_invite_to_chat($this->currentConnection, intval($_SESSION['user_id']), $this);
+				$result['can_invite_to_chat'] = $this->canInviteToChat();
 			}
 			if (in_array('main_photo_as_object', $resultedFields))
 			{

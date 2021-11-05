@@ -35,6 +35,24 @@ function get_page_origin ()
 	return $origin;
 }
 
+// explode string by length
+function explode_length ($text, $length)
+{
+	$result = [];
+
+	$currentLength = 0;
+	$partsCount = intval(strlen($text) / $length);
+
+	for ($i = 0; $i < $partsCount; $i++)
+	{
+		$result[] = substr($text, $currentLength, $length);
+
+		$currentLength += $length;
+	}
+
+	return $result;
+}
+
 // get language function
 function get_language ($connection, $current_user = NULL)
 {

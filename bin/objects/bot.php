@@ -54,6 +54,18 @@ class Bot extends Entity
 		}
 	}
 
+	public function canInviteToChat (): bool
+	{
+		if (!$this->valid()) return false;
+
+		if (intval($_SESSION['user_id']) === $this->getOwnerId()) return true;
+
+		$invitation = $this->getSettings()->getSettingsGroup('privacy')->getGroupValue('can_invite_to_chats');
+		if (!$invitation || $invitation === 0 || $invitation === 1) return true;
+
+		return false;
+	}
+
 	public function getCurrentPhoto ()
 	{
 		return $this->photo;

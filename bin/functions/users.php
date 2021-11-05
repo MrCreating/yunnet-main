@@ -383,12 +383,6 @@ function search_users ($connection, $query, $additional_params = [
 	return $result;
 }
 
-// checks if js allowed
-function is_js_allowed ($connection, $user_id)
-{
-	return Context::get()->getCurrentUser()->getSettings()->getSettingsGroup('theming')->isJSAllowed();
-}
-
 /**
  * Get friendship state
  * @return state 0-2

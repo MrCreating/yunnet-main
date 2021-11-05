@@ -1,10 +1,294 @@
 <?php
 
-require_once __DIR__ . '/../../bin/functions/chats.php';
-require_once __DIR__ . '/../../bin/functions/messages.php';
-require_once __DIR__ . '/../../bin/functions/users.php';
-require_once __DIR__ . "/../../bin/objects/message.php";
-require_once __DIR__ . '/../../bin/objects/chats.php';
+require_once __DIR__ . '/../../bin/objects/chat.php';
+
+if (isset($_POST['action']))
+{
+	$action = strtolower($_POST['action']);
+
+	switch ($action) {
+		case 'get_chat_info_by_link':
+			die(json_encode(array('error' => 3)));
+		break;
+		
+		default:
+		break;
+	}
+
+	if (!Context::get()->allowToUseUnt()) die(json_encode(array('error' => 1)));
+
+	if (isset($_POST['peer_id']) || isset($_POST['chat_id']))
+	{
+		$peer_id = strval(trim(strtolower(isset($_POST['chat_id']) ? strval($_POST['chat_id']) : strval($_POST['peer_id']))));
+		$chat    = Chat::findById($peer_id);
+
+		if (!$chat || !$chat->valid())
+			die(json_encode(array('error' => 1)));
+
+		switch ($action) {
+			case 'send_message':
+				$result = $chat->sendMessage(strval($_POST['text']), strval($_POST['attachments']), strval($_POST['fwd']), strval($_POST['payload']));
+				if ($result <= 0)
+					die(json_encode(array('error' => 1)));
+
+				die(json_encode(array('id' => $result)));
+			break;
+
+			case 'toggle_my_state':
+				if ($chat->getType() !== 'conversation')
+					die(json_encode(array('error' => 1)));
+
+				$result = $chat->isLeaved() ? $chat->addUser(intval($_SESSION['user_id'])) : $chat->removeUser(intval($_SESSION['user_id']));
+				if ($result <= 0)
+					die(json_encode(array('error' => 1)));
+
+				die(json_encode(array('result' => 1)));
+			break;
+
+			case 'read_chat':
+				die(json_encode(array('success' => intval($chat->read()))));
+			break;
+
+			case 'clear':
+				die(json_encode(array('response' => intval($chat->clear()))));
+			break;
+
+			case 'set_user_level':
+				if ($chat->getType() !== 'conversation')
+					die(json_encode(array('error' => 1)));
+
+				$new_level = intval($_POST['new_level']);
+				$user_id   = intval($_POST['user_id']);
+
+				$result = $chat->setUserPermissionsLevel($user_id, $new_level);
+				if ($result <= 0)
+					die(json_encode(array('error' => 1)));
+			break;
+
+			case 'get_members':
+				if ($chat->getType() !== 'conversation')
+					die(json_encode(array('error' => 1)));
+
+				die(json_encode(array_map(function (Data $member) {
+					$object = $member->entity->valid() ? $member->entity->toArray() : ['is_deleted' => 1];
+
+					if (!$member->entity->valid())
+					{
+						if ($member->user_id > 0)
+							$object['user_id'] = $member->user_id;
+						else
+							$object['bot_id'] = $member->user_id;
+					}
+
+					$object['chat_info'] = [
+						'access_level' => $member->access_level,
+						'invited_by'   => $member->invited_by,
+						'is_muted'     => $member->is_muted
+					];
+
+					return $object;
+				}, $chat->getMembers(true))));
+			break;
+
+			case 'get_messages':
+				die(json_encode(array('list' => array_map(function (Message $message) { return $message->toArray(); }, $chat->getMessages(intval($_POST['count']) !== 0 ? intval($_POST['count']) : 100, intval($_POST['offset']) !== 0 ? intval($_POST['offset']) : 0)))));
+			break;
+
+			case 'toggle_notifications':
+				die(json_encode(array('response' => intval($chat->setNotificationsEnabled()))));
+			break;
+
+			case 'toggle_pinned_messages':
+				if ($chat->getType() !== 'conversation')
+					die(json_encode(array('error' => 1)));
+
+				die(json_encode(array('response' => intval($chat->setPinnedMessageShown()))));
+			break;
+
+			case 'set_chat_title':
+				if ($chat->getType() !== 'conversation')
+					die(json_encode(array('error' => 1)));
+
+				$result = $chat->setTitle(strval($_POST['new_title']));
+				if ($result <= 0)
+					die(json_encode(array('error' => 1)));
+
+				die(json_encode(array('response' => 1)));
+			break;
+
+			case 'update_chat_photo':
+				if ($chat->getType() !== 'conversation')
+					die(json_encode(array('error' => 1)));
+
+				$photo = (new AttachmentsParser())->getObject($_POST['photo']);
+				if (!$photo)
+					die(json_encode(array('error' => 1)));
+
+				$result = $chat->setPhoto($photo);
+				if ($result <= 0)
+					die(json_encode(array('error' => 1)));
+
+				die(json_encode(array('response' => 1)));
+			break;
+
+			case 'delete_chat_photo':
+				if ($chat->getType() !== 'conversation')
+					die(json_encode(array('error' => 1)));
+
+				$result = $chat->setPhoto();
+				if ($result <= 0)
+					die(json_encode(array('error' => 1)));
+
+				die(json_encode(array('response' => 1)));
+			break;
+
+			case 'get_chat_link':
+				if ($chat->getType() !== 'conversation')
+					die(json_encode(array('error' => 1)));
+				if ($chat->getAccessLevel() !== 9)
+					die(json_encode(array('error' => 1)));
+
+				die(json_encode(array('response' => $chat->getInviteLink())));
+			break;
+
+			case 'update_chat_link':
+				if ($chat->getType() !== 'conversation')
+					die(json_encode(array('error' => 1)));
+				if ($chat->getAccessLevel() !== 9)
+					die(json_encode(array('error' => 1)));
+
+				if ($chat->updateInviteLink())
+					die(json_encode(array('response' => $chat->getInviteLink())));
+			break;
+
+			case 'toggle_write_access':
+				if ($chat->getType() !== 'conversation')
+					die(json_encode(array('error' => 1)));
+
+				$user_id = intval($_POST['user_id']);
+
+				$result = $chat->toggleWriteAccess($user_id);
+				if ($result <= 0)
+					die(json_encode(array('error' => 1)));
+
+				die(json_encode(array('response' => $chat->findMemberById($user_id)->is_muted)));
+			break;
+
+			case 'add_user':
+				if ($chat->getType() !== 'conversation')
+					die(json_encode(array('error' => 1)));
+
+				$user_ids = explode(',', $_POST['user_ids']);
+				$unique_ids = [];
+
+				foreach ($user_ids as $index => $user_id) 
+				{
+					if ($index > 500) break;
+
+					if (!in_array(intval($user_id), $unique_ids))
+						$unique_ids[] = intval($user_id);
+				}
+
+				foreach ($unique_ids as $index => $user_id) 
+				{
+					if ($index > 100) break;
+
+					$result = $chat->addUser($user_id);
+					if ($result <= 0)
+					{
+						if ($result === -3) die(json_encode(array('error' => 3)));
+						if ($result === -1) die(json_encode(array('error' => 4)));
+
+						die(json_encode(array('error' => 1)));
+					}
+				}
+
+				die(json_encode(array('response' => 1)));
+			break;
+
+			case 'remove_user':
+				if ($chat->getType() !== 'conversation')
+					die(json_encode(array('error' => 1)));
+
+				$user_id = intval($_POST['user_id']);
+
+				$result = $chat->removeUser($user_id);
+				if ($result <= 0)
+					die(json_encode(array('error' => 1)));
+
+				die(json_encode(array('response' => 1)));
+			break;
+
+			case 'update_chat_permissions':
+				if ($chat->getType() !== 'conversation')
+					die(json_encode(array('error' => 1)));
+
+				$group_name = strtolower($_POST['group_name']);
+				$new_value  = intval($_POST['value']);
+
+				$result = $chat->setPermissionsValue($group_name, $new_value);
+				if ($result <= 0)
+					die(json_encode(array('error' => 1)));
+
+				die(json_encode(array('response' => 1)));
+			break;
+			
+			default:
+			break;
+		}
+	} else
+	{
+		switch ($action) {
+			case 'get_chats':
+				die(json_encode(array_map(function (Chat $item) { return $item->toArray(); }, Chat::getList(intval($_POST['count']), intval($_POST['offset']), intval($_POST['only_chats']) ? 1 : 0))));
+			break;
+
+			case 'chat_create':
+				$permissions = [
+					'can_change_title'  => 4,
+					'can_change_photo'  => 4,
+					'can_kick'          => 7,
+					'can_invite'        => 7,
+					'can_invite_bots'   => 8,
+					'can_mute'          => 5,
+					'can_pin_message'   => 4,
+					'delete_messages_2' => 7,
+					'can_change_levels' => 9,
+					'can_link_join'     => 0
+				];
+
+				foreach ($permissions as $index => $value)
+				{
+					if (isset($_POST['permission_' . $index]))
+					{
+						if (intval($_POST['permission_' . $index]) >= 0 && intval($_POST['permission_' . $index]) <= 9) $permissions[$index] = intval($_POST['permission_' . $index]);
+					}
+				}
+
+				$result = Chat::create(strval($_POST['title']),
+										array_map(function ($user_id) { 
+											return intval($user_id); 
+										}, 
+										explode(',', $_POST['members'])), 
+										(new AttachmentsParser())->getObject(strval($_POST['photo'])), 
+										$permissions
+						);
+
+				if ($result < 0)
+					die(json_encode(array('error' => 1)));
+
+				die(json_encode(array('response' => $result * -1)));
+			break;
+			
+			default:
+			break;
+		}
+	}
+
+	die(json_encode(array('error' => 1)));
+}
+
+/*
 
 if (isset($_POST["action"]))
 {
@@ -37,241 +321,8 @@ if (isset($_POST["action"]))
 
 	switch ($action)
 	{
-		case 'send_message':
-			require __DIR__ . '/../form/modules/send_message.php';
-		break;
-
 		case 'save_message':
 			require __DIR__ . '/../form/modules/save_message.php';
-		break;
-
-		case 'chat_create':
-			$title = strval($_POST['title']);
-			$users = explode(',', strval($_POST['members']));
-			$photo = (new AttachmentsParser())->getObject(strval($_POST['photo']));
-
-			$permissions = [
-				'can_change_title'  => 4,
-				'can_change_photo'  => 4,
-				'can_kick'          => 7,
-				'can_invite'        => 7,
-				'can_invite_bots'   => 8,
-				'can_mute'          => 5,
-				'can_pin_message'   => 4,
-				'delete_messages_2' => 7,
-				'can_change_levels' => 9,
-				'can_link_join'     => 0
-			];
-
-			foreach ($permissions as $index => $value) {
-				if (isset($_POST['permission_' . $index]))
-				{
-					if (intval($_POST['permission_' . $index]) >= 0 && intval($_POST['permission_' . $index]) <= 9) $permissions[$index] = intval($_POST['permission_' . $index]);
-				}
-			}	
-
-			$result = create_chat($connection, $context->getCurrentUser()->getId(), $title, $users, $permissions, $photo);
-			if ($result['error'] < 0 || $result['error'] === false)
-			{
-				return json_encode(array('error'=>intval($result)));
-			}
-				
-			die(json_encode(array('response'=>intval($result))));
-		break;
-
-		case 'toggle_my_state':
-			$chat_data = parse_id_from_string($_POST['peer_id']);
-			if (!$chat_data)
-				die(json_encode(array('error' => 1)));
-
-			$sel    = intval($chat_data["chat_id"]);
-			$is_bot = boolval($chat_data["is_bot"]);
-			$uid    = get_uid_by_lid($connection, $sel, $is_bot, $context->getCurrentUser()->getId());
-			if (!$uid)
-				die(json_encode(array('error' => 1)));
-
-			$chat = new Chat($connection, $uid);
-			if (!$chat->isValid)
-				die(json_encode(array('error' => 1)));
-
-			$members = $chat->getMembers(true);
-			$me = $members["users"]["user_".$context->getCurrentUser()->getId()];
-			if (!$me || $me['flags']['is_kicked']) die(json_encode(array('error' => 1)));
-
-			if ($me['flags']['is_leaved'])
-			{
-				$result = $chat->addUser($context->getCurrentUser()->getId(), $context->getCurrentUser()->getId(), $chat_data);
-				if (!$result)
-					die(json_encode(array('error' => 1)));
-
-				die(json_encode(array('result' => 1)));
-			} else
-			{
-				$result = $chat->removeUser($context->getCurrentUser()->getId(), $context->getCurrentUser()->getId(), $chat_data);
-				
-				if (!$result)
-					die(json_encode(array('error' => 1)));
-
-				die(json_encode(array('result' => 0)));
-			}
-		break;
-
-		case "toggle_write_access":
-			$chat_data = parse_id_from_string($_POST['peer_id']);
-			if (!$chat_data)
-				die(json_encode(array('error' => 1)));
-
-			$sel    = intval($chat_data["chat_id"]);
-			$is_bot = boolval($chat_data["is_bot"]);
-			$uid    = get_uid_by_lid($connection, $sel, $is_bot, $context->getCurrentUser()->getId());
-			if (!$uid)
-				die(json_encode(array('error' => 1)));
-
-			$chat = new Chat($connection, $uid);
-			if (!$chat->isValid)
-				die(json_encode(array('error' => 1)));
-
-			$members = $chat->getMembers(true);
-			$permissions = $chat->getPermissions();
-
-			$me = $members["users"]["user_".$context->getCurrentUser()->getId()];
-			if (!$me || $me['flags']['is_kicked'] || $me['flags']['is_leaved']) die(json_encode(array('error' => 1)));
-
-			if ($me['flags']['level'] < $permissions->getValue("can_mute"))
-				die(json_encode(array('error' => 1)));
-
-			$mute_user = $members['users']['user_'.intval($_POST['user_id'])];
-			if (!$mute_user || $mute_user['flags']['is_kicked']) 
-				die(json_encode(array('error' => 1)));
-
-			if ($chat->changeWriteAccess($context->getCurrentUser()->getId(), intval($_POST['user_id']), $mute_user['flags']['is_muted'], $chat_data))
-			{
-				die(json_encode(array('state'=>intval(!$mute_user['flags']['is_muted']))));
-			};
-
-			die(json_encode(array('error' => 1)));
-		break;
-
-		case "set_user_level":
-			$chat_data = parse_id_from_string($_POST['peer_id']);
-			if (!$chat_data)
-				die(json_encode(array('error' => 1)));
-
-			$sel    = intval($chat_data["chat_id"]);
-			$is_bot = boolval($chat_data["is_bot"]);
-			$uid    = get_uid_by_lid($connection, $sel, $is_bot, $context->getCurrentUser()->getId());
-			if (!$uid)
-				die(json_encode(array('error' => 1)));
-
-			$chat = new Chat($connection, $uid);
-			if (!$chat->isValid)
-				die(json_encode(array('error' => 1)));
-
-			$members = $chat->getMembers(true);
-			$permissions = $chat->getPermissions();
-
-			$me = $members["users"]["user_".$context->getCurrentUser()->getId()];
-			if (!$me || $me['flags']['is_kicked'] || $me['flags']['is_leaved']) die(json_encode(array('error' => 1)));
-
-			if ($me['flags']['level'] < $permissions->getValue("can_change_levels") || $me['flags']['level'] <= $work_user['flags']['level'])
-				die(json_encode(array('error' => 1)));
-
-			$work_user = $members['users']['user_'.intval($_POST['user_id'])];
-			if (!$work_user || $work_user['flags']['is_kicked'])
-				die(json_encode(array('error' => 1)));
-
-			$new_level = intval($_POST['new_level']);
-			if ($new_level >= $me['flags']['level'])
-				die(json_encode(array('error' => 1)));
-
-			if ($new_level < 0 || $new_level > 9)
-				die(json_encode(array('error' => 1)));
-
-			if ($chat->setUserLevel($work_user['user_id'], $new_level))
-			{
-				die(json_encode(array('response' => 1)));
-			}
-
-			die(json_encode(array('error' => 1)));
-		break;
-
-		case "add_user":
-			$chat_data = parse_id_from_string($_POST["peer_id"]);
-			if (!$chat_data)
-				die(json_encode(array('error' => 1)));
-
-			$sel    = intval($chat_data["chat_id"]);
-			$is_bot = boolval($chat_data["is_bot"]);
-			$uid    = get_uid_by_lid($connection, $sel, $is_bot, $context->getCurrentUser()->getId());
-			if (!$uid)
-				die(json_encode(array('error' => 1)));
-
-			$chat = new Chat($connection, $uid);
-			if (!$chat->isValid)
-				die(json_encode(array('error' => 1)));
-
-			$permissions = $chat->getPermissions();
-			$members     = $chat->getMembers();
-
-			$me = $members["users"]["user_".$context->getCurrentUser()->getId()];
-			if (!$me || $me["flags"]["is_leaved"] || $me["flags"]["is_kicked"])
-				die(json_encode(array('error' => 1)));
-
-			if ($me['flags']['level'] < $permissions->getValue("can_invite"))
-				die(json_encode(array('error'=>2)));
-
-			$users = explode(',', $_POST['user_ids']);
-			$members_list = [];
-
-			foreach ($users as $index => $user_id)
-			{
-				$user_id = intval($user_id);
-				if ($index > 100) break;
-
-				if (!can_invite_to_chat($connection, $context->getCurrentUser()->getId(), ($user_id > 0 ? (new User($user_id)) : new Bot($user_id * -1))))
-					continue;
-
-				$add_member = $members["users"]["user_".$user_id];
-				if (!$add_member['is_kicked'] && $add_member['is_leaved'])
-					die(json_encode(array('error'=>3)));
-
-				if (!$add_member['is_kicked'] && !$add_member['is_leaved'] && $add_member)
-					die(json_encode(array('error'=>4)));
-
-				if (!in_array($user_id, $members_list) && $user_id !== $context->getCurrentUser()->getId())
-				{
-					$members_list[] = $user_id;
-				}
-
-				$chat->addUser($context->getCurrentUser()->getId(), $user_id, $chat_data);
-			}
-
-			die(json_encode(array('response' => 1)));
-		break;
-
-		case "remove_user":
-			$chat_data = parse_id_from_string($_POST["peer_id"]);
-			if (!$chat_data)
-				die(json_encode(array('error' => 1)));
-
-			$sel    = intval($chat_data["chat_id"]);
-			$is_bot = boolval($chat_data["is_bot"]);
-			$uid    = get_uid_by_lid($connection, $sel, $is_bot, $context->getCurrentUser()->getId());
-			if (!$uid)
-				die(json_encode(array('error' => 1)));
-
-			$chat = new Chat($connection, $uid);
-			if (!$chat->isValid)
-				die(json_encode(array('error' => 1)));
-
-			$kick_id = intval($_POST['user_id']);
-
-			if (!$chat->removeUser($context->getCurrentUser()->getId(), $kick_id, $chat_data))
-			{
-				die(json_encode(array('error' => 1)));
-			};
-
-			die(json_encode(array('response' => 1)));
 		break;
 
 		case "delete_messages":
@@ -321,251 +372,6 @@ if (isset($_POST["action"]))
 			die('[]');
 		break;
 
-		case "read_chat":
-			$chat_data = parse_id_from_string($_POST['peer_id']);
-			if (!$chat_data)
-				die(json_encode(array('error' => 1)));
-
-			$sel    = intval($chat_data["chat_id"]);
-			$is_bot = boolval($chat_data["is_bot"]);
-			$uid    = get_uid_by_lid($connection, $sel, $is_bot, $context->getCurrentUser()->getId());
-			if (!$uid)
-				die(json_encode(array('error' => 1)));
-			
-			die(json_encode(array('success'=>intval(read_chat($connection, $uid, $context->getCurrentUser()->getId(), [
-				'chat_id' => $sel,
-				'is_bot'  => $is_bot
-			])))));
-		break;
-
-		case 'get_members':
-			$chat_data = parse_id_from_string($_POST["peer_id"]);
-			if (!$chat_data)
-				die(json_encode(array('error' => 1)));
-
-			$sel    = intval($chat_data["chat_id"]);
-			$is_bot = boolval($chat_data["is_bot"]);
-
-			$uid    = get_uid_by_lid($connection, $sel, $is_bot, $context->getCurrentUser()->getId());
-			if (!$uid)
-				die(json_encode(array('error' => 1)));
-
-			$chat = new Chat($connection, $uid);
-			if (!$chat->isValid)
-				die(json_encode(array('error' => 1)));
-
-			$permissions = $chat->getPermissions();
-			$members     = $chat->getMembers();
-
-			$me = $members["users"]["user_".$context->getCurrentUser()->getId()];
-			if (!$me || $me["flags"]["is_leaved"] || $me["flags"]["is_kicked"])
-				die(json_encode(array('error' => 1)));
-
-			$response = [];
-
-			foreach ($members['users'] as $index => $user) {
-				if ($user['flags']['is_leaved'] || $user['flags']['is_kicked']) continue;
-
-				$user_id = intval($user['user_id']);
-
-				$entity = intval($user_id) > 0 ? new User(intval($user_id)) : new Bot(intval($user_id)*-1);
-
-				$object = [];
-				if (!$entity->valid()) 
-				{
-					$object = [
-						'is_deleted' => 1
-					];
-
-					if ($user_id > 0)
-						$object['user_id'] = $user_id;
-					else
-						$object['bot_id'] = $user_id * -1;
-				} else
-					$object = $entity->toArray();
-
-				$object['chat_info'] = [
-					'access_level' => intval($user['flags']['level']),
-					'invited_by'   => intval($user['invited_by'])
-				];
-
-				if ($user['flags']['is_muted']) $object['chat_info']['is_muted'] = true;
-
-				$response[] = $object;
-			}
-
-			die(json_encode($response));
-		break;
-
-		case 'get_messages':
-			$chat_data = parse_id_from_string($_POST["peer_id"]);
-			if (!$chat_data)
-				die(json_encode(array('error' => 1)));
-
-			$sel    = intval($chat_data["chat_id"]);
-			$is_bot = boolval($chat_data["is_bot"]);
-			$uid    = get_uid_by_lid($connection, $sel, $is_bot, $context->getCurrentUser()->getId());
-			if (!$uid)
-				die(json_encode(array('list'=>[])));
-
-			$offset = (intval($_POST['page'])*100)-100;
-
-			$messages_list = get_chat_messages($connection, $uid, $context->getCurrentUser()->getId(), $offset, 100, $chat_data);
-			if (!$messages_list)
-				die(json_encode(array('list'=>[])));
-
-			$pinned_messages = [];
-			if ($uid < 0)
-			{
-				$chat = new Chat($connection, $uid);
-				if ($chat->isValid)
-				{
-					$permissions = $chat->getPermissions();
-					$members     = $chat->getMembers();
-
-					$me = $members["users"]["user_".$context->getCurrentUser()->getId()];
-					if (!(!$me || $me["flags"]["is_leaved"] || $me["flags"]["is_kicked"]))
-					{
-						$pinned_messages = get_pinned_messages($connection, $uid);
-					}
-				}
-			}
-
-			die(json_encode(array('list'=>$messages_list, 'pinned'=>$pinned_messages)));
-		break;
-
-		case 'toggle_notifications':
-			$chat_data = parse_id_from_string($_POST["peer_id"]);
-			if (!$chat_data)
-				die(json_encode(array('error' => 1)));
-
-			$sel    = intval($chat_data["chat_id"]);
-			$is_bot = boolval($chat_data["is_bot"]);
-			$uid    = get_uid_by_lid($connection, $sel, $is_bot, $context->getCurrentUser()->getId());
-
-			if (!$uid)
-				die(json_encode(array('error' => 1)));
-
-			$new_value = intval(boolval(intval($_POST['new_value'])));
-
-			die(json_encode(array(
-				'success' => $connection->prepare("UPDATE messages.members_chat_list SET notifications = ? WHERE uid = ? AND user_id = ? LIMIT 1;")->execute([intval($new_value), intval($uid), intval($context->getCurrentUser()->getId())])
-			)));
-		break;
-
-		case 'toggle_pinned_messages':
-			$chat_data = parse_id_from_string($_POST["peer_id"]);
-			if (!$chat_data)
-				die(json_encode(array('error' => 1)));
-
-			$sel    = intval($chat_data["chat_id"]);
-			$is_bot = boolval($chat_data["is_bot"]);
-			$uid    = get_uid_by_lid($connection, $sel, $is_bot, $context->getCurrentUser()->getId());
-
-			if (!$uid)
-				die(json_encode(array('error' => 1)));
-
-			$new_value = intval(boolval(intval($_POST['new_value'])));
-
-			die(json_encode(array(
-				'success' => $connection->prepare("UPDATE messages.members_chat_list SET show_pinned_messages = ? WHERE uid = ? AND user_id = ? LIMIT 1;")->execute([intval($new_value), intval($uid), intval($context->getCurrentUser()->getId())])
-			)));
-		break;
-
-		case 'get_chat_link':
-			$chat_data = parse_id_from_string($_POST["peer_id"]);
-			if (!$chat_data)
-				die(json_encode(array('error' => 1)));
-
-			$sel    = intval($chat_data["chat_id"]);
-			$is_bot = boolval($chat_data["is_bot"]);
-			$uid    = get_uid_by_lid($connection, $sel, $is_bot, $context->getCurrentUser()->getId());
-			if (!$uid)
-				die(json_encode(array('error' => 1)));
-
-			$chat = new Chat($connection, $uid);
-			if (!$chat->isValid)
-				die(json_encode(array('error' => 1)));
-
-			$permissions = $chat->getPermissions();
-			$members     = $chat->getMembers();
-
-			$me = $members["users"]["user_".$context->getCurrentUser()->getId()];
-			if (!$me || $me["flags"]["is_leaved"] || $me["flags"]["is_kicked"])
-				die(json_encode(array('error' => 1)));
-
-			if ($me['flags']['level'] < 9)
-				die(json_encode(array('error' => 1)));
-
-			die(json_encode(array('response'=>$chat->getLink())));
-		break;
-
-		case 'update_chat_link':
-			$chat_data = parse_id_from_string($_POST["peer_id"]);
-			if (!$chat_data)
-				die(json_encode(array('error' => 1)));
-
-			$sel    = intval($chat_data["chat_id"]);
-			$is_bot = boolval($chat_data["is_bot"]);
-			$uid    = get_uid_by_lid($connection, $sel, $is_bot, $context->getCurrentUser()->getId());
-			if (!$uid)
-				die(json_encode(array('error' => 1)));
-
-			$chat = new Chat($connection, $uid);
-			if (!$chat->isValid)
-				die(json_encode(array('error' => 1)));
-
-			$permissions = $chat->getPermissions();
-			$members     = $chat->getMembers();
-
-			$me = $members["users"]["user_".$context->getCurrentUser()->getId()];
-			if (!$me || $me["flags"]["is_leaved"] || $me["flags"]["is_kicked"])
-				die(json_encode(array('error' => 1)));
-
-			if ($me['flags']['level'] < 9)
-				die(json_encode(array('error' => 1)));
-
-			die(json_encode(array('response'=>$chat->updateLink())));
-		break;
-
-		case 'update_chat_permissions':
-			$chat_data = parse_id_from_string($_POST["peer_id"]);
-			if (!$chat_data)
-				die(json_encode(array('error' => 1)));
-
-			$sel    = intval($chat_data["chat_id"]);
-			$is_bot = boolval($chat_data["is_bot"]);
-			$uid    = get_uid_by_lid($connection, $sel, $is_bot, $context->getCurrentUser()->getId());
-			if (!$uid)
-				die(json_encode(array('error' => 1)));
-
-			$chat = new Chat($connection, $uid);
-			if (!$chat->isValid)
-				die(json_encode(array('error' => 1)));
-
-			$permissions = $chat->getPermissions();
-			$members     = $chat->getMembers();
-
-			$me = $members["users"]["user_".$context->getCurrentUser()->getId()];
-			if (!$me || $me["flags"]["is_leaved"] || $me["flags"]["is_kicked"])
-				die(json_encode(array('error' => 1)));
-
-			if ($me['flags']['level'] < 9)
-				die(json_encode(array('error' => 1)));
-
-			$group_name = strtolower($_POST['group_name']);
-			$new_value  = intval($_POST['value']);
-
-			if ($new_value > 9 || $new_value < 0)
-				die(json_encode(array('error' => 1)));
-
-			$result = $permissions->setValue($group_name, $new_value);
-			if (!$result)
-				die(json_encode(array('error' => 1)));
-
-			die(json_encode(array('response' => 1)));
-		break;
-
 		case 'join_to_chat_by_link':
 			$chat = get_chat_by_query($connection, $_POST['link_query'], $context->getCurrentUser()->getId());
 			if (!$chat)
@@ -590,106 +396,6 @@ if (isset($_POST["action"]))
 			]);
 
 			die(json_encode(array('response'=>$lid)));
-		break;
-
-		case 'update_chat_photo':
-			$chat_data = parse_id_from_string($_POST["peer_id"]);
-			if (!$chat_data)
-				die(json_encode(array('error' => 1)));
-
-			$sel    = intval($chat_data["chat_id"]);
-			$is_bot = boolval($chat_data["is_bot"]);
-			$uid    = get_uid_by_lid($connection, $sel, $is_bot, $context->getCurrentUser()->getId());
-			if (!$uid)
-				die(json_encode(array('error' => 1)));
-
-			$chat = new Chat($connection, $uid);
-			if (!$chat->isValid)
-				die(json_encode(array('error' => 1)));
-
-			$permissions = $chat->getPermissions();
-			$members     = $chat->getMembers();
-
-			$me = $members["users"]["user_".$context->getCurrentUser()->getId()];
-			if (!$me || $me["flags"]["is_leaved"] || $me["flags"]["is_kicked"])
-				die(json_encode(array('error' => 1)));
-
-			if ($me['flags']['level'] < $permissions->getValue('can_change_photo'))
-				die(json_encode(array('error' => 1)));
-
-			$photo = (new AttachmentsParser())->getObject($_POST['photo']);
-			if (!$photo)
-				die(json_encode(array('error' => 1)));
-
-			die(json_encode(array('success'=>$chat->updatePhoto($photo, $context->getCurrentUser()->getId(), [
-				'chat_id'   => $chat_data['chat_id'],
-				'is_bot'    => false,
-				'new_src'   => $photo->getLink(),
-				'new_query' => $photo->getQuery()
-			]))));
-		break;
-
-		case 'delete_chat_photo':
-			$chat_data = parse_id_from_string($_POST["peer_id"]);
-			if (!$chat_data)
-				die(json_encode(array('error' => 1)));
-
-			$sel    = intval($chat_data["chat_id"]);
-			$is_bot = boolval($chat_data["is_bot"]);
-			$uid    = get_uid_by_lid($connection, $sel, $is_bot, $context->getCurrentUser()->getId());
-			if (!$uid)
-				die(json_encode(array('error' => 1)));
-
-			$chat = new Chat($connection, $uid);
-			if (!$chat->isValid)
-				die(json_encode(array('error' => 1)));
-
-			$permissions = $chat->getPermissions();
-			$members     = $chat->getMembers();
-
-			$me = $members["users"]["user_".$context->getCurrentUser()->getId()];
-			if (!$me || $me["flags"]["is_leaved"] || $me["flags"]["is_kicked"])
-				die(json_encode(array('error' => 1)));
-
-			if ($me['flags']['level'] < $permissions->getValue('can_change_photo'))
-				die(json_encode(array('error' => 1)));
-
-			die(json_encode(array('success'=>$chat->updatePhoto(null, $context->getCurrentUser()->getId(), [
-				'chat_id'   => $chat_data['chat_id'],
-				'is_bot'    => false
-			]))));
-		break;
-
-		case 'set_chat_title':
-			$chat_data = parse_id_from_string($_POST["peer_id"]);
-			if (!$chat_data)
-				die(json_encode(array('error' => 1)));
-
-			$sel    = intval($chat_data["chat_id"]);
-			$is_bot = boolval($chat_data["is_bot"]);
-			$uid    = get_uid_by_lid($connection, $sel, $is_bot, $context->getCurrentUser()->getId());
-			if (!$uid)
-				die(json_encode(array('error' => 1)));
-
-			$chat = new Chat($connection, $uid);
-			if (!$chat->isValid)
-				die(json_encode(array('error' => 1)));
-
-			$permissions = $chat->getPermissions();
-			$members     = $chat->getMembers();
-
-			$me = $members["users"]["user_".$context->getCurrentUser()->getId()];
-			if (!$me || $me["flags"]["is_leaved"] || $me["flags"]["is_kicked"])
-				die(json_encode(array('error' => 1)));
-
-			if ($me['flags']['level'] < $permissions->getValue('can_change_photo'))
-				die(json_encode(array('error' => 1)));
-
-			die(json_encode(array('response'=>$chat->setTitle($context->getCurrentUser()->getId(), strval($_POST['new_title']), [
-				'chat_id'   => $chat_data['chat_id'],
-				'is_bot'    => false,
-				'new_title' => strval($_POST['new_title'])
-			]))));
 		break;
 
 		case 'set_typing_state':
@@ -734,42 +440,10 @@ if (isset($_POST["action"]))
 
 			die(json_encode(array('error' => 1)));
 		break;
-
-		case 'get_chats':
-			die(json_encode(get_chats($connection, $context->getCurrentUser()->getId(), intval($_POST['offset']), intval($_POST['count']), intval($_POST['only_chats']))));
-		break;
-
-		case 'clear':
-			$id  = parse_id_from_string(strtolower($_POST["chat_id"]));
-			$uid = get_uid_by_lid($connection, $id["chat_id"], $id["is_bot"], $context->getCurrentUser()->getId());
-
-			$result = clear_chat($connection, $uid, $context->getCurrentUser()->getId(), [
-				'chat_id' => $id["chat_id"],
-				'is_bot'  => $id["is_bot"]
-			]);
-			die('[]');
-		break;
 		
 		default:
 		break;
 	}
-}
-
-/*
- * messages file...
-*/
-if (isset($_REQUEST["s"]) && !is_empty($_REQUEST["s"]))
-{
-	if (strtolower($_REQUEST["a"]) === "e")
-	{
-		require __DIR__ . '/../form/modules/save_message.php';
-	}
-}
-
-// getting chat list and parse it to html if not empty "s" param
-if (!isset($_REQUEST["s"]) || is_empty($_REQUEST["s"]))
-{
-	require __DIR__ . '/../form/modules/messages_list_html.php';
-}
+}*/
 
 ?>

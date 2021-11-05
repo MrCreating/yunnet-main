@@ -20,15 +20,12 @@ class Token
 
 	function __construct (?App $bound_app, int $id)
 	{
-		$connection = $_SERVER['dbConnection'];
-		if (!$connection)
-			$connection = get_database_connection();
-
-		$this->currentConnection = $connection;
+		$this->currentConnection = DataBaseManager::getConnection();
 		if (!$bound_app->valid()) return;
+
 		$this->bound_app = $bound_app;
 
-		$res = $connection->prepare("SELECT id, token, permissions, owner_id FROM apps.tokens WHERE id = :id AND app_id = :app_id AND is_deleted = 0 LIMIT 1;");
+		$res = $this->currentConnection->prepare("SELECT id, token, permissions, owner_id FROM apps.tokens WHERE id = :id AND app_id = :app_id AND is_deleted = 0 LIMIT 1;");
 
 		$token_id = intval($id);
 		$app_id   = $bound_app ? intval($bound_app->getId()) : 0;
@@ -58,6 +55,11 @@ class Token
 				}
 			}
 		}
+	}
+
+	public function getToken (): string
+	{
+		return $this->value;
 	}
 
 	public function delete (): bool

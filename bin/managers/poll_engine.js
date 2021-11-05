@@ -351,6 +351,26 @@ const Server = {
 							delete event.peer_id;
 					}
 				}
+				if (event.event === 'chat_event') {
+					event.peer_id = local_id;
+					if (user_id < 0)
+						delete event.bot_peer_id;
+
+					if (user_id > 0 && event.bot_peer_id)
+						delete event.peer_id;
+
+					if (user_id > 0 && event.bot_peer_id)
+						delete event.peer_id;
+
+					if (event.peer_id === true)
+						delete event.peer_id;
+
+					if (user_id > 0 && local_id < 0 && uid > 0 && data.owner_id < 0)
+						event.bot_peer_id = data.owner_id;
+
+					if (event.peer_id && event.bot_peer_id)
+						delete event.peer_id;
+				}
 
 				event.last_event_id = connected['user'+String(user_id)] ? (Number(connected['user'+String(user_id)].last_event_id) + 1) : 1;
 				try {
