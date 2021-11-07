@@ -7812,6 +7812,7 @@ html, body {
 }
 
 .post_data {
+    word-break: break-word;
     display: -webkit-box;
     -webkit-line-clamp: 9;
     -webkit-box-orient: vertical;

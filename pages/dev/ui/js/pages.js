@@ -7919,6 +7919,8 @@ const pages = {
 			let post_text_data = document.createElement('div');
 
 			post_text_data.style.width = '100%';
+			post_text_data.style.wordBreak = 'break-word';
+
 			if (inWindow) {
 				post_text_data.style.overflow = 'auto';
 				post_text_data.style.maxHeight = '370px';

@@ -3,10 +3,38 @@
 function default_page_template ($is_mobile, $lang = "en", $user)
 {
 	$userlevel  = $user ? $user->getAccessLevel() : 0;
-	$devChecked = explode('.', strtolower($_SERVER['HTTP_HOST']))[0] === 'dev';
 
 	if (!$user || ($user && $user->getSettings()->getSettingsGroup('theming')->isNewDesignUsed()))
 	{
+		$devChecked  = explode('.', strtolower($_SERVER['HTTP_HOST']))[0] === 'dev';
+		$authChecked = explode('.', strtolower($_SERVER['HTTP_HOST']))[0] === 'auth';
+
+		$scripts_list = '
+<script src="' . Project::DEVELOPERS_URL . '/js/platform-loader.js"></script>
+<script src="' . Project::DEVELOPERS_URL . '/js/platform-content.js"></script>
+<script src="' . Project::DEVELOPERS_URL . '/js/platform-actions.js"></script>
+
+<script src="' . Project::DEVELOPERS_URL . '/js/platform-modules-settings.js"></script>
+<script src="' . Project::DEVELOPERS_URL . '/js/platform-modules-accounts.js"></script>
+		';
+
+		if ($devChecked)
+		{
+			$scripts_list = '
+<script src="' . Project::DEVELOPERS_URL . '/js/dev-platform-loader.js"></script>
+<script src="' . Project::DEVELOPERS_URL . '/js/dev-platform-content.js"></script>
+<script src="' . Project::DEVELOPERS_URL . '/js/dev-platform-actions.js"></script>
+		';
+		}
+		if ($authChecked)
+		{
+			$scripts_list = '
+<script src="' . Project::DEVELOPERS_URL . '/js/auth-platform-loader.js"></script>
+<script src="' . Project::DEVELOPERS_URL . '/js/auth-platform-content.js"></script>
+<script src="' . Project::DEVELOPERS_URL . '/js/auth-platform-actions.js"></script>
+		';
+		}
+
 		$result = '
 <!DOCTYPE html>
 <html>
@@ -28,12 +56,8 @@ function default_page_template ($is_mobile, $lang = "en", $user)
 
 		<script src="' . Project::DEVELOPERS_URL . '/js/default-components.js"></script>
 		<script src="' . Project::DEVELOPERS_URL . '/js/additional-components.js"></script>
-		' .($devChecked ? ('<script src="' . Project::DEVELOPERS_URL . '/js/dev-platform-loader.js"></script>') : ('<script src="' . Project::DEVELOPERS_URL . '/js/platform-loader.js"></script>')). '
-		' .($devChecked ? ('<script src="' . Project::DEVELOPERS_URL . '/js/dev-platform-content.js"></script>') : ('<script src="' . Project::DEVELOPERS_URL . '/js/platform-content.js"></script>')). '
-		' .($devChecked ? ('<script src="' . Project::DEVELOPERS_URL . '/js/dev-platform-actions.js"></script>') : ('<script src="' . Project::DEVELOPERS_URL . '/js/platform-actions.js"></script>')). '
-
-		' .(!$devChecked ? ('<script src="' . Project::DEVELOPERS_URL . '/js/platform-modules-settings.js"></script>') : ''). '
-		' .(!$devChecked ? ('<script src="' . Project::DEVELOPERS_URL . '/js/platform-modules-accounts.js"></script>') : ''). '
+		
+		'.$scripts_list.'
 	</head>
 	<body>
 		<div id="load" style="position: fixed; right: 0; bottom: 0; left: 0; top: 0; background-color: white;z-index: 999;">
