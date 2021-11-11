@@ -19,13 +19,16 @@ if (isset($headers['X-Hub-Signature']))
 // user endpoint
 if ($endpoint_id === 0)
 {
-	die('This is the User');
+	if (($user = Context::get()->getCurrentUser()) && isset($user) && ($user->getAccessLevel() >= 4))
+	{
+		die(require_once __DIR__ . '/users/index.php');
+	}
 }
 
 // github endpoint
 if ($endpoint_id === 1)
 {
-	die('This is the GitHub');
+	die(require_once __DIR__ . '/github/index.php');
 }
 
 die(header('Location: ' . Project::DEFAULT_URL));
