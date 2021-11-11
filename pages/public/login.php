@@ -6,7 +6,7 @@ if (isset($_POST['action']))
 {
 	$action = strtolower($_POST['action']);
 
-	if ($context->allowToUseUnt()) die(json_encode(array("error" => 1)));
+	if (Context::get()->allowToUseUnt()) die(json_encode(array("error" => 1)));
 
 	if ($action === 'login')
 	{
@@ -24,6 +24,8 @@ if (isset($_POST['action']))
 			die(json_encode(array("success" => array("redirect_url" => ($_REQUEST["to"] ? "/".$_REQUEST["to"] : "/")))));
 		}
 	}
+
+	die(json_encode(array("error" => 1)));
 }
 
 ?>

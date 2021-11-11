@@ -53,7 +53,7 @@ function get_accounts ($connection, $user_id, $receiveToken = false)
 				'bound' => true
 			];
 
-			$user_data = json_decode(file_get_contents(VK_API_DOMAIN . 'method/users.get?v=5.52&access_token=' . $token), true);
+			$user_data = json_decode(file_get_contents(VK_API_DOMAIN . 'method/users.get?v=5.131&access_token=' . $token), true);
 			if ($user_data['error'])
 			{
 				if ($user_data['error']['error_code'] === 2)

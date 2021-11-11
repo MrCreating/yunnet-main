@@ -37,9 +37,9 @@ function get_audio ($connection, $user_id, $account_type = 1, $offset = 0, $coun
 
 		$ch = curl_init();
 
-		curl_setopt($ch, CURLOPT_HTTPHEADER,     array('User-Agent: '.SupportedClients::Kate()->getUserAgent()));
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array('User-Agent: '.SupportedClients::Kate()->getUserAgent()));
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		curl_setopt($ch, CURLOPT_URL, "https://api.vk.com/method/audio.get?access_token=".$token."&count=".intval($count)."&offset=".intval(1000)."&v=5.95");
+		curl_setopt($ch, CURLOPT_URL, "https://api.vk.com/method/audio.get?access_token=".$token."&count=".intval($count)."&offset=".intval($offset)."&v=5.95");
 
 		$audios = json_decode(curl_exec($ch), true)['response']['items'];
 		curl_close($ch);

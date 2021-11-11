@@ -72,7 +72,7 @@ class URLParser {
 		this.currentDomain = domainUrl;
 		this.currentPage = pageAndParams.split('?')[0];
 
-		let params = pageAndParams.split('?');
+		let params = String(pageAndParams.split('?')[1]).split('&');
 		let resultedObject = {};
 
 		params.forEach(function (keyPair) {
