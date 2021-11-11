@@ -17,7 +17,7 @@ $to             = explode('.', strtolower($_SERVER['HTTP_HOST']))[0];
 $requested_page = explode('?', strtolower($_SERVER['REQUEST_URI']))[0];
 
 $subdomains = [
-	'm', 'api', 'dev', 'd-1', 'yunnet', 'lp', 'themes', 'auth'
+	'm', 'api', 'dev', 'd-1', 'yunnet', 'lp', 'themes', 'auth', 'test'
 ];
 
 if (!in_array($to, $subdomains))
@@ -35,17 +35,19 @@ require_once __DIR__ . '/../bin/base_functions.php';
 switch ($to)
 {
 	case "api":
-		die(require __DIR__ . '/../api/index.php');
+		die(require_once __DIR__ . '/../api/index.php');
 	case "dev":
-		die(require __DIR__ . '/../pages/dev/index.php');
+		die(require_once __DIR__ . '/../pages/dev/index.php');
 	case "d-1":
-		die(require __DIR__ . '/../attachments/index.php');
+		die(require_once __DIR__ . '/../attachments/index.php');
 	case "lp":
-		die(require __DIR__ . '/../pages/lp/index.php');
+		die(require_once __DIR__ . '/../pages/lp/index.php');
 	case "themes":
-		die(require __DIR__ . '/../attachments/themes.php');
+		die(require_once __DIR__ . '/../attachments/themes.php');
 	case "auth":
-		die(require __DIR__ . '/../pages/widgets/auth/index.php');
+		die(require_once __DIR__ . '/../pages/widgets/auth/index.php');
+	case "test":
+		die(require_once __DIR__ . '/../dev/tester/index.php');
 }
 
 die(require_once __DIR__ . '/../pages/init.php');
