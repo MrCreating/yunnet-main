@@ -72,6 +72,24 @@ unt.pages = new Object({
 
 		let grantedParams = (new URLParser());
 
+		let app_id = Number(grantedParams.getQueryValue('app_id'));
+		let permissions = grantedParams.getQueryValue('permissions').isEmpty() ? [] : String(grantedParams.getQueryValue('permissions') || '').split(',').map(function (element) {
+        	return Number(element);
+        });
+        if (permissions.length > 4)
+            permissions.length = 4;
+        if (permissions.length === 1 && permissions[0] === "")
+            permissions = [];
+
+        let donePermissions = [];
+        for (let i = 0; i < permissions.length; i++) {
+        	if (donePermissions.indexOf(permissions[i]) !== -1) continue;
+
+        	if (permissions[i] >= 1 && permissions[i] <= 4)
+        		donePermissions.push(permissions[i]);
+        }
+        permissions = donePermissions;
+
 		let authContainer = document.createElement('div');
 		authContainer.style.width = '100%';
 		menu.appendChild(authContainer);
@@ -166,13 +184,159 @@ unt.pages = new Object({
         errorDiv.hide();
         authContentDiv.appendChild(errorDiv);
 
+        let buttonsDiv = document.createElement('div');
+        buttonsDiv.classList.add('valign-wrapper');
+        buttonsDiv.style.width = '100%';
+        buttonsDiv.style.justifyContent = 'end';
+
+        let declareDiv = document.createElement('a');
+        let declareIcon = document.createElement('div');
+        declareIcon.classList.add('tooltipped');
+        declareIcon.setAttribute('data-position', 'bottom');
+        declareIcon.setAttribute('data-tooltip', unt.settings.lang.getValue('cancel'));
+        declareDiv.appendChild(declareIcon);
+        declareIcon.innerHTML = unt.icons.close;
+        let declareDivLoader = unt.components.loaderElement();
+        declareDiv.appendChild(declareDivLoader);
+        declareIcon.style.cursor = 'pointer';
+        declareDiv.style.marginRight = '15px';
+        declareDivLoader.setArea(24);
+        declareDivLoader.hide();
+        buttonsDiv.appendChild(declareDiv);
+        declareIcon.addEventListener('click', function () {
+        	authContentDiv.innerHTML = '';
+
+			let errorDiv = document.createElement('div');
+            errorDiv.classList.add('full_section');
+            authContentDiv.appendChild(errorDiv);
+
+            authContentDiv.innerText = unt.settings.lang.getValue('access_denied');
+            if (window.opener && grantedParams.getQueryValue('returns')) {
+                return window.opener.postMessage({status: -1}, '*');
+            }
+
+            if (!decodeURIComponent(grantedParams.getQueryValue('redirect_url')) || !String(decodeURIComponent(grantedParams.getQueryValue('redirect_url'))).isURL())
+                return authContentDiv.innerText += '\n\n' + unt.settings.lang.getValue('redirect_url_not_given');
+            else {
+            	let needRedirect = decodeURIComponent(grantedParams.getQueryValue('redirect_url'));
+
+                let paramDel = '?';
+                if (needRedirect.split('?').length > 1)
+                    paramDel = '&';
+
+                if (!needRedirect.startsWith('http://') && !needRedirect.startsWith('https://'))
+                    needRedirect = 'http://' + needRedirect;
+                needRedirect += paramDel + 'result=0&time=' + Math.floor(new Date() / 1000);
+
+                return setTimeout(function () {
+                    return window.location.href = needRedirect;
+                }, 1000);
+            }
+        });
+
+        let acceptDiv = document.createElement('a');
+        let acceptIcon = document.createElement('div');
+        acceptIcon.classList.add('tooltipped');
+        acceptIcon.setAttribute('data-position', 'bottom');
+        acceptIcon.setAttribute('data-tooltip', unt.settings.lang.getValue('continue'));
+        acceptDiv.appendChild(acceptIcon);
+        acceptIcon.innerHTML = unt.icons.done;
+        let acceptDivLoader = unt.components.loaderElement();
+        acceptDiv.appendChild(acceptDivLoader);
+        acceptIcon.style.cursor = 'pointer';
+        acceptDivLoader.setArea(24);
+        acceptDivLoader.hide();
+        buttonsDiv.appendChild(acceptDiv);
+        acceptIcon.addEventListener('click', function () {
+        	acceptIcon.hide();
+        	acceptDivLoader.show();
+        	declareDiv.hide();
+
+        	return unt.tools.Request({
+        		url: '/flex',
+        		data: (new POSTData()).append('action', 'resolve_auth').append('app_id', Number(grantedParams.getQueryValue('app_id'))).append('permissions', permissions.join(',')).build(),
+        		method: 'POST',
+        		success: function (response) {
+        			acceptIcon.show();
+        			acceptDivLoader.hide();
+        			declareDiv.show();
+
+        			try {
+        				response = JSON.parse(response);
+        				if (response.error) {
+        					return unt.toast({html: unt.settings.lang.getValue('upload_error')});
+        				}
+
+        				authContentDiv.innerHTML = '';
+
+        				let errorDiv = document.createElement('div');
+                        errorDiv.classList.add('full_section');
+                        authContentDiv.appendChild(errorDiv);
+
+                        authContentDiv.innerText = unt.settings.lang.getValue('access_granted');
+                        if (window.opener && grantedParams.getQueryValue('returns')) {
+                        	return window.opener.postMessage({status: 1, token: response.token, tokenId: response.id, user: JSON.parse(JSON.stringify(unt.settings.users.current))}, '*');
+                        }
+
+                        if (!decodeURIComponent(grantedParams.getQueryValue('redirect_url')) || !String(decodeURIComponent(grantedParams.getQueryValue('redirect_url'))).isURL()) {
+                        	authContentDiv.innerText += '\n\n' + unt.settings.lang.getValue('redirect_url_not_given') + '\n\n';
+
+                        	let tokenField = unt.components.textField('access_key');
+                            authContentDiv.appendChild(tokenField);
+
+                            tokenField.getInput().setAttribute('readonly', 'true');
+                            tokenField.getInput().value = response.token;
+
+                            let tokenIdField = unt.components.textField('token_id');
+                            authContentDiv.appendChild(tokenIdField);
+
+                            tokenIdField.getInput().setAttribute('readonly', 'true');
+                            tokenIdField.getInput().value = response.id;
+
+                            let userIdField = unt.components.textField('user_id');
+                            authContentDiv.appendChild(userIdField);
+
+                            userIdField.getInput().setAttribute('readonly', 'true');
+                            userIdField.getInput().value = unt.settings.users.current.user_id;
+
+                            unt.updateTextFields()
+                        } else {
+                        	let needRedirect = decodeURIComponent(grantedParams.getQueryValue('redirect_url'));
+
+                            let paramDel = '?';
+                            if (needRedirect.split('?').length > 1)
+                                paramDel = '&';
+
+                            if (!needRedirect.startsWith('http://') && !needRedirect.startsWith('https://'))
+                                needRedirect = 'http://' + needRedirect;
+                            needRedirect += paramDel + 'result=1&time=' + Math.floor(new Date() / 1000) + '&access_key=' + response.token + '&token_id=' + response.id + '&user_id=' + unt.settings.users.current.user_id;
+
+                            return setTimeout(function () {
+                                return window.location.href = needRedirect;
+                            }, 1000);
+                        }
+        			} catch (e) {
+        				console.log(e);
+        				return unt.toast({html: unt.settings.lang.getValue('upload_error')});
+        			}
+        		},
+        		error: function () {
+        			acceptIcon.show();
+        			acceptDivLoader.hide();
+        			declareDiv.show();
+
+        			return unt.toast({html: unt.settings.lang.getValue('upload_error')});
+        		}
+        	});
+        });
+
         if (!grantedParams.getQueryValue('app_id')) {
         	errorDiv.show();
         	loader.hide();
         	errorDiv.innerText = unt.settings.lang.getValue('app_id_is_invalid');
-        } else {
-        	let app_id = Number(grantedParams.getQueryValue('app_id'));
 
+        	authContentDiv.appendChild(buttonsDiv);
+        } else {
         	unt.dev.apps.getById(app_id).then(function (appInfo) {
         		loader.hide();
 
@@ -183,23 +347,6 @@ unt.pages = new Object({
                 infoHeaderDiv.style.padding = '10px';
                 infoHeaderDiv.innerText = unt.settings.lang.getValue('app_requests').replace('%username%', unt.settings.users.current.first_name + ' ' + unt.settings.users.current.last_name)
                                                                                             .replace('%app_name%', appInfo.title);
-        	
-                let permissions = grantedParams.getQueryValue('permissions').isEmpty() ? [] : String(grantedParams.getQueryValue('permissions') || '').split(',').map(function (element) {
-                	return Number(element);
-                });
-	            if (permissions.length > 4)
-	                permissions.length = 4;
-	            if (permissions.length === 1 && permissions[0] === "")
-	                permissions = [];
-
-	            let donePermissions = [];
-	            for (let i = 0; i < permissions.length; i++) {
-	            	if (donePermissions.indexOf(permissions[i]) !== -1) continue;
-
-	            	if (permissions[i] >= 1 && permissions[i] <= 4)
-	            		donePermissions.push(permissions[i]);
-	            }
-	            permissions = donePermissions;
 
 	            let requestsPermissionsTextDiv = document.createElement('div');
                 authContentDiv.appendChild(requestsPermissionsTextDiv);
@@ -243,10 +390,14 @@ unt.pages = new Object({
                 } else {
                 	requestsPermissionsTextDiv.innerText = unt.settings.lang.getValue('permissions_not_get');
                 }
+
+                authContentDiv.appendChild(buttonsDiv);
         	}).catch(function () {
         		loader.hide();
         		errorDiv.show();
         		errorDiv.innerText = unt.settings.lang.getValue('app_is_invalid');
+
+        		authContentDiv.appendChild(buttonsDiv);
         	});
         }
 	}
