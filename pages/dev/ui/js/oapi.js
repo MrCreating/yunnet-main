@@ -216,9 +216,13 @@ class Unt {
 						window.addEventListener('message', function handlerMessagesOfAuth (event) {
 							clearInterval(timer);
 
-							setTimeout(function () {
-								return currentWindow.close();
-							}, 1000);
+							if (event.data.withOutTimeout) {
+								currentWindow.close();
+							} else {
+								setTimeout(function () {
+									return currentWindow.close();
+								}, 1000);
+							}
 
 							window.removeEventListener('message', handlerMessagesOfAuth);
 							let result = event.data;
