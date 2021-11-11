@@ -24,9 +24,10 @@ unt.actions.linkWorker.go = function (url = window.location.href, writeToLocalHi
 
 window.addEventListener('DOMContentLoaded', function (event) {
 	if (window.opener) {
-		window.addEventListener('beforeunload', function () {
-			return window.opener.postMessage({status: -1, withOutTimeout: true}, '*');
-		});
+		/*window.addEventListener('beforeunload', function () {
+			if (!window.isInRequest)
+				return window.opener.postMessage({status: -1, withOutTimeout: true}, '*');
+		});*/
 	}
 
 	let spinner = document.getElementById('load_indicator');

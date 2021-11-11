@@ -4,6 +4,9 @@ class Unt {
 	}
 
 	static Auth () {
+		if (Unt.lastAuth)
+			return Unt.lastAuth;
+
 		return new (class Auth {
 			#currentParams = {
 				app_id: 0,
@@ -14,6 +17,11 @@ class Unt {
 			#initialized = false;
 
 			init (params) {
+				let unt = this;
+
+				if (Unt.lastAuth)
+					return Unt.lastAuth;
+
 				if (this.#initialized)
 					return this;
 
@@ -51,6 +59,15 @@ class Unt {
 					{
 						if (String(key).length !== 75)
 							throw new TypeError('Access key is invalid');
+						else {
+							let token = localStorage.getItem('unt.token.token_' + localStorage.getItem('unt.user.current_id'));
+							if (String(token).length === 75)
+								this.#currentParams.access_key = token;
+						}
+					} else {
+						let token = localStorage.getItem('unt.token.token_' + localStorage.getItem('unt.user.current_id'));
+						if (String(token).length === 75)
+							this.#currentParams.access_key = token;
 					}
 				}
 
@@ -113,6 +130,7 @@ class Unt {
 					}
 				}
 
+				Unt.lastAuth = this;
 				return this;
 			}
 
