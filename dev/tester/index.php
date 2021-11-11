@@ -19,7 +19,7 @@ if (isset($headers['X-Hub-Signature']))
 // user endpoint
 if ($endpoint_id === 0)
 {
-	die('This the User');
+	die('This is the User');
 }
 
 // github endpoint
