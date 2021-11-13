@@ -10,11 +10,18 @@ $result = Entity::runAs(69, function (Context $context) {
 	$event = json_decode(file_get_contents('php://input'), true);
 
 $messageText = '
-***[GITHUB EVENT RECEIVED]***
+***[GitHub]***
 
 =======================
 **Changed files list:**
 ';
+	
+	$files_list = array_merge($event['head_commit']['modified'], $event['head_commit']['added']);
+	foreach ($files_list as $index => $filename) {
+		$messageText .= "
+*{$i}*. {$filename}
+";
+	}
 
 	$chat->sendMessage($messageText);
 });
