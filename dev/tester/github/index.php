@@ -16,6 +16,11 @@ $result = Entity::runAs(69, function (Context $context) {
 Commit uploaded by: **' . $event['sender']['login'] . '**
 Commit uploaded at: **' . $event['head_commit']['timestamp'] . '**
 ';
+
+	if ($event['ref'] !== "refs/heads/master")
+		$messageText .= '
+***NOT IN THE MASTER***
+';
 	
 	$files_list = array_merge($event['head_commit']['modified'], $event['head_commit']['added']);
 	if (count($files_list) > 0)
