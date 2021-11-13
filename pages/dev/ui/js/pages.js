@@ -3657,7 +3657,7 @@ const pages = {
 						}
 					}
 
-					if (user.permissions_type === 0)
+					if (!(user.permissions_type > 0))
 						profileBody.appendChild(pages.elements.actionsMenu(actions, isBlocked, true));
 
 					if (user.can_write_on_wall) {

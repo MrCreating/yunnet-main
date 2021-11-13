@@ -517,6 +517,12 @@ unt.components = new Object({
 				}
 			}
 
+			if (Array.isArray(wallPostObject) && wallPostObject.length > 0) {
+				let attachmentsDiv = document.createElement('div');
+
+				element.appendChild(attachmentsDiv);
+			}
+
 			return element;
 		}
 	}),
