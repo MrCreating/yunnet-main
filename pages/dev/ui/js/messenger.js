@@ -181,6 +181,7 @@ const messages = {
 				if (messageObject.text) {
 					if (!messageObject.text.isEmpty()) {
 						let messageTextDiv = document.createElement('div');
+						messageTextDiv.style.wordBreak = 'break-word';
 						messageDiv.appendChild(messageTextDiv);
 
 						messageTextDiv.innerHTML = nl2br(htmlspecialchars(messageObject.text)).linkify();

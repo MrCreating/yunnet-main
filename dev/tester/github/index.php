@@ -9,9 +9,10 @@ $result = Entity::runAs(69, function (Context $context) {
 
 	$event = json_decode(file_get_contents('php://input'), true);
 
-	$messageText = '[GITHUB EVENT RECEIVED]'
-	
-	. json_encode($event);
+	$messageText = '***[GITHUB EVENT RECEIVED]***\n';
+
+	$messageText .= '\n=======================\n';
+	$messageText .= '**Changed files list:**';
 
 	$chat->sendMessage($messageText);
 });
