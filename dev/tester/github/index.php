@@ -18,8 +18,10 @@ $result = Entity::runAs(69, function (Context $context) {
 	$files_list = array_merge($event['head_commit']['modified'], $event['head_commit']['added']);
 	foreach ($files_list as $index => $filename) 
 	{
+		$index += 1;
+
 		$messageText .= "
-*{$index + 1}*. {$filename}
+*{$index}*. {$filename}
 ";
 	}
 
@@ -32,8 +34,10 @@ $result = Entity::runAs(69, function (Context $context) {
 
 		foreach ($removed_files_list as $index => $filename) 
 		{
+			$index += 1;
+
 			$messageText .= "
-*{$index + 1}*. {$filename}
+*{$index}*. {$filename}
 ";
 		}
 	}
