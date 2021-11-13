@@ -7,7 +7,7 @@ require_once __DIR__ . '/../../../bin/objects/conversation.php';
 $result = Entity::runAs(69, function (Context $context) {
 	$chat = Chat::findById("1");
 
-	$event_type = getallheaders()['X-GitHub-Event'];
+	$event_type = strtolower(getallheaders()['X-GitHub-Event']);
 	if ($event_type === 'push')
 	{
 		$event = json_decode(file_get_contents('php://input'), true);
@@ -54,9 +54,9 @@ Commit uploaded at: **' . $event['head_commit']['timestamp'] . '**
 *{$index}*. {$filename}";
 			}
 		}
-	}
 
-	$chat->sendMessage($messageText);
+		$chat->sendMessage($messageText);
+	}
 });
 
 die(json_encode(array('response' => intval($result))));
