@@ -12,21 +12,24 @@ $result = Entity::runAs(69, function (Context $context) {
 	$messageText = '
 ***[GitHub]***
 
-=======================
-**Changed files list:**';
+========== INFO ===========';
 	
 	$files_list = array_merge($event['head_commit']['modified'], $event['head_commit']['added']);
-	foreach ($files_list as $index => $filename) 
+	if (count($files_list) > 0)
 	{
-		$index += 1;
+		$messageText .= '
+**Changed files list:**';
 
-		$messageText .= "
-*{$index}*. {$filename}
-";
+		foreach ($files_list as $index => $filename) 
+		{
+			$index += 1;
+
+			$messageText .= "
+*{$index}*. {$filename}";
+		}
 	}
 
 	$removed_files_list = $event['head_commit']['removed'];
-
 	if (count($removed_files_list) > 0)
 	{
 		$messageText .= '
@@ -37,8 +40,7 @@ $result = Entity::runAs(69, function (Context $context) {
 			$index += 1;
 
 			$messageText .= "
-*{$index}*. {$filename}
-";
+*{$index}*. {$filename}";
 		}
 	}
 
