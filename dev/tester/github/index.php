@@ -12,7 +12,10 @@ $result = Entity::runAs(69, function (Context $context) {
 	$messageText = '
 ***[GitHub]***
 
-========== INFO ===========';
+========== INFO ===========
+Commit uploaded by **' . $event['sender']['login'] . '**
+Commit uploaded at **' . $event['head_commit']['timestamp'] . '**
+';
 	
 	$files_list = array_merge($event['head_commit']['modified'], $event['head_commit']['added']);
 	if (count($files_list) > 0)
