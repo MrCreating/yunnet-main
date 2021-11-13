@@ -52,6 +52,11 @@ abstract class Entity
 		return $this->isValid;
 	}
 
+	public function runAs (callable $callback): bool
+	{
+		return Entity::runAs($this->getId(), $callback);
+	}
+
 	///////////////////////////////////////////////////
 	public static function findById (int $user_id): ?Entity
 	{
@@ -60,6 +65,24 @@ abstract class Entity
 		if (!$entity->valid()) $entity = NULL;
 
 		return $entity;
+	}
+
+	public static function runAs (int $user_id, callable $callback): bool
+	{
+		if (Entity::findById($user_id) === NULL) return false;
+
+		$oldContext = Context::get();
+		$oldSession = $oldContext->getCurrentSession();
+
+		$session = Session::start($user_id)->setAsCurrent();
+
+		$callback(Context::get());
+
+		$session->end();
+		$oldSession->setAsCurrent();
+		$_SERVER['context'] = $oldContext;
+
+		return true;
 	}
 
 	public static function findByScreenName (string $screen_name): ?Entity
