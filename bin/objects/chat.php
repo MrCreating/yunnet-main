@@ -2,8 +2,6 @@
 
 require_once __DIR__ . '/../functions/messages.php';
 require_once __DIR__ . '/message.php';
-require_once __DIR__ . '/dialog.php';
-require_once __DIR__ . '/conversation.php';
 
 /**
  * Base chat class.
