@@ -9,18 +9,33 @@ $result = Entity::runAs(69, function (Context $context) {
 
 	$event = json_decode(file_get_contents('php://input'), true);
 
-$messageText = '
+	$messageText = '
 ***[GitHub]***
 
 =======================
-**Changed files list:**
-';
+**Changed files list:**';
 	
 	$files_list = array_merge($event['head_commit']['modified'], $event['head_commit']['added']);
-	foreach ($files_list as $index => $filename) {
+	foreach ($files_list as $index => $filename) 
+	{
 		$messageText .= "
-*{$i}*. {$filename}
+*{$index + 1}*. {$filename}
 ";
+	}
+
+	$removed_files_list = $event['head_commit']['removed'];
+
+	if (count($removed_files_list) > 0)
+	{
+		$messageText .= '
+**Removed files list:**';
+
+		foreach ($removed_files_list as $index => $filename) 
+		{
+			$messageText .= "
+*{$index + 1}*. {$filename}
+";
+		}
 	}
 
 	$chat->sendMessage($messageText);
