@@ -116,6 +116,8 @@ class Session
 		$_SESSION['user_id'] = $this->getCurrentUser()->getId();
 		session_write_close();
 
+		$_SERVER['context'] = new Context();
+
 		return $this;
 	}
 
