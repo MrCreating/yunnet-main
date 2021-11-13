@@ -71,7 +71,12 @@ abstract class Entity
 
 		$session = Session::start($user_id)->setAsCurrent();
 
-		$callback(Context::get());
+		try 
+		{
+			$callback(Context::get());
+		} catch (Exception $e)
+		{
+		}
 
 		$session->end();
 		$oldSession->setAsCurrent();
