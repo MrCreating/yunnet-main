@@ -4,12 +4,12 @@ require_once __DIR__ . '/../../../bin/objects/chat.php';
 require_once __DIR__ . '/../../../bin/objects/dialog.php';
 require_once __DIR__ . '/../../../bin/objects/conversation.php';
 
-ini_set('display_errors', 1);
-
 $result = Entity::runAs(69, function (Context $context) {
 	$chat = Chat::findById("1");
 
 	$event_type = strtolower(getallheaders()['X-GitHub-Event']);
+
+	die(var_dump($event_type));
 	if ($event_type === 'push')
 	{
 		$event = json_decode(file_get_contents('php://input'), true);
