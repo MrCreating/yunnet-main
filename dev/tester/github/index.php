@@ -9,7 +9,7 @@ $result = Entity::runAs(69, function (Context $context) {
 
 	$event_type = strtolower($headers['X-GitHub-Event']);
 
-	die(var_dump($headers));
+	die(var_dump(getallheaders()));
 	if ($event_type === 'push')
 	{
 		$event = json_decode(file_get_contents('php://input'), true);
