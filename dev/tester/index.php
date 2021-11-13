@@ -1,5 +1,10 @@
 <?php
 
+if (REQUESTED_PAGE === '/flex')
+{
+	die(require_once __DIR__ . '/flex.php');
+}
+
 $endpoint_id         = 0;
 $known_github_secret = 'yunnet-response-is-ok';
 

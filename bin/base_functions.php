@@ -32,6 +32,9 @@ function get_page_origin ()
 	if ($ref === 'https://auth.yunnet.ru/')
 		$origin = 'https://auth.yunnet.ru';
 
+	if ($ref === 'https://test.yunnet.ru/')
+		$origin = 'https://test.yunnet.ru';
+
 	return $origin;
 }
 

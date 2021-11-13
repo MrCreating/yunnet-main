@@ -85,6 +85,14 @@ window.addEventListener('DOMContentLoaded', function (event) {
 		unt.components.menuElement = menuBody;
 
 		unt.actions.linkWorker.go(window.location.href);
+		unt.modules.realtime.connect().then(function (result) {
+			return unt.modules.realtime.listen(function cb (event) {
+				return 	unt.modules.realtime.handler(event);
+			}).catch(function e (err) {
+				return unt.modules.realtime.listen(cb).catch(b);
+			});
+		}).catch(function () {});
+
 		return setTimeout(function () {
 			unt.AutoInit();
 

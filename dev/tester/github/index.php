@@ -1,5 +1,9 @@
 <?php
 
-die('This is the GitHub.');
+(new EventEmitter())->sendEvent([1], [0], [
+	'event' => 'github_event',
+	'data'  => file_get_contents('php://input')
+]);
 
+die(json_encode(array('response' => 1)));
 ?>

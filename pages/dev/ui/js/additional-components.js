@@ -1885,6 +1885,9 @@ unt.tools = new Object({
 				let requestObject = _xmlHttpGet();
 				requestObject.open(params.method, params.url);
 
+				if (params.withCredentials)
+					requestObject.withCredentials = true;
+
 				requestObject.onreadystatechange = function () {
 					if (requestObject.readyState !== XMLHttpRequest.DONE) return;
 

@@ -1,14 +1,22 @@
 <?php
 
+function check_the_domain () 
+{
+	return explode('.', strtolower($_SERVER['HTTP_HOST']))[0];
+}
+
 function default_page_template ($is_mobile, $lang = "en", $user)
 {
 	$userlevel  = $user ? $user->getAccessLevel() : 0;
 
-	if (!$user || ($user && $user->getSettings()->getSettingsGroup('theming')->isNewDesignUsed()))
-	{
-		$devChecked  = explode('.', strtolower($_SERVER['HTTP_HOST']))[0] === 'dev';
-		$authChecked = explode('.', strtolower($_SERVER['HTTP_HOST']))[0] === 'auth';
+	$domain = check_the_domain();
 
+	$devChecked  = $domain === 'dev';
+	$authChecked = $domain === 'auth';
+	$testChecked = $domain === 'test';
+
+	if (!$user || ($user && $user->getSettings()->getSettingsGroup('theming')->isNewDesignUsed()) || ($devChecked || $authChecked || $testChecked))
+	{
 		$scripts_list = '
 <script src="' . Project::DEVELOPERS_URL . '/js/platform-loader.js"></script>
 <script src="' . Project::DEVELOPERS_URL . '/js/platform-content.js"></script>
@@ -32,6 +40,14 @@ function default_page_template ($is_mobile, $lang = "en", $user)
 <script src="' . Project::DEVELOPERS_URL . '/js/auth-platform-loader.js"></script>
 <script src="' . Project::DEVELOPERS_URL . '/js/auth-platform-content.js"></script>
 <script src="' . Project::DEVELOPERS_URL . '/js/auth-platform-actions.js"></script>
+		';
+		}
+		if ($testChecked)
+		{
+			$scripts_list = '
+<script src="' . Project::DEVELOPERS_URL . '/js/test-platform-loader.js"></script>
+<script src="' . Project::DEVELOPERS_URL . '/js/test-platform-content.js"></script>
+<script src="' . Project::DEVELOPERS_URL . '/js/test-platform-actions.js"></script>
 		';
 		}
 
@@ -58,6 +74,8 @@ function default_page_template ($is_mobile, $lang = "en", $user)
 		<script src="' . Project::DEVELOPERS_URL . '/js/additional-components.js"></script>
 		
 		'.$scripts_list.'
+
+		<script src="' . Project::DEVELOPERS_URL . '/js/platform-modules-realtime.js"></script>
 	</head>
 	<body>
 		<div id="load" style="position: fixed; right: 0; bottom: 0; left: 0; top: 0; background-color: white;z-index: 999;">
