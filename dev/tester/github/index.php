@@ -13,7 +13,7 @@ $result = Entity::runAs(69, function (Context $context) {
 		$event = json_decode(file_get_contents('php://input'), true);
 
 		$messageText = '
-***[GitHub]***
+***[GitHub PUSH]***
 
 ========== INFO ===========
 Commit uploaded by: **' . $event['sender']['login'] . '**
