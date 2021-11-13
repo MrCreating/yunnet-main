@@ -52,11 +52,6 @@ abstract class Entity
 		return $this->isValid;
 	}
 
-	public function runAs (callable $callback): bool
-	{
-		return Entity::runAs($this->getId(), $callback);
-	}
-
 	///////////////////////////////////////////////////
 	public static function findById (int $user_id): ?Entity
 	{
