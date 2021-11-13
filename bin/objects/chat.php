@@ -637,6 +637,9 @@ abstract class Chat extends EventEmitter
 
 	public static function findById (string $localId): ?Chat
 	{
+		require_once __DIR__ . '/conversation.php';
+		require_once __DIR__ . '/dialog.php';
+
 		$dialog = intval($localId) < 0 ? new Conversation($localId) : new Dialog($localId);
 
 		if ($dialog->valid())
