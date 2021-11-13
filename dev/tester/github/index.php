@@ -7,9 +7,12 @@ require_once __DIR__ . '/../../../bin/objects/conversation.php';
 $result = Entity::runAs(69, function (Context $context) {
 	$chat = Chat::findById("1");
 
-	$event = json_decode(file_get_contents('php://input'), true);
+	$event_type = getallheaders()['X-GitHub-Event'];
+	if ($event_type === 'push')
+	{
+		$event = json_decode(file_get_contents('php://input'), true);
 
-	$messageText = '
+		$messageText = '
 ***[GitHub]***
 
 ========== INFO ===========
@@ -17,38 +20,39 @@ Commit uploaded by: **' . $event['sender']['login'] . '**
 Commit uploaded at: **' . $event['head_commit']['timestamp'] . '**
 ';
 
-	if ($event['ref'] !== "refs/heads/master")
-		$messageText .= '
+		if ($event['ref'] !== "refs/heads/master")
+			$messageText .= '
 ***NOT IN THE MASTER***
 ';
 	
-	$files_list = array_merge($event['head_commit']['modified'], $event['head_commit']['added']);
-	if (count($files_list) > 0)
-	{
-		$messageText .= '
+		$files_list = array_merge($event['head_commit']['modified'], $event['head_commit']['added']);
+		if (count($files_list) > 0)
+		{
+			$messageText .= '
 **Changed files list:**';
 
-		foreach ($files_list as $index => $filename) 
-		{
-			$index += 1;
+			foreach ($files_list as $index => $filename) 
+			{
+				$index += 1;
 
-			$messageText .= "
+				$messageText .= "
 *{$index}*. {$filename}";
+			}
 		}
-	}
 
-	$removed_files_list = $event['head_commit']['removed'];
-	if (count($removed_files_list) > 0)
-	{
-		$messageText .= '
+		$removed_files_list = $event['head_commit']['removed'];
+		if (count($removed_files_list) > 0)
+		{
+			$messageText .= '
 **Removed files list:**';
 
-		foreach ($removed_files_list as $index => $filename) 
-		{
-			$index += 1;
+			foreach ($removed_files_list as $index => $filename) 
+			{
+				$index += 1;
 
-			$messageText .= "
+				$messageText .= "
 *{$index}*. {$filename}";
+			}
 		}
 	}
 
