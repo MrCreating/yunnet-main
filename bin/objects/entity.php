@@ -79,7 +79,7 @@ abstract class Entity
 		}
 
 		$session->end();
-		$oldSession->setAsCurrent();
+		//$oldSession->setAsCurrent();
 		$_SERVER['context'] = $oldContext;
 
 		return true;
