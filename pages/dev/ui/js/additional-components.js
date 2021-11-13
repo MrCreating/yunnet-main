@@ -364,6 +364,7 @@ unt.actions = new Object({
 
 unt.parsers = new Object({
 	online: function (user) {
+		if (user.permissions_type > 0) return unt.settings.lang.getValue("work_account");
 		if (user.is_banned) return unt.settings.lang.getValue("user_banned");
 		if (user.account_type === "bot") return unt.settings.lang.getValue("bot");
 		if (user.online.is_online) return unt.settings.lang.getValue("online");

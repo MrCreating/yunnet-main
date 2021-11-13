@@ -81,6 +81,9 @@ class Dialog extends Chat
 	{
 		if ($this->getCompanion()->getId() === intval($_SESSION['user_id'])) return 1;
 
+		if (Context::get()->getCurrentUser()->getAccountType() > 0) return 1;
+		if (Context::get()->getCurrentUser()->getAccessLevel() > 3) return 1;
+
 		if ($this->getCompanion()->getType() === 'user')
 		{
 			if ($this->getCompanion()->inBlacklist()) return 0;

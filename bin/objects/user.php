@@ -20,6 +20,8 @@ class User extends Entity
 	private $screenName = NULL;
 	private $gender     = NULL;
 
+	private $accountType = NULL;
+
 	private $newDesignAllowed = NULL;
 
 	private $photo  = NULL;
@@ -32,7 +34,7 @@ class User extends Entity
 
 		$this->currentConnection = DataBaseManager::getConnection();
 
-		$res = $this->currentConnection->prepare("SELECT id, first_name, last_name, email, status, is_banned, is_verified, is_online, online_hidden, userlevel, photo_path, screen_name, cookies, half_cookies, gender, settings_account_language, settings_account_is_closed, settings_privacy_can_write_messages, settings_privacy_can_write_on_wall, settings_privacy_can_comment_posts, settings_privacy_can_invite_to_chats, settings_push_notifications, settings_push_sound, settings_theming_js_allowed, settings_theming_new_design, settings_theming_current_theme, settings_theming_menu_items FROM users.info WHERE id = ? AND is_deleted = 0 LIMIT 1");
+		$res = $this->currentConnection->prepare("SELECT id, type, first_name, last_name, email, status, is_banned, is_verified, is_online, online_hidden, userlevel, photo_path, screen_name, cookies, half_cookies, gender, settings_account_language, settings_account_is_closed, settings_privacy_can_write_messages, settings_privacy_can_write_on_wall, settings_privacy_can_comment_posts, settings_privacy_can_invite_to_chats, settings_push_notifications, settings_push_sound, settings_theming_js_allowed, settings_theming_new_design, settings_theming_current_theme, settings_theming_menu_items FROM users.info WHERE id = ? AND is_deleted = 0 LIMIT 1");
 
 		if ($res->execute([$user_id]))
 		{
@@ -46,6 +48,7 @@ class User extends Entity
 
 				$this->id = intval($user_info->id);
 				$this->accessLevel = intval($user_info->userlevel);
+				$this->accountType = intval($user_info->type);
 
 				$this->isBanned = boolval(intval($user_info->is_banned));
 				$this->isVerified = boolval(intval($user_info->is_verified));
@@ -221,6 +224,8 @@ class User extends Entity
 			$is_online        = $online->isOnline;
 			$last_online_time = $online->lastOnlineTime;
 
+			$account_type     = $this->getAccountType();
+
 			if ($online->isOnlineHidden)
 			{
 				$hidden_online    = true;
@@ -346,6 +351,9 @@ class User extends Entity
 
 			if ($this->getAccessLevel() > 0)
 				$result['user_level'] = $this->getAccessLevel();
+
+			if ($account_type !== 0)
+				$result['permissions_type'] = $account_type;
 		} else
 		{
 			$result['photo_url'] = 'https://dev.yunnet.ru/images/default.png';
@@ -404,6 +412,11 @@ class User extends Entity
 	public function getOnline (): Data
 	{
 		return $this->online;
+	}
+
+	public function getAccountType (): int
+	{
+		return $this->accountType;
 	}
 
 	////////////////////////////////////////////////////

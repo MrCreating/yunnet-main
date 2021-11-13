@@ -3657,7 +3657,8 @@ const pages = {
 						}
 					}
 
-					profileBody.appendChild(pages.elements.actionsMenu(actions, isBlocked, true));
+					if (user.permissions_type === 0)
+						profileBody.appendChild(pages.elements.actionsMenu(actions, isBlocked, true));
 
 					if (user.can_write_on_wall) {
 						let wallInput = pages.elements.wallInput({
@@ -9140,6 +9141,8 @@ const pages = {
 			let onlineString = "...";
 			if (user.is_banned) {
 				return (settings.lang.getValue("user_banned"))
+			} else if (user.permissions_type === 1) {
+				return (settings.lang.getValue("work_account"))
 			} else {
 				if (user.account_type === "user") {
 					if (user.online.is_online) {

@@ -1,13 +1,13 @@
 <?php
 
-/*$_SESSION['user_id'] = 1;
+require_once __DIR__ . '/../../../bin/objects/chat.php';
 
-$result = (new EventEmitter())->sendEvent([1], [0], [
-	'event' => 'github_event',
-	'data'  => json_decode(file_get_contents('php://input'), true)
-]);*/
+$session = Session::start(69);
 
-$event = json_decode(file_get_contents('php://input'), false);
+$chat = Chat::findById("1");
+
+$chat->sendMessage(1, 'GitHub Event Received!');
+$session->end();
 
 die(json_encode(array('response' => 1)));
 ?>

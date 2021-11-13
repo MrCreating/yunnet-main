@@ -611,26 +611,34 @@ unt.pages = new Object({
 			if (!unt.settings.users.current)
 				fastAction = null;
 
-			if (unt.settings.users.current && !user.is_banned && user.account_type === 'user' && !user.is_me_blacklisted && !user.is_blacklisted && user.friend_state && user.friend_state.state === 0) {
-				actionsMenu.addOption(unt.settings.lang.getValue('add_to_the_friends'), new Function());
-			}
-			if (unt.settings.users.current && !user.is_banned && user.account_type === 'user' && !user.is_me_blacklisted && !user.is_blacklisted && user.friend_state && user.friend_state.state === 1) {
-				let initier = user.friend_state.user1;
-				let accepter = user.friend_state.user2;
-				if (initier === unt.settings.users.current.user_id) {
-					actionsMenu.addOption(unt.settings.lang.getValue('cancel_request'), new Function());
-				} else {
-					actionsMenu.addOption(unt.settings.lang.getValue('accept_request'), new Function());
+			if (user.permissions_type === 0) {
+				if (unt.settings.users.current && !user.is_banned && user.account_type === 'user' && !user.is_me_blacklisted && !user.is_blacklisted && user.friend_state && user.friend_state.state === 0) {
+					actionsMenu.addOption(unt.settings.lang.getValue('add_to_the_friends'), new Function());
+				}
+				if (unt.settings.users.current && !user.is_banned && user.account_type === 'user' && !user.is_me_blacklisted && !user.is_blacklisted && user.friend_state && user.friend_state.state === 1) {
+					let initier = user.friend_state.user1;
+					let accepter = user.friend_state.user2;
+					if (initier === unt.settings.users.current.user_id) {
+						actionsMenu.addOption(unt.settings.lang.getValue('cancel_request'), new Function());
+					} else {
+						actionsMenu.addOption(unt.settings.lang.getValue('accept_request'), new Function());
+					}
+				}
+				if (unt.settings.users.current && user.friend_state && user.friend_state.state === 2) {
+					actionsMenu.addOption(unt.settings.lang.getValue('delete_friend'), new Function());
+				}
+
+				if (unt.settings.users.current && !user.is_banned && user.account_type === 'user' && user.can_access_closed && !user.is_me_blacklisted && !user.is_blacklisted) {
+					actionsMenu.addOption(unt.settings.lang.getValue('show_friends'), function () {
+						return unt.actions.linkWorker.go('/friends?id=' + user.user_id);
+					});
 				}
 			}
-			if (unt.settings.users.current && user.friend_state && user.friend_state.state === 2) {
-				actionsMenu.addOption(unt.settings.lang.getValue('delete_friend'), new Function());
-			}
 
-			if (unt.settings.users.current && !user.is_banned && user.account_type === 'user' && user.can_access_closed && !user.is_me_blacklisted && !user.is_blacklisted) {
-				actionsMenu.addOption(unt.settings.lang.getValue('show_friends'), function () {
-					return unt.actions.linkWorker.go('/friends?id=' + user.user_id);
-				});
+			if (user.permissions_type > 0) {
+				fastAction = null;
+				
+				!unt.tools.isMobile() ? actionsMenu = unt.components.cardButton(unt.icons.biteCookies, unt.settings.lang.getValue('work_account_info'), new Function()) : actionsMenu.hide();
 			}
 
 			if (fastAction)
@@ -686,7 +694,6 @@ unt.pages = new Object({
 			actionsDiv.appendChild(actionsMenu);
 			unt.AutoInit();
 		}).catch(function (err) {
-			console.log(err);
 			profileLoadCard.hide();
 
 			let notFoundCard = document.createElement('div');

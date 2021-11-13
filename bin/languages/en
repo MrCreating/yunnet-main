@@ -568,5 +568,7 @@
   "roll_back_to_old_design": "Roll back to the old version of the site?",
   "open_profile_attention": "Your profile is now closed. However, you can open it so that other users can recognize you faster!",
   "auth_welcome": "Welcome! Login or register to start using all the site's features.",
-  "auth_failed": "Login failed. You may have entered incorrect data, please check it and try again."
+  "auth_failed": "Login failed. You may have entered incorrect data, please check it and try again.",
+  "work_account": "Special account",
+  "work_account_info": "This is the special account. Not the user."
 }
