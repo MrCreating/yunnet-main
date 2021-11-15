@@ -375,6 +375,61 @@ unt.parsers = new Object({
 		
 		return unt.settings.lang.getValue("was_online").replace("(а)", (user.gender === 2 ? "а" : "")) + " " + timeString;
 	},
+	attachments: function (attachmentsArray) {
+		let resultElement = document.createElement('div');
+
+		if (!Array.isArray(attachmentsArray))
+			return resultElement;
+
+		let doneAttachmentsArray = [];
+		for (let i = 0; i < attachmentsArray.length; i++) {
+			if (attachmentsArray[i].type !== 'photo')
+				doneAttachmentsArray.push(attachmentsArray[i]);
+		}
+		for (let i = 0; i < attachmentsArray.length; i++) {
+			if (attachmentsArray[i].type === 'photo')
+				doneAttachmentsArray.push(attachmentsArray[i]);
+		}
+
+		let arrayWithoutNoPhotoAttachments = doneAttachmentsArray.filter(function (attachment) {
+			return attachment.type === 'photo';
+		});
+
+		let firstAttachmentsDiv = document.createElement('div');
+		let secondAttachmentsDiv = document.createElement('div');
+		let thirdAttachmentsDiv = document.createElement('div');
+
+		arrayWithoutNoPhotoAttachments.forEach(function (attachment, index) {
+			if (arrayWithoutNoPhotoAttachments.length === 1) {
+				if (index === 0) {
+					console.log(attachment);
+					resultElement.appendChild(firstAttachmentsDiv);
+
+					let image = document.createElement('img');
+					image.src = attachment.photo.url.main;
+					firstAttachmentsDiv.appendChild(image);
+
+					image.style.maxWidth = '100%';
+					image.style.maxHeight = parseInt(attachment.photo.meta.height / 2) + 'px';
+				}
+			}
+			if (arrayWithoutNoPhotoAttachments.length === 2) {}
+			if (arrayWithoutNoPhotoAttachments.length === 3) {}
+			if (arrayWithoutNoPhotoAttachments.length === 4) {}
+			if (arrayWithoutNoPhotoAttachments.length === 5) {}
+			if (arrayWithoutNoPhotoAttachments.length === 6) {}
+			if (arrayWithoutNoPhotoAttachments.length === 7) {}
+			if (arrayWithoutNoPhotoAttachments.length === 8) {}
+			if (arrayWithoutNoPhotoAttachments.length === 9) {}
+			if (arrayWithoutNoPhotoAttachments.length >= 10) {}
+		});
+
+		let restAttachmentsArray = doneAttachmentsArray.filter(function (attachment) {
+			return attachment.type !== 'photo';
+		});
+
+		return resultElement;
+	},
 	time: function (timestamp, withOutDate = false, withOutHours = false) {
 		if (withOutHours && withOutDate) {
 			withOutDate = !withOutDate;
@@ -517,8 +572,8 @@ unt.components = new Object({
 				}
 			}
 
-			if (Array.isArray(wallPostObject) && wallPostObject.length > 0) {
-				let attachmentsDiv = document.createElement('div');
+			if (Array.isArray(wallPostObject.attachments) && wallPostObject.attachments.length > 0) {
+				let attachmentsDiv = unt.parsers.attachments(wallPostObject.attachments);
 
 				element.appendChild(attachmentsDiv);
 			}
