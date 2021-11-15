@@ -396,13 +396,14 @@ unt.parsers = new Object({
 		});
 
 		let firstAttachmentsDiv = document.createElement('div');
+		firstAttachmentsDiv.style.display = 'flex';
+
 		let secondAttachmentsDiv = document.createElement('div');
 		let thirdAttachmentsDiv = document.createElement('div');
 
 		arrayWithoutNoPhotoAttachments.forEach(function (attachment, index) {
 			if (arrayWithoutNoPhotoAttachments.length === 1) {
 				if (index === 0) {
-					console.log(attachment);
 					resultElement.appendChild(firstAttachmentsDiv);
 
 					let image = document.createElement('img');
@@ -413,7 +414,28 @@ unt.parsers = new Object({
 					image.style.maxHeight = parseInt(attachment.photo.meta.height / 2) + 'px';
 				}
 			}
-			if (arrayWithoutNoPhotoAttachments.length === 2) {}
+			if (arrayWithoutNoPhotoAttachments.length === 2) {
+				if (index === 0) {
+					resultElement.appendChild(firstAttachmentsDiv);
+
+					let image = document.createElement('img');
+					image.src = attachment.photo.url.main;
+					firstAttachmentsDiv.appendChild(image);
+
+					image.style.maxWidth = '50%';
+					image.style.marginRight = '5px';
+					//image.style.maxHeight = parseInt(attachment.photo.meta.height / 2) + 'px';
+				}
+				if (index === 1) {
+					let image = document.createElement('img');
+					image.src = attachment.photo.url.main;
+					firstAttachmentsDiv.appendChild(image);
+
+					image.style.maxWidth = '50%';
+					//image.style.maxHeight = parseInt(attachment.photo.meta.height / 2) + 'px';
+				}
+				console.log(attachment);
+			}
 			if (arrayWithoutNoPhotoAttachments.length === 3) {}
 			if (arrayWithoutNoPhotoAttachments.length === 4) {}
 			if (arrayWithoutNoPhotoAttachments.length === 5) {}
