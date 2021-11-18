@@ -422,8 +422,8 @@ utils.cache.connect('127.0.0.1:11211', function (e, c) {
 	if (e)
 		return console.log('\x1b[31m[!]\x1b[0m Failed to start LP!');
 	
-	utils.fs.readFile('/etc/letsencrypt/live/yunnet.ru/privkey.pem', null, function (err, key) {
-		utils.fs.readFile('/etc/letsencrypt/live/yunnet.ru/fullchain.pem', null, function (err, cert) {
+	utils.fs.readFile('/home/unt/local/config/ssl/privkey.pem', null, function (err, key) {
+		utils.fs.readFile('/home/unt/local/config/ssl/fullchain.pem', null, function (err, cert) {
 			https.createServer({
 				key: key,
 				cert: cert
