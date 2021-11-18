@@ -24,6 +24,7 @@ function default_page_template ($is_mobile, $lang = "en", $user)
 
 <script src="' . Project::DEVELOPERS_URL . '/js/platform-modules-settings.js"></script>
 <script src="' . Project::DEVELOPERS_URL . '/js/platform-modules-accounts.js"></script>
+<script src="' . Project::DEVELOPERS_URL . '/js/platform-modules-messenger.js"></script>
 		';
 
 		if ($devChecked)
