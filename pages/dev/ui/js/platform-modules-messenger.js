@@ -10,6 +10,9 @@ unt.modules.messenger = {
 		chatObject = null;
 
 		constructor (chatObject) {
+			if (!(chatObject instanceof Object))
+				throw new Error('Only the objects allowed');
+
 			this.chatObject = chatObject;
 		}
 
