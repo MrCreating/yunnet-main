@@ -31,24 +31,13 @@ function call (API $api, array $params)
 	} else 
 	if (isset($params['user_ids']))
 	{
-		$user_ids = array_map(function ($user_id) { return intval($user_id); }, explode(',', $params['user_ids']));
-		$result_user_ids = [];
+		$result = array_filter(array_map(function ($user_id) {
+			$entity = Entity::findById(intval($user_id));
 
-		foreach ($user_ids as $index => $user_id) 
-		{
-			if ($index > 100) break;
-
-			if (!in_array($user_id, $result_user_ids))
-			{
-				$result_user_ids[] = $user_id;
-
-				$entity = Entity::findById($user_id);
-				if (!$entity)
-				{
-					$result[] = $entity->toArray(strval($params['fields']));
-				}
-			}
-		}
+			return $entity ? $entity->toArray($params['fields']) : null;
+		}, array_slice(array_unique(explode(',', $params['user_ids'])), 0, 100)), function ($entity) {
+			return $entity != null;
+		});
 	} else
 	{
 		$entity = Entity::findById($_SESSION['user_id']);
