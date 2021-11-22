@@ -1,5 +1,27 @@
 unt.modules.messenger = {
-	getList: function () {},
+	getList: function (offset = 0, count = 30) {
+		return new Promise(function (resolve, reject) {
+			return unt.tools.Request({
+				url: '/messages',
+				method: 'POST',
+				data: (new POSTData()).append('action', 'get_chats').append('offset', Number(offset) || 0).append('count', Number(count) || 0).build(),
+				success: function (response) {
+					try {
+						response = JSON.parse(response);
+						if (response.error)
+							return reject(new TypeError('Unable to fetch messages'));
+						
+						return resolve(response);
+					} catch (e) {
+						return reject(e);
+					}
+				},
+				error: function (err) {
+					return reject(err);
+				}
+			});
+		});
+	},
 	createChat: function () {},
 
 	cachedChats: {},
