@@ -27,6 +27,8 @@ abstract class Chat extends EventEmitter
 
 	public function __construct (string $localId)
 	{
+	    parent::__construct();
+
 		$this->isValid = false;
 		$this->currentConnection = DataBaseManager::getConnection();
 
