@@ -25,7 +25,9 @@ unt.modules.messenger = {
 
 			return element;
 		},
-		previewString: function (lastMessage) {}
+		previewString: function (lastMessage) {
+			return "";
+		}
 	},
 
 	pages: new Object({
