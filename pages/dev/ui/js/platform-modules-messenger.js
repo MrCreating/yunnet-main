@@ -8,25 +8,54 @@ unt.modules.messenger = {
 
 			element.classList = ['collection-item card waves-effect'];
 			element.style.margin = '2px';
+			element.style.height = '90px';
 			element.style.marginLeft = element.style.marginRight = 0;
 			element.style.width = '100%';
 			element.style.padding = '20px';
 
 			let chatInfoContainer = document.createElement('div');
+			chatInfoContainer.classList.add('valign-wrapper');
+			chatInfoContainer.style.height = '100%';
 			element.appendChild(chatInfoContainer);
 
 			let chatPhoto = document.createElement('img');
+			chatPhoto.style.marginRight = '15px';
 			chatInfoContainer.appendChild(chatPhoto);
 			chatPhoto.classList.add('circle');
 			chatPhoto.width = chatPhoto.height = 48;
 			chatPhoto.src = chatObject.chat_info.data.photo_url;
 
-			console.log(chatObject);
+			let chatInfo = document.createElement('div');
+			chatInfo.style.height = '100%';
+			chatInfoContainer.appendChild(chatInfo);
+
+			let chatTitle = document.createElement('div');
+			chatInfo.appendChild(chatTitle);
+			chatTitle.style.height = '25px';
+			chatTitle.style.overflow = 'hidden';
+			chatTitle.style.textOverflow = 'ellipsis';
+
+			let chatB = document.createElement('b');
+			chatTitle.appendChild(chatB);
+			chatB.innerText = chatObject.chat_info.data.title ? chatObject.chat_info.data.title : (chatObject.chat_info.data.name ? chatObject.chat_info.data.name : (chatObject.chat_info.data.first_name + ' ' + chatObject.chat_info.data.last_name));
+
+			let previewMessage = document.createElement('div');
+			previewMessage.innerText = unt.settings.lang.getValue('loading') + '...';
+			chatInfo.appendChild(previewMessage);
+			previewMessage.style.height = '25px';
+			previewMessage.style.overflow = 'hidden';
+			previewMessage.style.textOverflow = 'ellipsis';
+
+			let previewMessageText = unt.modules.messenger.components.previewString(chatObject.last_message).then(function (string) {
+				previewMessage.innerText = string;
+			});
 
 			return element;
 		},
 		previewString: function (lastMessage) {
-			return "";
+			return new Promise(function (resolve) {
+				return resolve(lastMessage.text || '...');
+			});
 		}
 	},
 
@@ -66,6 +95,8 @@ unt.modules.messenger = {
 					}).catch(function (err) {
 						if (page === 1)
 							resultDiv.show();
+
+						console.log(err);
 
 						return;
 					});
