@@ -1,0 +1,4 @@
+nginx:
+  image: nginx:1.17.1
+  ports:
+    - "80:80"
