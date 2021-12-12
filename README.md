@@ -1,6 +1,12 @@
 # yunnet-main (yunNet.)
 Исходный код проекта, ничего личного :)
 
+# Сайт
+* https://yunnet.ru
+* https://m.yunnet.ru
+* https://api.yunnet.ru
+* https://auth.yunnet.ru?app_id=11&permissions=1,2,3,4
+
 # Разделение директорий проекта
 * `api` - исходный код API проекта: https://api.yunnet.ru/
 * `bin` - ядро (движок - untEngine), здесь вся логика всех процессов

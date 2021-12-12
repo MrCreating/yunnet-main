@@ -1,0 +1,110 @@
+-- MySQL dump 10.13  Distrib 5.7.33, for Linux (x86_64)
+--
+-- Host: localhost    Database: messages
+-- ------------------------------------------------------
+-- Server version	5.7.33-0ubuntu0.16.04.1
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `chat_engine_1`
+--
+
+DROP TABLE IF EXISTS `chat_engine_1`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `chat_engine_1` (
+  `local_id` int(11) NOT NULL AUTO_INCREMENT,
+  `uid` int(11) DEFAULT NULL,
+  `owner_id` int(11) DEFAULT NULL,
+  `local_chat_id` int(11) DEFAULT NULL,
+  `text` longtext,
+  `reply` text,
+  `time` text,
+  `flags` int(11) DEFAULT NULL,
+  `to_id` int(11) DEFAULT NULL,
+  `attachments` text,
+  `event` text,
+  `new_title` text,
+  `new_src` text,
+  `deleted_for_all` int(11) DEFAULT '0',
+  `deleted_for` text,
+  `keyboard` text,
+  `is_edited` tinyint(1) DEFAULT '0',
+  `is_pinned` tinyint(1) DEFAULT '0',
+  PRIMARY KEY (`local_id`),
+  KEY `uids` (`uid`)
+) ENGINE=InnoDB AUTO_INCREMENT=103683 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `members_chat_list`
+--
+
+DROP TABLE IF EXISTS `members_chat_list`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `members_chat_list` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `uid` int(11) DEFAULT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  `return_time` int(11) DEFAULT '0',
+  `join_time` int(11) DEFAULT '0',
+  `leaved_time` int(11) DEFAULT '0',
+  `lid` int(11) DEFAULT '0',
+  `permissions_level` int(11) DEFAULT '0',
+  `invited_by` int(11) DEFAULT '0',
+  `is_kicked` int(11) DEFAULT '0',
+  `is_leaved` int(11) DEFAULT '0',
+  `is_muted` int(11) DEFAULT '0',
+  `cleared_message_id` int(11) DEFAULT '0',
+  `last_read_message_id` int(11) DEFAULT '0',
+  `keyboard_created` tinyint(1) DEFAULT '0',
+  `keyboard_onetime` bigint(20) DEFAULT NULL,
+  `last_time` int(11) DEFAULT '0',
+  `hidden` tinyint(1) DEFAULT '0',
+  `is_read` tinyint(1) DEFAULT '0',
+  `notifications` int(11) DEFAULT '1',
+  `show_pinned_messages` int(11) DEFAULT '1',
+  PRIMARY KEY (`id`),
+  KEY `uids` (`uid`,`user_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=8606 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `members_engine_1`
+--
+
+DROP TABLE IF EXISTS `members_engine_1`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `members_engine_1` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `uid` int(11) DEFAULT NULL,
+  `title` text,
+  `photo` text,
+  `permissions` text,
+  `link` text,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=136 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2021-12-03 23:54:41
