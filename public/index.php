@@ -1,4 +1,7 @@
 <?php
+
+die('a');
+
 /**
  * 
  * yunnet frontend code.
