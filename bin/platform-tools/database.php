@@ -17,7 +17,7 @@ class DataBaseManager
 		if (isset($_SERVER['dbConnection']) && ($_SERVER['dbConnection'] instanceof PDO))
 			return $_SERVER['dbConnection'];
 
-		$_SERVER['dbConnection'] = new PDO("mysql:host=mysql", Project::DB_USERNAME, Project::DB_PASSWORD, [
+    $_SERVER['dbConnection'] = new PDO("mysql:host=localhost", Project::DB_USERNAME, Project::DB_PASSWORD, [
 			PDO::ATTR_PERSISTENT => false
 		]);
 
