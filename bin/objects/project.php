@@ -32,7 +32,7 @@ class Project
 	public const DB_USERNAME = "root";
 
 	// default DB password
-	public const DB_PASSWORD = "iA22021981_";
+	public const DB_PASSWORD = "root";
 
 	public static function isClosed (): bool
 	{
