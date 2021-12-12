@@ -1,0 +1,12 @@
+FROM php:7-fpm
+
+RUN groupadd -g 1011 unt
+RUN useradd -ms /bin/bash -g unt unt 
+
+RUN apt-get update
+RUN apt-get install git libmemcached11 libmemcachedutil2 libmemcached-dev libz-dev zlib-* zlib1g-dev libfreetype6-dev libjpeg62-turbo-dev libpng-dev memcached -y
+
+RUN docker-php-ext-install gd && docker-php-ext-configure gd --with-freetype --with-jpeg && docker-php-ext-install -j$(nproc) gd
+RUN docker-php-ext-enable gd
+
+RUN docker-php-ext-install pdo pdo_mysql
