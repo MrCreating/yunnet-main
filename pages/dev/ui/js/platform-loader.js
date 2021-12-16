@@ -16,6 +16,9 @@ unt.actions.linkWorker.go = function (url = window.location.href, writeToLocalHi
 		this.currentPage = pageInfoObject;
 	}
 
+	unt.components.navPanel.getDefaultHeader().show();
+	unt.components.navPanel.getAdditionalHeader().hide();
+
 	let resultedUrlWithOutParams = resultedUrl.split('?')[0];
 	switch (resultedUrlWithOutParams) {
 		case '/':
