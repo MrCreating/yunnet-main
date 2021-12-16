@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . "/../../bin/functions/users.php";
+require_once __DIR__ . '/../../bin/functions/users.php';
 
 // large actions handle here.
 if (isset($_POST["action"]))

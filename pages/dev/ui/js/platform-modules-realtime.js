@@ -4,7 +4,7 @@
 	handlers: [],
 	addHandler: function (callback) {
 		this.handlers.push(callback);
-		return this.handlers.length - 1;
+		return this.handlers.length;
 	},
 	removeHandler (index) {
 		return this.handlers.splice(index, 1)[0];
