@@ -272,6 +272,14 @@ unt.pages = new Object({
 	},
 	messages: function (internalData) {
 		document.title = unt.settings.lang.getValue('messages');
+
+		let url = new URLParser();
+
+		if (url.getQueryValue('s') === '') {
+			document.title = unt.settings.lang.getValue('dialog');
+		} else {
+
+		}
 	},
 	notifications: function (internalData) {
 		document.title = unt.settings.lang.getValue('notifications');
