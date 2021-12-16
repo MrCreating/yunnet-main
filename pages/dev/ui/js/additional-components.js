@@ -1552,7 +1552,6 @@ unt.components = new Object({
 			let a = document.createElement('a');
 			a.classList.add('valign-wrapper');
 			li.appendChild(a);
-			a.style.height = '50px';
 
 			let i = document.createElement('i');
 			a.appendChild(i);
