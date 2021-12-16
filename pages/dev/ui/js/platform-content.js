@@ -311,7 +311,6 @@ unt.pages = new Object({
 
 				let chatContainer = document.createElement('div');
 				chatContainer.classList.add('valign-wrapper');
-				chatContainer.style.height = '50px';
 				f.appendChild(chatContainer);
 
 				let element = document.createElement('img');
