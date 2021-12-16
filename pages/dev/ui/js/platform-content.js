@@ -271,7 +271,83 @@ unt.pages = new Object({
 		});
 	},
 	messages: function (internalData) {
-		document.title = unt.settings.lang.getValue('messages');
+		let url = new URLParser();
+
+		let menu = unt.components.menuElement;
+		if (url.getQueryValue('s').isEmpty()) {
+			document.title = unt.settings.lang.getValue('messages');
+
+			let messagesDiv = document.createElement('div');
+			menu.appendChild(messagesDiv);
+
+			let dialogsList = document.createElement('div');
+			let resultMessageDiv = document.createElement('div');
+			let loaderDiv = unt.components.loaderElement();
+
+			loaderDiv.style.marginTop = '15px';
+			loaderDiv.classList.add('center');
+
+			dialogsList.hide();
+			resultMessageDiv.hide();
+			loaderDiv.hide();
+
+			messagesDiv.appendChild(dialogsList);
+			messagesDiv.appendChild(resultMessageDiv);
+			messagesDiv.appendChild(loaderDiv);
+
+			unt.modules.messenger.pages.functions.loadChats(resultMessageDiv, dialogsList, loaderDiv, 1);
+		} else {
+			document.title = unt.settings.lang.getValue('message');
+
+			unt.components.navPanel.getDefaultHeader().hide();
+			unt.components.navPanel.getAdditionalHeader().show();
+
+			let photoIm = document.createElement('img');
+
+			function createChatPage (chatObject) {
+				let f = unt.components.navPanel.getAdditionalHeader();
+
+				unt.components.navPanel.getAdditionalHeader().innerHTML = '';
+
+				let chatContainer = document.createElement('div');
+				chatContainer.classList.add('valign-wrapper');
+				chatContainer.style.height = '50px';
+				f.appendChild(chatContainer);
+
+				let element = document.createElement('img');
+				element.src = chatObject.chat_info.data.photo_url;
+				element.width = element.height = 32;
+				element.classList.add('circle');
+
+				chatContainer.appendChild(element);
+
+				let chatInfoDiv = document.createElement('div');
+				chatInfoDiv.style.marginLeft = '15px';
+
+				chatContainer.appendChild(chatInfoDiv);
+				chatInfoDiv.classList.add('halign-wrapper');
+
+				let dialogInf = document.createElement('div');
+				dialogInf.style.lineHeight = 'normal';
+				dialogInf.innerText = chatObject.chat_info.is_multi_chat ? chatObject.chat_info.data.title : (chatObject.chat_info.data.name || (chatObject.chat_info.data.first_name + ' ' + chatObject.chat_info.data.last_name));
+
+				let dialogState = document.createElement('div');
+				dialogState.style.lineHeight = 'normal';
+				dialogState.style.color = 'lightgrey';
+				dialogState.style.fontSize = '80%';
+				dialogState.innerText = chatObject.chat_info.is_multi_chat ? unt.parsers.chatStateString(chatObject) : unt.parsers.online(chatObject.chat_info.data);
+
+				chatInfoDiv.appendChild(dialogInf);
+				chatInfoDiv.appendChild(dialogState);
+			}
+
+			if (internalData)
+				return createChatPage(internalData);
+
+			return unt.modules.messenger.getChatByPeerId(url.getQueryValue('s')).then(createChatPage).catch(function () {
+				return unt.actions.linkWorker.go('/messages');
+			});
+		}
 	},
 	notifications: function (internalData) {
 		document.title = unt.settings.lang.getValue('notifications');

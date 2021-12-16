@@ -1,6 +1,14 @@
 (unt.modules ? unt.modules : unt.modules = {}).realtime = {
 	lastEventId: 0,
 	currentUrl: null,
+	handlers: [],
+	addHandler: function (callback) {
+		this.handlers.push(callback);
+		return this.handlers.length - 1;
+	},
+	removeHandler (index) {
+		return this.handlers.splice(index, 1)[0];
+	},
 	connect: function () {
 		return new Promise (function (resolve, reject) {
 			if (!unt.settings.users.current) return reject(new Error('Failed to LP auth'));
@@ -34,6 +42,8 @@
 		});
 	},
 	listen: function (callback) {
+		let o = this;
+
 		return new Promise(function (resolve, reject) {
 			if (!unt.modules.realtime.currentUrl)
 				return reject(new Error('First, connect to LP'));
@@ -49,8 +59,10 @@
 
 						response.last_event_id ? unt.modules.realtime.last_event_id = response.last_event_id : null;
 
-						if (typeof callback === 'function')
-							callback(response);
+						o.handlers.forEach(function (callback) {
+							if (typeof callback === 'function')
+								callback(response);
+						});
 
 						return unt.modules.realtime.listen(callback).then(resolve).catch(reject);
 					} catch (e) {
