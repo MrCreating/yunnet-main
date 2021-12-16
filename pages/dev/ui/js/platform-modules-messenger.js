@@ -60,10 +60,6 @@ unt.modules.messenger = {
 	},
 
 	pages: new Object({
-		realtime: function (event) {
-
-		},
-
 		dialog: function (url, internalData) {
 			document.title = unt.settings.lang.getValue('message');
 		},
