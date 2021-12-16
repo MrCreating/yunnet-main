@@ -1,9 +1,3 @@
-window.addEventListener('DOMContentLoaded', function () {
-	(unt.modules ? unt.modules : unt.modules = {}).realtime.handler = function (event) {
-		console.log(event);
-	}
-});
-
 unt.actions.wall = new Object({
 	currentId: null,
 	postsSaved: {},

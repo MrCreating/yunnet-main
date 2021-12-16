@@ -375,6 +375,32 @@ unt.parsers = new Object({
 		
 		return unt.settings.lang.getValue("was_online").replace("(а)", (user.gender === 2 ? "а" : "")) + " " + timeString;
 	},
+	form: function (int, form) {
+		let number = Math.abs(int) % 100;
+
+		let numberOne = number % 10;
+
+		if (number > 10 && number < 20) return form[2];
+		if (numberOne > 1 && numberOne < 5) return form[1];
+
+		if (numberOne === 1) return form[0];
+
+		return form[2];
+	},
+	chatStateString: function (chatObject) {
+		if (chatObject.metadata.permissions) {
+			if (chatObject.metadata.permissions.is_leaved) return unt.settings.lang.getValue('you_leaved');
+			if (chatObject.metadata.permissions.is_kicked) return unt.settings.lang.getValue('you_kicked');
+		}
+
+		if (chatObject.chat_info.data.members_count) {
+			if (unt.settings.lang.getValue('id') === 'ru') return chatObject.chat_info.data.members_count + ' ' + this.form(chatObject.chat_info.data.members_count, ['участник', 'участника', 'участников']);
+			else 
+				return chatObject.chat_info.data.members_count + ' members';
+		}
+
+		return unt.settings.lang.getValue('chat');
+	},
 	attachments: function (attachmentsArray) {
 		let resultElement = document.createElement('div');
 
@@ -1526,6 +1552,7 @@ unt.components = new Object({
 			let a = document.createElement('a');
 			a.classList.add('valign-wrapper');
 			li.appendChild(a);
+			a.style.height = '50px';
 
 			let i = document.createElement('i');
 			a.appendChild(i);
@@ -1545,10 +1572,20 @@ unt.components = new Object({
 			let titleDiv = document.createElement('div');
 			a.appendChild(titleDiv);
 
+			let additionalDiv = document.createElement('div');
+			a.appendChild(additionalDiv);
+
 			navFixed.setTitle = function (title) {
 				titleDiv.innerText = title;
 
 				return navFixed;
+			}
+
+			navFixed.getAdditionalHeader = function () {
+				return additionalDiv;
+			}
+			navFixed.getDefaultHeader = function () {
+				return titleDiv;
 			}
 
 			navFixed.getBackButton = function () {
@@ -1613,6 +1650,13 @@ unt.components = new Object({
 			currentPage.style.width = '100%';
 			currentPage.style.fontSize = '90%';
 			currentPage.classList.add('current-title');
+
+			let additionalPage = document.createElement('div');
+			currentPageTitleValign.appendChild(additionalPage);
+			currentPage.style.width = '100%';
+			currentPage.style.fontSize = '90%';
+			currentPage.classList.add('current-additional');
+			additionalPage.hide();
 
 			let partialActions = document.createElement('div');
 			navContainer.appendChild(partialActions);
@@ -1681,6 +1725,20 @@ unt.components = new Object({
 				userCredentialsInfo.innerText = unt.settings.users.current.first_name + ' ' + unt.settings.users.current.last_name;
 				infoDiv.appendChild(userCredentialsInfo);
 
+				let fdividerLi = document.createElement('li');
+				fdividerLi.classList.add('divider');
+				ulDropdownContent.appendChild(fdividerLi);
+
+				let settingsButtonLi = document.createElement('li');
+				ulDropdownContent.appendChild(settingsButtonLi);
+
+				let settingsButton = document.createElement('a');
+				settingsButtonLi.appendChild(settingsButton);
+				settingsButton.innerText = unt.settings.lang.getValue('settings');
+				settingsButton.addEventListener('click', function () {
+					return unt.actions.linkWorker.go('/settings');
+				});
+
 				let dividerLi = document.createElement('li');
 				dividerLi.classList.add('divider');
 				ulDropdownContent.appendChild(dividerLi);
@@ -1706,6 +1764,13 @@ unt.components = new Object({
 				currentPage.innerText = title;
 
 				return navFixed;
+			}
+
+			navFixed.getAdditionalHeader = function () {
+				return additionalPage;
+			}
+			navFixed.getDefaultHeader = function () {
+				return currentPage;
 			}
 
 			navFixed.getMenuButton = function () {
@@ -1898,6 +1963,7 @@ unt.components = new Object({
 
 		currentMenuItems.forEach(function (itemId) {
 			if (unt.settings.users.current && unt.settings.users.current.is_banned) return;
+			if (itemId === 8 && !unt.tools.isMobile()) return;
 
 			let menuItemIndex = itemId - 1;
 

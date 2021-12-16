@@ -3,7 +3,7 @@ unt.modules.messenger = {
 		dialog: function (chatObject) {
 			let element = document.createElement('div');
 			element.addEventListener('click', function (event) {
-				return unt.actions.linkWorker.go('/messages?s=' + (chatObject.peer_id || ("b" + (chatObject.bot_peer_id * -1))));
+				return unt.actions.linkWorker.go('/messages?s=' + (chatObject.peer_id || ("b" + (chatObject.bot_peer_id * -1))), true, chatObject);
 			});
 
 			element.classList = ['collection-item card waves-effect'];
@@ -60,17 +60,12 @@ unt.modules.messenger = {
 	},
 
 	pages: new Object({
-		realtime: function (event) {
-
-		},
-
 		dialog: function (url, internalData) {
 			document.title = unt.settings.lang.getValue('message');
 		},
 		functions: {
-			loadChats: function (resultDiv, loader, messagesDiv, loaderDiv, page = 1) {
+			loadChats: function (resultDiv, messagesDiv, loaderDiv, page = 1) {
 				loaderDiv.show();
-				loader.show();
 
 				return new Promise(function (resolve, reject) {
 					return unt.modules.messenger.getList((Number(page) * 30) - 30, 30).then(function (chats) {
@@ -95,8 +90,6 @@ unt.modules.messenger = {
 					}).catch(function (err) {
 						if (page === 1)
 							resultDiv.show();
-
-						console.log(err);
 
 						return;
 					});
@@ -136,6 +129,8 @@ unt.modules.messenger = {
 		}
 	}),
 
+	dialogs: {},
+
 	getList: function (offset = 0, count = 30) {
 		return new Promise(function (resolve, reject) {
 			return unt.tools.Request({
@@ -159,6 +154,34 @@ unt.modules.messenger = {
 			});
 		});
 	},
+
+	getChatByPeerId: function (peer_id) {
+		let o = this;
+
+		return new Promise(function (resolve, reject) {
+			if (o.dialogs[peer_id]) return resolve(o.dialogs[peer_id]);
+
+			return unt.tools.Request({
+				method: 'POST',
+				url: '/flex',
+				data: (new POSTData()).append('action', 'get_chat_by_peer').append('peer_id', peer_id).build(),
+				success: function (response) {
+					try {
+						response = JSON.parse(response);
+
+						if (response.error)
+							return reject(new Error('Invalid peer id?'));
+
+						return resolve(o.dialogs[peer_id] = response);
+					} catch (e) {
+						return reject(e);
+					}
+				},
+				error: reject
+			});
+		});
+	},
+
 	createChat: function () {},
 
 	cachedChats: {},
