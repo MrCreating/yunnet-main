@@ -511,6 +511,21 @@ unt.pages = new Object({
 			section = url.getQueryValue('section').toLowerCase();
 		}
 
+		let tabs = unt.components.tabs([
+			{
+				title: unt.settings.lang.getValue('main').
+				link: '/edit',
+				active: section === 'main'
+			}, 
+			{
+				title: unt.settings.lang.getValue('profile'),
+				link: '/edit?section=contacts',
+				active: section === 'contacts'
+			}
+		]);
+
+		menu.appendChild(tabs);
+
 		if (section === 'amin') {
 			return unt.modules.edit.pages.main(internalData);
 		}

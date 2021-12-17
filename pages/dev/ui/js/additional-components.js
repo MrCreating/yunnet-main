@@ -532,6 +532,12 @@ unt.icons = new Object({
 });
 
 unt.components = new Object({
+	tabs: function (tabsObject) {
+		let tabsElement = document.createElement('div');
+		tabsElement.classList.add('card');
+
+		return tabsElement;
+	},
 	wall: new Object({
 		post: function (wallPostObject, isFullWindow = false) {
 			let element = document.createElement('div');
