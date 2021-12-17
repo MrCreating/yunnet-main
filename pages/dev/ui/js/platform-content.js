@@ -312,6 +312,7 @@ unt.pages = new Object({
 				let chatContainer = document.createElement('div');
 				chatContainer.classList.add('valign-wrapper');
 				f.appendChild(chatContainer);
+				chatContainer.parentNode.parentNode.style.height = '100%';
 
 				let element = document.createElement('img');
 				element.src = chatObject.chat_info.data.photo_url;
@@ -495,6 +496,27 @@ unt.pages = new Object({
 	},
 	edit: function (internalData) {
 		document.title = unt.settings.lang.getValue('edit');
+
+		let menu = unt.components.menuElement;
+
+		let sections = ['main', 'contacts'];
+
+		let section = 'main';
+
+		let sectionContainer = document.createElement('div');
+		menu.appendChild(sectionContainer);
+
+		let url = new URLParser();
+		if (sections.indexOf(url.getQueryValue('section').toLowerCase()) !== -1) {
+			section = url.getQueryValue('section').toLowerCase();
+		}
+
+		if (section === 'amin') {
+			return unt.modules.edit.pages.main(internalData);
+		}
+		if (section === 'contacts') {
+			return unt.modules.edit.pages.contacts(internalData);
+		}
 	},
 	profile: function (internalData) {
 		unt.components.navPanel ? unt.components.navPanel.show() : null;
