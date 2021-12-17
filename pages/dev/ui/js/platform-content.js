@@ -513,24 +513,26 @@ unt.pages = new Object({
 
 		let tabs = unt.components.tabs([
 			{
-				title: unt.settings.lang.getValue('main').
+				title: unt.settings.lang.getValue('main'),
 				link: '/edit',
-				active: section === 'main'
+				active: section === 'main',
+				internalData: internalData
 			}, 
 			{
 				title: unt.settings.lang.getValue('profile'),
 				link: '/edit?section=contacts',
-				active: section === 'contacts'
+				active: section === 'contacts',
+				internalData: internalData
 			}
 		]);
 
 		menu.appendChild(tabs);
 
 		if (section === 'amin') {
-			return unt.modules.edit.pages.main(internalData);
+			return unt.modules.edit.pages.main(internalData, sectionContainer);
 		}
 		if (section === 'contacts') {
-			return unt.modules.edit.pages.contacts(internalData);
+			return unt.modules.edit.pages.contacts(internalData, sectionContainer);
 		}
 	},
 	profile: function (internalData) {

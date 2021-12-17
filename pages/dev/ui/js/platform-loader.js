@@ -14,6 +14,8 @@ unt.actions.linkWorker.go = function (url = window.location.href, writeToLocalHi
 		history.pushState(pageInfoObject, document.title, resultedUrl);
 
 		this.currentPage = pageInfoObject;
+	} else {
+		history.pushState({id: this.history.length, url: url}, document.title, resultedUrl);
 	}
 
 	unt.components.navPanel.getDefaultHeader().show();

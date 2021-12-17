@@ -535,6 +535,28 @@ unt.components = new Object({
 	tabs: function (tabsObject) {
 		let tabsElement = document.createElement('div');
 		tabsElement.classList.add('card');
+		tabsElement.style.width = 'inherit';
+
+		let ul = document.createElement('ul');
+		tabsElement.appendChild(ul);
+		ul.classList.add('tabs');
+
+		tabsObject.forEach(function (tabObject) {
+			let li = document.createElement('li');
+			li.classList.add('tab');
+			li.classList.add('unselectable');
+			li.classList.add('waves-effect');
+
+			li.innerText = tabObject.title;
+			if (tabObject.active) {
+				li.style = 'border-bottom: inset; border-bottom-color: rgba(238, 110, 115, .7) !important';
+			}
+			li.addEventListener('click', function () {
+				return unt.actions.linkWorker.go(tabObject.link, false, tabObject.internalData);
+			});
+
+			return ul.appendChild(li);
+		});
 
 		return tabsElement;
 	},
@@ -1575,9 +1597,11 @@ unt.components = new Object({
 			}
 
 			let titleDiv = document.createElement('div');
+			titleDiv.classList.add('unselectable');
 			a.appendChild(titleDiv);
 
 			let additionalDiv = document.createElement('div');
+			additionalDiv.classList.add('unselectable');
 			a.appendChild(additionalDiv);
 
 			navFixed.setTitle = function (title) {
@@ -1655,12 +1679,12 @@ unt.components = new Object({
 			currentPage.style.width = '100%';
 			currentPage.style.fontSize = '90%';
 			currentPage.classList.add('current-title');
+			currentPage.classList.add('unselectable');
 
 			let additionalPage = document.createElement('div');
 			currentPageTitleValign.appendChild(additionalPage);
-			currentPage.style.width = '100%';
-			currentPage.style.fontSize = '90%';
-			currentPage.classList.add('current-additional');
+			additionalPage.classList.add('current-additional');
+			additionalPage.classList.add('unselectable');
 			additionalPage.hide();
 
 			let partialActions = document.createElement('div');

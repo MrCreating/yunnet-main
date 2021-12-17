@@ -1,6 +1,10 @@
 unt.modules.edit = {
 	pages: {
-		main: function (internalData) {},
-		contacts: function (internalData) {}
+		main: function (internalData, sectionContainer) {
+			
+		},
+		contacts: function (internalData, sectionContainer) {
+
+		}
 	}
 };
