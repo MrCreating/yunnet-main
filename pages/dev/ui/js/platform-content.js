@@ -503,15 +503,12 @@ unt.pages = new Object({
 
 		let section = 'main';
 
-		let sectionContainer = document.createElement('div');
-		menu.appendChild(sectionContainer);
-
 		let url = new URLParser();
 		if (sections.indexOf(url.getQueryValue('section').toLowerCase()) !== -1) {
 			section = url.getQueryValue('section').toLowerCase();
 		}
 
-		let tabs = unt.components.tabs([
+		menu.appendChild(unt.components.tabs([
 			{
 				title: unt.settings.lang.getValue('main'),
 				link: '/edit',
@@ -524,11 +521,12 @@ unt.pages = new Object({
 				active: section === 'contacts',
 				internalData: internalData
 			}
-		]);
+		]));
 
-		menu.appendChild(tabs);
+		let sectionContainer = document.createElement('div');
+		menu.appendChild(sectionContainer);
 
-		if (section === 'amin') {
+		if (section === 'main') {
 			return unt.modules.edit.pages.main(internalData, sectionContainer);
 		}
 		if (section === 'contacts') {

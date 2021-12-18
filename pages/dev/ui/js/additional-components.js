@@ -535,6 +535,7 @@ unt.components = new Object({
 	tabs: function (tabsObject) {
 		let tabsElement = document.createElement('div');
 		tabsElement.classList.add('card');
+		tabsElement.style.marginBottom = 0;
 		tabsElement.style.width = 'inherit';
 
 		let ul = document.createElement('ul');
