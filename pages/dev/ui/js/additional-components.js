@@ -532,6 +532,31 @@ unt.icons = new Object({
 });
 
 unt.components = new Object({
+	button: function (text, onclick) {
+		let element = document.createElement('a');
+		element.classList = ['btn waves-effect waves-light'];
+		element.innerText = text;
+		element.addEventListener('click', function (event) {
+			return onclick(event);
+		});
+
+		element.setText = function (text) {
+			element.innerText = text;
+			return element;
+		}
+
+		element.disable = function () {
+			element.classList.add('disabled');
+			return element;
+		}
+
+		element.enable = function () {
+			element.classList.remove('disabled');
+			return element;
+		}
+
+		return element;
+	},
 	tabs: function (tabsObject) {
 		let tabsElement = document.createElement('div');
 		tabsElement.classList.add('card');
