@@ -11,12 +11,16 @@ unt.modules.uploads = {
 
 			let menu = win.getMenu();
 
-			return win.show();
+			let tabsUl = document.createElement('ul');
+			menu.appendChild(tabsUl);
+
+			win.show();
+			unt.Tabs.init();
 		});
 	},
 	upload: function (file) {
 		return new Promise(function () {
-			
+
 		});
 	}
 };
