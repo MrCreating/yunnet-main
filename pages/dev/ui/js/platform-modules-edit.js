@@ -22,11 +22,15 @@ unt.modules.edit = {
 			formContainer.appendChild(userImage);
 			userImage.src = unt.settings.users.current.photo_url;
 			userImage.addEventListener('click', function () {
-				return unt.modules.uploads.uploader().then(function (files) {
-					if (files == null) return;
+				return unt.modules.uploads.uploader().then(function (uploader) {
+					return uploader.selectFile(function (files) {
+						if (files == null) return;
 
-					unt.modules.upload(files[0]).then(function (attachment) {
-						console.log(attachment);
+						uploader.upload(files[0]).then(function (attachment) {
+							uploader.setPreviewAttachment(attachment);
+						});+
+					}).finish(function (attachment) {
+						
 					});
 				});
 			});

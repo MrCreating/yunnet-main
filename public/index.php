@@ -8,7 +8,7 @@
  *
  */
 
-//ini_set("display_errors", 1);
+ini_set("display_errors", 1);
 
 // if ($_SERVER['REMOTE_ADDR'] != "31.40.55.185")
 //	die('С 26 июля 2020 года 12:00 по МСК yunnet 4 закрыт. Ждите выхода yunnet 5. (Примерно 15-21 августа 2020 года)');
@@ -23,7 +23,7 @@ $subdomains = [
 
 if (!in_array($to, $subdomains))
 {
-	die(header("Location: https://yunnet.ru"));
+	//die(header("Location: https://yunnet.ru"));
 }
 
 // defines a page and loads the core context

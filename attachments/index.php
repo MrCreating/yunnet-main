@@ -19,7 +19,7 @@ function return_not_found ()
 }
 
 // we will get attachments path and another data from the database
-$database_connection = new PDO("mysql:host=localhost;dbname=users", "root", "iA22021981_");
+$database_connection = DataBaseManager::getConnection();
 
 // attachment query
 $attachment_query = explode('__', substr($_SERVER['REQUEST_URI'], 1, strlen($_SERVER['REQUEST_URI'])))[0];

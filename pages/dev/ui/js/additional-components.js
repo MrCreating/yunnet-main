@@ -1576,6 +1576,12 @@ unt.components = new Object({
 
 					return this;
 				},
+				setCloseAble: function (closeable) {
+					defaultParams.closeAble = Boolean(closeable);
+					if (!closeable) i.style.display = 'none';
+					else i.style.display = '';
+					return this;
+				},
 				setTitle: function (title) {
 					setTitle(title);
 

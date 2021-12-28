@@ -6,6 +6,8 @@
  * DO NOT CONSTRUCT IT WITHOUT NEEDED
 */
 
+error_reporting(0);
+
 class Project
 {
 	// URLS
@@ -23,7 +25,7 @@ class Project
 	public const VERSION = 6;
 
 	// memcached IP
-	public const CACHE_IP = "127.0.0.1";
+	public const CACHE_IP = "memcached";
 
 	// memcached PORT
 	public const CACHE_PORT = 11211;
@@ -32,7 +34,13 @@ class Project
 	public const DB_USERNAME = "root";
 
 	// default DB password
-	public const DB_PASSWORD = "iA22021981_";
+	public const DB_PASSWORD = "default-prod-unt-user-iA22021981_";
+
+	// get default host
+	public static function getProjectUrl ()
+	{
+		return ($h = gethostname()) ? $h : "212.109.219.153"
+	}
 
 	public static function isClosed (): bool
 	{
