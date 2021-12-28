@@ -1,0 +1,101 @@
+:root {
+    /* Unread messages color */
+    --unreaded-messages-color: #414141;
+    
+    /* Body color and 90% text color */
+    --unt-background-color: #010101;
+    --unt-background-light-color: #222222;
+    --unt-text-color: white;
+    /* Text coloring */
+    --unt-text-color-with-chekboxes: #fce4ec;
+    
+    /* Custom user image and interface opacity */
+    --unt-user-background: url(https://d-1.yunnet.ru/WbB5tK1xSeizliWWkKWyWYCxfi62HC/CfxIUwFJlKtfNsvpFml28Dxdzm0zw+5QAX9wAgzkS1gbAMuxXBUU=);                                                 
+    --unt-opacity: 0.9;
+    
+    /* Sidenav user info div coloring */
+    --unt-sidenav-background: #626262;
+    
+    /* Collections color (right menu, left menu on PC, etc) */
+    --unt-collection-background-color: #222222;
+    --unt-section-item-background-color: #222222;
+    --unt-collection-text-color: white;
+    
+    /* Currently selected items */
+    --unt-collection-active-background: #616161;
+    
+    /* In modal buttons text color (flat buttons) */
+    --unt-flat-btn-text-color: white;
+    
+    /* SVG Icons fill color */
+    --svg-fill-color: white;
+    
+    /* Subtext (chats members count, online, etc) text color */
+    --unt-subtext-color: #f48fb1;
+    
+    /* Right and left active items */
+    --unt-active-item-color: #424242;
+    --unt-active-borded-color: white;
+    
+    /* Hovered collection and collapsible colors */
+    --hovered-collection-items-color: #626262;
+    --hovered-collapsible-items-color: #626262;
+    
+    /* Default collapsible colors */
+    --unt-collapsible-header-color: #222222;
+    --unt-collapsible-body-color: #222222;
+    --unt-collapsible-items-color: #222222;
+    --unt-collapsible-text-color: white;
+    
+    /* Navigation panel color */
+    --unt-navigation-panel-color: #222222;
+    
+    /* Cards color */
+    --unt-background-card-color: #222222;
+    
+    /* Links (href) color */
+    --unt-links-color: #f48fb1;
+    
+    /* Text input colors */
+    --unt-input-text-color: white;
+    
+    /* Unliked icons color */
+    --unt-unlike-color: white;
+    
+    /* Modals background colors */
+    --unt-modals-background-color: #222222;
+    
+    /* Dropdown background and hovered colors */
+    --unt-dropdown-background-color: #222222;
+    --unt-dropdown-hovered-color: #626262;
+    
+    /* Divider background color */
+    --unt-divider-background-color: #222222;
+    
+    /* Messages from me and from another colors */
+    --from-me-messages-background: #222222;
+    --from-another-messages-background: #222222;
+    --from-me-messages-text-color: white;
+    --from-another-messages-text-color: white;
+    
+    /* Notifications background color */
+    --unt-notifications-background-color: #222222;
+    
+    /* Counters color (messages, friends, etc) */
+    --unt-counters-color: white;
+    
+    /* Switches background change */
+    --unt-lever-color: #f44336;
+    --unt-lever-border-color: #ffcdd2;
+    --unt-checkbox-color: #f44336;
+    --unt-checkbox-border-color: #9c27b0;
+    /* Preloader color */
+    --unt-loader-color: #e91e63;
+    /* Message event variables */
+    --unt-event-names-color: #e91e63;
+    --unt-events-textcolor: white;
+    
+    /* Messages date line colors */
+    --unt-messages-dateline-color: white;
+    --unt-messages-dateline-textcolor: white;
+}
