@@ -32,7 +32,7 @@ module.exports = {
 				current.removeSession(context, user_id, key);
 			});
 
-			if (last_event_id < context.connections[user_id].last_event_id) {
+			if (last_event_id > 0 && last_event_id < context.connections[user_id].last_event_id) {
 				let event = current.getEventById(context, user_id, key, Number(last_event_id) + 1);
 
 				if (event) {
