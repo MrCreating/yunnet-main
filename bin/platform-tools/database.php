@@ -17,7 +17,10 @@ class DataBaseManager
 		if (isset($_SERVER['dbConnection']) && ($_SERVER['dbConnection'] instanceof PDO))
 			return $_SERVER['dbConnection'];
 
-		$_SERVER['dbConnection'] = new PDO("mysql:host=212.109.219.153;port=3306", Project::DB_USERNAME, Project::DB_PASSWORD, [
+		$port = boolval(intval(getenv('UNT_PRODUCTION'))) ? 3306 : 3310;
+		$pwd  = boolval(intval(getenv('UNT_PRODUCTION'))) ? Project::DB_PASSWORD : Project::DB_TEST_PASSWORD;
+
+		$_SERVER['dbConnection'] = new PDO("mysql:host=212.109.219.153;port=" . $port, Project::DB_USERNAME, $pwd, [
 			PDO::ATTR_PERSISTENT => false
 		]);
 

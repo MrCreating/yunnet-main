@@ -36,11 +36,8 @@ class Project
 	// default DB password
 	public const DB_PASSWORD = "default-prod-unt-user-iA22021981_";
 
-	// get default host
-	public static function getProjectUrl ()
-	{
-		return ($h = gethostname()) ? $h : "212.109.219.153"
-	}
+	// test DB password
+	public const DB_TEST_PASSWORD = "unt-user-test-pc2021_die";
 
 	public static function isClosed (): bool
 	{

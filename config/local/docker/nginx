@@ -1,0 +1,6 @@
+FROM nginx:latest
+
+RUN apt-get update
+RUN apt-get install dos2unix
+
+ENTRYPOINT dos2unix /home/unt/config/local/scripts/nginx.sh && /home/unt/config/local/scripts/nginx.sh

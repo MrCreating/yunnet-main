@@ -19,29 +19,20 @@ function emit_event ($user_ids, $lids, $event, $owner_id = 0)
 // receiver local_chat_id from uid by text engine
 function get_local_chat_id (int $uid)
 {
-	$socket  = socket_create(AF_UNIX, SOCK_STREAM, 0);
-	$block   = socket_set_block($socket);
-	$timeout = socket_set_timeout($socket, 5);
-	$connect = socket_connect($socket, __DIR__ . "/../managers/sockets/text_engine.sock");
-	if (!$connect)
-		return false;
+	$text_engine_init = curl_init("text_engine");
 
-	$data = [
+	$data = json_encode([
 		'operation' => 'get_lid',
 		'uid'       => $uid
-	];
+	]);
 
-	$result = socket_write($socket, json_encode($data));
-	if (!$result)
-		return false;
-	$local_chat_id = socket_read($socket, 25);
-	socket_close($socket);
+	curl_setopt($text_engine_init, CURLOPT_POSTFIELDS,     $data);
+	curl_setopt($text_engine_init, CURLOPT_POST,           1);
+	curl_setopt($text_engine_init, CURLOPT_HTTPHEADER,     array('Content-Type: application/json'));
+	curl_setopt($text_engine_init, CURLOPT_RETURNTRANSFER, true);
 
-	if (!$local_chat_id)
-	{
-		return false;
-	}
+	$result = curl_exec($text_engine_init);
 
-	return $local_chat_id;
+	return intval($result);
 }
 ?>

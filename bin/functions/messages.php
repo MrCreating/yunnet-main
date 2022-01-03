@@ -530,32 +530,21 @@ function can_write_to_chat ($connection, $uid, $user_id, $chat_data = [])
 */
 function get_last_uid ($dialog = true)
 {
-	$params = [
+	$text_engine_init = curl_init("text_engine");
+
+	$data = json_encode([
 		'operation' => 'get_uid',
 		'to_dialog' => $dialog
-	];
+	]);
 
-	// connecting to text-engine;
-	$socket  = socket_create(AF_UNIX, SOCK_STREAM, 0);
-	$connect = socket_connect($socket, __DIR__ . "/../managers/sockets/text_engine.sock");
-	
-	// if not text-engine online
-	if (!$connect)
-		return false;
+	curl_setopt($text_engine_init, CURLOPT_POSTFIELDS,     $data);
+	curl_setopt($text_engine_init, CURLOPT_POST,           1);
+	curl_setopt($text_engine_init, CURLOPT_HTTPHEADER,     array('Content-Type: application/json'));
+	curl_setopt($text_engine_init, CURLOPT_RETURNTRANSFER, true);
 
-	// fetching result.
-	$result = socket_write($socket, json_encode($params));
-	if (!$result)
-		return false;
+	$result = curl_exec($text_engine_init);
 
-	$last_uid = intval(socket_read($socket, 50));
-	socket_close($socket);
-
-	// if server not returned uid.
-	if (!$last_uid) return false;
-
-	// return uid.
-	return $last_uid;
+	return intval($result);
 }
 
 /**
