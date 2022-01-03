@@ -46,3 +46,15 @@ services:
             - /home/unt:/home/unt
         links:
             - memcached
+    poll_engine:
+        env_file:
+            - $PWD/configs.env
+        volumes:
+            - /home/unt:/home/unt
+        links:
+            - memcached
+        ports:
+            - "8080:80"
+        build:
+            context: $PWD/docker/context/poll_engine
+            dockerfile: $PWD/docker/poll_engine

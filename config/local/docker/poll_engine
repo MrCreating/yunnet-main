@@ -1,0 +1,8 @@
+FROM node:14.1
+
+RUN npm install memcached
+RUN npm install mysql
+
+RUN npm install -g nodemon
+
+ENTRYPOINT cd /home/unt/bin/managers/poll_engine/ && nodemon index.js

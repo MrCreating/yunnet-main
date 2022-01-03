@@ -543,6 +543,7 @@ function get_last_uid ($dialog = true)
 	curl_setopt($text_engine_init, CURLOPT_RETURNTRANSFER, true);
 
 	$result = curl_exec($text_engine_init);
+	curl_close($text_engine_init);
 
 	return intval($result);
 }

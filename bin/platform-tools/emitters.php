@@ -32,6 +32,7 @@ function get_local_chat_id (int $uid)
 	curl_setopt($text_engine_init, CURLOPT_RETURNTRANSFER, true);
 
 	$result = curl_exec($text_engine_init);
+	curl_close($result);
 
 	return intval($result);
 }
