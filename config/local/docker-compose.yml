@@ -36,6 +36,16 @@ services:
     memcached:
         image: memcached:latest
         container_name: memcached
+    mail:
+        build:
+            context: $PWD/docker/context/postfix
+            dockerfile: $PWD/docker/postfix
+        volumes:
+            - /home/unt:/home/unt
+            - $PWD/config/postfix:/config
+            - $PWD/config/postfix/mailname:/etc/mailname
+        env_file:
+            - $PWD/configs.env
     text_engine:
         env_file:
             - $PWD/configs.env
