@@ -13,7 +13,7 @@ module.exports = {
 				}
 			} else {
 				if (context.connections[user_id].sessions[key]) {
-					return res.end(JSON.stringify(context.errors['20']));
+				//	return res.end(JSON.stringify(context.errors['20']));
 				}
 			}
 
