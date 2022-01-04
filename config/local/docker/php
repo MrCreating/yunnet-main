@@ -51,5 +51,4 @@ RUN apt-get install -y libmagickwand-dev --no-install-recommends && rm -rf /var/
 RUN printf "\n" | pecl install imagick
 RUN docker-php-ext-enable imagick
 
-RUN curl -sL https://deb.nodesource.com/setup_12.x  | bash -
-RUN apt-get -y install nodejs
+RUN chmod 777 /dev/urandom

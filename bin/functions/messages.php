@@ -109,9 +109,9 @@ function get_chat_info ($connection, $uid, $without_bots = false, $without_me = 
 	$count = count($done);
 
 	// generating url of chat_photo
-	$src = Project::ATTACHMENTS_URL . '/' . $chat_info["photo"];
+	$src = Project::getAttachmentsDomain() . '/' . $chat_info["photo"];
 	if (!$chat_info["photo"] || $chat_info["photo"] === "")
-		$src = Project::DEVELOPERS_URL . '/images/default.png';
+		$src = Project::getDevDomain() . '/images/default.png';
 
 	// return result.
 	return [

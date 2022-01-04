@@ -14,7 +14,7 @@
 			if (!unt.settings.users.current) return reject(new Error('Failed to LP auth'));
 
 			return unt.tools.Request({
-				url: 'https://lp.yunnet.ru',
+				url: window.location.host.match(/localhost/) ? 'http://lp.localhost' : 'https://lp.yunnet.ru',
 				method: 'GET',
 				withCredentials: true,
 				success: function (response) {

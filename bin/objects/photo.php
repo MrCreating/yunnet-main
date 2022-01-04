@@ -15,7 +15,7 @@ class Photo extends Attachment
 	private $width  = 0;
 	private $height = 0;
 
-	private $url   = Project::DEVELOPERS_URL . '/images/default.png';
+	private $url   = NULL;
 	private $query = '';
 
 	private $path  = '';
@@ -27,6 +27,8 @@ class Photo extends Attachment
 
 	function __construct ($owner_id, $id, $access_key)
 	{
+		$this->url = Project::getDevDomain() . '/images/default.png';
+		
 		$connection = $_SERVER['dbConnection'];
 		if (!$connection)
 			$connection = get_database_connection();
@@ -44,7 +46,7 @@ class Photo extends Attachment
 				$this->id         = intval($id);
 				$this->access_key = strval($access_key);
 
-				$this->url        = Project::ATTACHMENTS_URL . '/' . $attachment["query"];
+				$this->url        = Project::getAttachmentsDomain() . '/' . $attachment["query"];
 				$this->query      = $attachment["query"];
 
 				$this->path       = __DIR__."/../".$attachment["path"];

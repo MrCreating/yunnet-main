@@ -17,25 +17,7 @@ require_once __DIR__ . '/parsers/attachments.php';
 // returns a page origin for CORS.
 function get_page_origin () 
 {
-	$origin = 'https://yunnet.ru';
-	$ref = explode('.ru/', $_SERVER['HTTP_REFERER'])[0] . ".ru/";
-
-	if ($ref === 'https://m.yunnet.ru/')
-		$origin = 'https://m.yunnet.ru';
-
-	if ($ref === 'https://www.yunnet.ru/')
-		$origin = 'https://www.yunnet.ru';
-
-	if ($ref === 'https://dev.yunnet.ru/')
-		$origin = 'https://dev.yunnet.ru';
-
-	if ($ref === 'https://auth.yunnet.ru/')
-		$origin = 'https://auth.yunnet.ru';
-
-	if ($ref === 'https://test.yunnet.ru/')
-		$origin = 'https://test.yunnet.ru';
-
-	return $origin;
+	return substr($_SERVER['HTTP_REFERER'], 0, strlen($_SERVER['HTTP_REFERER']) - 1);
 }
 
 // explode string by length
@@ -273,7 +255,7 @@ function get_polling_data ($cache, $user_id, $mode = "sse")
 	$done = openssl_encrypt(strval($user_id.'_'.strval(rand(1, 1000000000)).'_permissions'), 'AES-256-OFB', strval(rand(1, 10000000000)), 0, strval(rand(1, 1000000000)), rand(1, 9999999));
 
 	$cache->set($done, intval($user_id));
-	$result = array('url'=>'https://yunnet.ru:8080?mode=listen&state='.$mode.'&key='.urlencode($done), 'last_event_id'=>0, 'owner_id'=>intval($user_id));
+	$result = array('url'=> Project::getDefaultDomain() . ':8080?mode=listen&state='.$mode.'&key='.urlencode($done), 'last_event_id' => 0, 'owner_id' => intval($user_id));
 
 	return $result;
 }

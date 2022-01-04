@@ -13,19 +13,32 @@ process.on('SIGINT', function() {
 
 console.log('Prepared all data.');
 
-https.createServer({
-	key: fs.readFileSync('/home/unt/config/local/config/nginx/privkey.pem'),
-	cert: fs.readFileSync('/home/unt/config/local/config/nginx/fullchain.pem')
-}, function (req, res) {
-	req.setMaxListeners(0);
-	res.setMaxListeners(0);
-	req.setTimeout(24*60*60);
-	res.setTimeout(24*60*60);
+if (process.env.UNT_PRODUCTION === '1') {
+	https.createServer({
+		key: fs.readFileSync('/home/unt/config/local/config/nginx/privkey.pem'),
+		cert: fs.readFileSync('/home/unt/config/local/config/nginx/fullchain.pem')
+	}, function (req, res) {
+		req.setMaxListeners(0);
+		res.setMaxListeners(0);
+		req.setTimeout(24*60*60);
+		res.setTimeout(24*60*60);
 
-	pollEngine.dataHandler.apply(pollEngine, [req, res]);
-}).listen(80, function () {
-	console.log('Started Public server');
-});
+		pollEngine.dataHandler.apply(pollEngine, [req, res]);
+	}).listen(80, function () {
+		console.log('Started Public server');
+	});
+} else {
+	http.createServer(function (req, res) {
+		req.setMaxListeners(0);
+		res.setMaxListeners(0);
+		req.setTimeout(24*60*60);
+		res.setTimeout(24*60*60);
+
+		pollEngine.dataHandler.apply(pollEngine, [req, res]);
+	}).listen(80, function () {
+		console.log('Started Public NON-PRODUCTION Server');
+	});
+}
 
 http.createServer(function (req, res) {
 	req.setMaxListeners(0);

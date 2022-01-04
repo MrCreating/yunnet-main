@@ -357,7 +357,9 @@ const themes = {
 				let tmpElement = document.createElement('a');
 				tmpElement.style.display = 'none';
 
-				tmpElement.href = 'https://themes.yunnet.ru/theme' + Number(owner_id) + '_' + Number(theme_id) + '?mode=export';
+				let thUrl = window.location.host.match(/localhost/) ? 'http://themes.localhost' : 'https://themes.yunnet.ru';
+
+				tmpElement.href = thUrl + '/theme' + Number(owner_id) + '_' + Number(theme_id) + '?mode=export';
 				tmpElement.download = 'theme' + Number(owner_id) + '_' + Number(theme_id) + '.uth';
 
 				document.body.appendChild(tmpElement);
@@ -411,7 +413,9 @@ const themes = {
 			return new Promise(function (resolve, reject) {
 				let x = _xmlHttpGet();
 
-				x.open('GET', 'https://themes.yunnet.ru/theme' + Number(owner_id) + '_' + Number(theme_id) + '?mode=' + mode);
+				let thUrl = window.location.host.match(/localhost/) ? 'http://themes.localhost' : 'https://themes.yunnet.ru';
+
+				x.open('GET', thUrl + '/theme' + Number(owner_id) + '_' + Number(theme_id) + '?mode=' + mode);
 				x.withCredentials = true;
 				x.onreadystatechange = function () {
 					if (x.readyState !== 4) return;
@@ -544,7 +548,9 @@ const themes = {
 				    }
 				}
 
-				x.open('GET', 'https://themes.yunnet.ru/' + themeCredentials);
+				let thUrl = window.location.host.match(/localhost/) ? 'http://themes.localhost/' : 'https://themes.yunnet.ru/';
+
+				x.open('GET', thUrl + themeCredentials);
 				return x.send();
 			} else {
 				return resolve();
@@ -555,6 +561,8 @@ const themes = {
 		return new Promise(function () {
 			let data = new FormData();
 
+			let thUrl = window.location.host.match(/localhost/) ? 'http://themes.localhost' : 'https://themes.yunnet.ru';
+
 			if (!saveOnAccount && credentials === 'theme1_1') {
 				return realtime.handler({event: 'interface_event', data: {action: 'theme_changed', theme: {
 					owner_id: 1,
@@ -562,7 +570,7 @@ const themes = {
 					data: {
 						title: "Dark theme",
 						description: "yunNet dark theme",
-						url: "https://themes.yunnet.ru/theme1_1"
+						url: thUrl + "/theme1_1"
 					},
 					params: {
 						has_api: false,

@@ -15,42 +15,50 @@ function default_page_template ($is_mobile, $lang = "en", $user)
 	$authChecked = $domain === 'auth';
 	$testChecked = $domain === 'test';
 
+	if (getenv('UNT_PRODUCTION') !== '1')
+		$test_div = '
+<div class="card waves-effect waves-light" style="padding: 15px; position: fixed !important; bottom: 20px; left: 25px;">
+	<b>Режим разработки.</b>
+</div>
+		';
+
+
 	if (!$user || ($user && $user->getSettings()->getSettingsGroup('theming')->isNewDesignUsed()) || ($devChecked || $authChecked || $testChecked))
 	{
 		$scripts_list = '
-<script src="' . Project::DEVELOPERS_URL . '/js/platform-loader.js"></script>
-<script src="' . Project::DEVELOPERS_URL . '/js/platform-content.js"></script>
-<script src="' . Project::DEVELOPERS_URL . '/js/platform-actions.js"></script>
+<script src="' . Project::getDevDomain() . '/js/platform-loader.js"></script>
+<script src="' . Project::getDevDomain() . '/js/platform-content.js"></script>
+<script src="' . Project::getDevDomain() . '/js/platform-actions.js"></script>
 
-<script src="' . Project::DEVELOPERS_URL . '/js/platform-modules-settings.js"></script>
-<script src="' . Project::DEVELOPERS_URL . '/js/platform-modules-accounts.js"></script>
-<script src="' . Project::DEVELOPERS_URL . '/js/platform-modules-messenger.js"></script>
-<script src="' . Project::DEVELOPERS_URL . '/js/platform-modules-edit.js"></script>
-<script src="' . Project::DEVELOPERS_URL . '/js/platform-modules-uploader.js"></script>
+<script src="' . Project::getDevDomain() . '/js/platform-modules-settings.js"></script>
+<script src="' . Project::getDevDomain() . '/js/platform-modules-accounts.js"></script>
+<script src="' . Project::getDevDomain() . '/js/platform-modules-messenger.js"></script>
+<script src="' . Project::getDevDomain() . '/js/platform-modules-edit.js"></script>
+<script src="' . Project::getDevDomain() . '/js/platform-modules-uploader.js"></script>
 		';
 
 		if ($devChecked)
 		{
 			$scripts_list = '
-<script src="' . Project::DEVELOPERS_URL . '/js/dev-platform-loader.js"></script>
-<script src="' . Project::DEVELOPERS_URL . '/js/dev-platform-content.js"></script>
-<script src="' . Project::DEVELOPERS_URL . '/js/dev-platform-actions.js"></script>
+<script src="' . Project::getDevDomain() . '/js/dev-platform-loader.js"></script>
+<script src="' . Project::getDevDomain() . '/js/dev-platform-content.js"></script>
+<script src="' . Project::getDevDomain() . '/js/dev-platform-actions.js"></script>
 		';
 		}
 		if ($authChecked)
 		{
 			$scripts_list = '
-<script src="' . Project::DEVELOPERS_URL . '/js/auth-platform-loader.js"></script>
-<script src="' . Project::DEVELOPERS_URL . '/js/auth-platform-content.js"></script>
-<script src="' . Project::DEVELOPERS_URL . '/js/auth-platform-actions.js"></script>
+<script src="' . Project::getDevDomain() . '/js/auth-platform-loader.js"></script>
+<script src="' . Project::getDevDomain() . '/js/auth-platform-content.js"></script>
+<script src="' . Project::getDevDomain() . '/js/auth-platform-actions.js"></script>
 		';
 		}
 		if ($testChecked)
 		{
 			$scripts_list = '
-<script src="' . Project::DEVELOPERS_URL . '/js/test-platform-loader.js"></script>
-<script src="' . Project::DEVELOPERS_URL . '/js/test-platform-content.js"></script>
-<script src="' . Project::DEVELOPERS_URL . '/js/test-platform-actions.js"></script>
+<script src="' . Project::getDevDomain() . '/js/test-platform-loader.js"></script>
+<script src="' . Project::getDevDomain() . '/js/test-platform-content.js"></script>
+<script src="' . Project::getDevDomain() . '/js/test-platform-actions.js"></script>
 		';
 		}
 
@@ -60,25 +68,25 @@ function default_page_template ($is_mobile, $lang = "en", $user)
 	<head>
 		<title>yunNet.</title>
 
-		<link rel="shortcut icon" href="' . Project::DEFAULT_URL . '/favicon.ico"/>
-     	<link rel="apple-touch-icon" sizes="180x180" href="' . Project::DEFAULT_URL . '/favicon/apple-touch-icon.png">
-     	<link rel="icon" type="image/png" href="' . Project::DEFAULT_URL . '/favicon/favicon-16x16.png" sizes="16x16">
-		<link rel="icon" type="image/png" href="' . Project::DEFAULT_URL . '/favicon/favicon-32x32.png" sizes="32x32">
+		<link rel="shortcut icon" href="' . Project::getDefaultDomain() . '/favicon.ico"/>
+     	<link rel="apple-touch-icon" sizes="180x180" href="' . Project::getDefaultDomain() . '/favicon/apple-touch-icon.png">
+     	<link rel="icon" type="image/png" href="' . Project::getDefaultDomain() . '/favicon/favicon-16x16.png" sizes="16x16">
+		<link rel="icon" type="image/png" href="' . Project::getDefaultDomain() . '/favicon/favicon-32x32.png" sizes="32x32">
 
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
 		<meta name="theme-color" content="#42A5F5">
 		<meta name="description" content="yunNet. - is a social network whose purpose is to return the old principles of social networks, while following the new technologies">
 	
-		<link href="' . Project::DEVELOPERS_URL . '/css/default-components.css" type="text/css" rel="stylesheet" media="screen,projection"/>
-		<link href="' . Project::DEVELOPERS_URL . '/css/additional-components.css" type="text/css" rel="stylesheet" media="screen,projection"/>
+		<link href="' . Project::getDevDomain() . '/css/default-components.css" type="text/css" rel="stylesheet" media="screen,projection"/>
+		<link href="' . Project::getDevDomain() . '/css/additional-components.css" type="text/css" rel="stylesheet" media="screen,projection"/>
 
-		<script src="' . Project::DEVELOPERS_URL . '/js/default-components.js"></script>
-		<script src="' . Project::DEVELOPERS_URL . '/js/additional-components.js"></script>
+		<script src="' . Project::getDevDomain() . '/js/default-components.js"></script>
+		<script src="' . Project::getDevDomain() . '/js/additional-components.js"></script>
 		
 		'.$scripts_list.'
 
-		<script src="' . Project::DEVELOPERS_URL . '/js/platform-modules-realtime.js"></script>
+		<script src="' . Project::getDevDomain() . '/js/platform-modules-realtime.js"></script>
 	</head>
 	<body>
 		<div id="load" style="position: fixed; right: 0; bottom: 0; left: 0; top: 0; background-color: white;z-index: 999;">
@@ -93,6 +101,9 @@ function default_page_template ($is_mobile, $lang = "en", $user)
 				</div>
 			</div>
 		</div>
+
+		'. $test_div .'
+
 	</body>
 </html>
 		';
@@ -101,19 +112,19 @@ function default_page_template ($is_mobile, $lang = "en", $user)
 		$content = $is_mobile ? "" : '<div class="row" style="height: 100%; margin-bottom: 0 !important"><div class="col s3"></div><div class="col s6"></div><div class="col s3"></div></div>';
 
 		$scripts_list = '
-<script src="'.Project::DEVELOPERS_URL.'/js/ui.js"></script>
-<script src="'.Project::DEVELOPERS_URL.'/js/poster.js"></script>
-<script src="'.Project::DEVELOPERS_URL.'/js/caches.js"></script>
-<script src="'.Project::DEVELOPERS_URL.'/js/settings.js"></script>
-<script src="'.Project::DEVELOPERS_URL.'/js/pages.js"></script>
-<script src="'.Project::DEVELOPERS_URL.'/js/themes.js"></script>
-<script src="'.Project::DEVELOPERS_URL.'/js/dev.js"></script>
-<script src="'.Project::DEVELOPERS_URL.'/js/messenger.js"></script>
-<script src="'.Project::DEVELOPERS_URL.'/js/codes.js"></script>
+<script src="'.Project::getDevDomain().'/js/ui.js"></script>
+<script src="'.Project::getDevDomain().'/js/poster.js"></script>
+<script src="'.Project::getDevDomain().'/js/caches.js"></script>
+<script src="'.Project::getDevDomain().'/js/settings.js"></script>
+<script src="'.Project::getDevDomain().'/js/pages.js"></script>
+<script src="'.Project::getDevDomain().'/js/themes.js"></script>
+<script src="'.Project::getDevDomain().'/js/dev.js"></script>
+<script src="'.Project::getDevDomain().'/js/messenger.js"></script>
+<script src="'.Project::getDevDomain().'/js/codes.js"></script>
 ';
 		if ($userlevel > 0)
 		{
-			$scripts_list .= '<script src="'.Project::DEVELOPERS_URL.'/js/management.js"></script>';
+			$scripts_list .= '<script src="'.Project::getDevDomain().'/js/management.js"></script>';
 		}
 
 		$result = '
@@ -121,18 +132,18 @@ function default_page_template ($is_mobile, $lang = "en", $user)
 <html lang="'.$lang.'">
 	<head>
 		<title>yunNet.</title>
-		<link rel="shortcut icon" href="'.Project::DEFAULT_URL.'/favicon.ico"/>
-     	<link rel="apple-touch-icon" sizes="180x180" href="'.Project::DEFAULT_URL.'/favicon/apple-touch-icon.png">
-     	<link rel="icon" type="image/png" href="'.Project::DEFAULT_URL.'/favicon/favicon-16x16.png" sizes="16x16">
-		<link rel="icon" type="image/png" href="'.Project::DEFAULT_URL.'/favicon/favicon-32x32.png" sizes="32x32">
+		<link rel="shortcut icon" href="'.Project::getDefaultDomain().'/favicon.ico"/>
+     	<link rel="apple-touch-icon" sizes="180x180" href="'.Project::getDefaultDomain().'/favicon/apple-touch-icon.png">
+     	<link rel="icon" type="image/png" href="'.Project::getDefaultDomain().'/favicon/favicon-16x16.png" sizes="16x16">
+		<link rel="icon" type="image/png" href="'.Project::getDefaultDomain().'/favicon/favicon-32x32.png" sizes="32x32">
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 	    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
 	    <meta name="theme-color" content="#42A5F5">
 	    <meta name="description" content="yunNet. - is a social network whose purpose is to return the old principles of social networks, while following the new technologies">
 	    <link href="/manifest.json" rel="manifest">
 	    <link href="/favicon/apple-touch-icon.png" sizes="180x180" rel="apple-touch-icon">
-	    <link href="'.Project::DEVELOPERS_URL.'/css/ui.css" type="text/css" rel="stylesheet" media="screen,projection"/>
-	    <link href="'.Project::DEVELOPERS_URL.'/css/codes.css" type="text/css" rel="stylesheet" media="screen,projection"/>
+	    <link href="'.Project::getDevDomain().'/css/ui.css" type="text/css" rel="stylesheet" media="screen,projection"/>
+	    <link href="'.Project::getDevDomain().'/css/codes.css" type="text/css" rel="stylesheet" media="screen,projection"/>
 	    '.$scripts_list.'
 	</head>
 	<body>
@@ -155,6 +166,7 @@ function default_page_template ($is_mobile, $lang = "en", $user)
 		<div id="menu" style="height: calc(100% - 56px)">
 			'.$content.'
 		</div>
+		'. $test_div .'
 	</body>
 </html>
 ';

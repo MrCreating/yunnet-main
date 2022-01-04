@@ -6,14 +6,15 @@ module.exports = (function () {
 		connect: function () {
 			q.connection = mysql.createConnection({
 				host: '212.109.219.153',
+				port: (process.env.UNT_PRODUCTION === '1' ? 3306 : 3310),
 				user: 'root',
-				password: 'default-prod-unt-user-iA22021981_',
+				password: process.env.UNT_PRODUCTION === '1' ? 'default-prod-unt-user-iA22021981_' : 'unt-user-test-pc2021_die',
 				database: 'users',
 				charset: 'LATIN1_SWEDISH_CI'
 			});
 			
 			q.connection.connect();
-			q.connection.on('error', function () {
+			q.connection.on('error', function (e) {
 				return q.connect();
 			});
 		},

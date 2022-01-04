@@ -13,7 +13,7 @@ services:
         env_file:
             - $PWD/configs.env
         volumes:
-            - /home/unt:/home/unt
+            - $PWD/../../:/home/unt
             - /var/log/nginx
             - $PWD/config/nginx/nginx.conf:/etc/nginx/nginx.conf
         links:
@@ -26,8 +26,8 @@ services:
         env_file:
             - $PWD/configs.env
         volumes:
-            - /home/unt:/home/unt
-            - $PWD/config/php/php.ini:/usr/local/etc/php/php.ini
+            - $PWD/../../:/home/unt
+            - $PWD/config/php/php$UNT_PRODUCTION.ini:/usr/local/etc/php/php.ini
             - $PWD/config/php/php-fpm.conf:/usr/local/etc/php-fpm.conf
             - $PWD/config/php/www.conf:/usr/local/etc/php-fpm.d/www.conf
         links:
@@ -41,7 +41,7 @@ services:
             context: $PWD/docker/context/postfix
             dockerfile: $PWD/docker/postfix
         volumes:
-            - /home/unt:/home/unt
+            - $PWD/../../:/home/unt
             - $PWD/config/postfix:/config
             - $PWD/config/postfix/mailname:/etc/mailname
         env_file:
@@ -53,14 +53,14 @@ services:
             context: $PWD/docker/context/text_engine
             dockerfile: $PWD/docker/text_engine
         volumes:
-            - /home/unt:/home/unt
+            - $PWD/../../:/home/unt
         links:
             - memcached
     poll_engine:
         env_file:
             - $PWD/configs.env
         volumes:
-            - /home/unt:/home/unt
+            - $PWD/../../:/home/unt
         links:
             - memcached
         ports:

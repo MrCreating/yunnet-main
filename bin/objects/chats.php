@@ -14,7 +14,7 @@ class Chat
 {
 	public $isValid = false;
 	public $title   = "";
-	public $photo   = Project::DEVELOPERS_URL . "/images/default.png";
+	public $photo   = NULL;
 
 	private $uid = 0;
 
@@ -33,6 +33,8 @@ class Chat
 		if ($uid > 0)
 			return $this->isValid = false;
 
+		$this->photo = Project::getDevDomain() . "/images/default.png";
+
 		// now we gettings link to the photo,
 		// title and members list
 		$res = $connection->prepare("SELECT title, photo, permissions, link FROM messages.members_engine_1 WHERE uid = :uid;");
@@ -45,9 +47,9 @@ class Chat
 			$this->isValid     = true;
 			$this->title       = $data["title"];
 			$this->permissions = $data["permissions"];
-			$this->link        = Project::DEFAULT_URL . '/chats?c='.$data['link'];
+			$this->link        = Project::getDefaultDomain() . '/chats?c='.$data['link'];
 			if ($data["photo"] && $data["photo"] !== "")
-				$this->photo = Project::ATTACHMENTS_URL."/".$data["photo"];
+				$this->photo = Project::getAttachmentsDomain()."/".$data["photo"];
 
 			$this->utils["connection"] = $connection;
 			$this->uid                 = intval($uid);

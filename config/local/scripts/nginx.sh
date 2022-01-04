@@ -23,4 +23,4 @@ fi
 touch /etc/nginx/yunnet.conf
 envsubst '${PRODUCTION_NGINX_HTTPS_CODE}' < /home/unt/config/local/config/nginx/yunnet.conf > /etc/nginx/yunnet.conf
 echo "Config complied. Starting..."
-nginx -g "daemon off;" > "/dev/null"
+nginx -g "daemon off;"

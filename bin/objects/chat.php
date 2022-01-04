@@ -484,7 +484,7 @@ abstract class Chat extends EventEmitter
 				'access_level' => $this->getAccessLevel(),
 				'permissions'  => json_decode(json_encode($this->getPermissions()), true),
 				'title'        => $this->getTitle(),
-				'photo_url'    => $this->getPhoto() ? $this->getPhoto()->getLink() : Project::DEVELOPERS_URL . '/images/default.png'
+				'photo_url'    => $this->getPhoto() ? $this->getPhoto()->getLink() : Project::getDevDomain() . '/images/default.png'
 			];
 
 			if (!$this->isKicked() && !$this->isLeaved())

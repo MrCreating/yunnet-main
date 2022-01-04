@@ -15,16 +15,16 @@ $connection = $context->getConnection();
 
 /*if (!$context->isMobile() && explode('.', strtolower($_SERVER['HTTP_HOST']))[0] === 'm')
 {
-	die(header("Location: ". Project::DEFAULT_URL . $_SERVER['REQUEST_URI']));
+	die(header("Location: ". Project::getDefaultDomain() . $_SERVER['REQUEST_URI']));
 }*/
 if ($context->isMobile() && explode('.', strtolower($_SERVER['HTTP_HOST']))[0] !== 'm')
 {
-	die(header("Location: ". Project::MOBILE_URL . $_SERVER['REQUEST_URI']));
+	die(header("Location: ". Project::getMobileDomain() . $_SERVER['REQUEST_URI']));
 }
 
 //Session::start(1)->setAsCurrent();
 if (!$context->isLogged() && strtoupper($_SERVER['REQUEST_METHOD']) === "GET" && isset($_SESSION['stage']) && intval($_SESSION['stage']) > 2 && REQUESTED_PAGE !== "/register")
-	die(header("Location: ". Project::DEFAULT_URL ."/register"));
+	die(header("Location: ". Project::getDefaultDomain() ."/register"));
 
 if (strtoupper($_SERVER['REQUEST_METHOD']) === "POST")
 {

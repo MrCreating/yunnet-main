@@ -7,20 +7,10 @@
 */
 
 error_reporting(0);
+//ini_set('display_errors', 1);
 
 class Project
 {
-	// URLS
-	public const CONNECTION_HEAD = "https://";
-	public const PROJECT_URL     = "yunnet.ru";
-
-	public const DEFAULT_URL     = self::CONNECTION_HEAD .             self::PROJECT_URL;
-	public const MOBILE_URL      = self::CONNECTION_HEAD . "m."      . self::PROJECT_URL;
-	public const ATTACHMENTS_URL = self::CONNECTION_HEAD . "d-1."    . self::PROJECT_URL;
-	public const DEVELOPERS_URL  = self::CONNECTION_HEAD . "dev."    . self::PROJECT_URL;
-	public const THEMES_URL      = self::CONNECTION_HEAD . "themes." . self::PROJECT_URL;
-	///////
-
 	// current yunNet. version
 	public const VERSION = 6;
 
@@ -38,6 +28,45 @@ class Project
 
 	// test DB password
 	public const DB_TEST_PASSWORD = "unt-user-test-pc2021_die";
+
+	public static function getConnectionHead ()
+	{
+		return (getenv('UNT_PRODUCTION') === '1' ? 'https://' : 'http://');
+	}
+
+	public static function getProjectDomain () 
+	{
+		if (getenv("UNT_PRODUCTION") === '1') return 'yunnet.ru';
+
+		if (gethostname() === 'yunnet.ru') return 'yunnet.ru';
+
+		return 'localhost';
+	}
+
+	public static function getDefaultDomain ()
+	{
+		return self::getConnectionHead() . self::getProjectDomain();
+	}
+
+	public static function getMobileDomain ()
+	{
+		return self::getConnectionHead() . "m." . self::getProjectDomain();
+	}
+
+	public static function getAttachmentsDomain ()
+	{
+		return "https://d-1.yunnet.ru";
+	}
+
+	public static function getDevDomain ()
+	{
+		return self::getConnectionHead() . "dev." . self::getProjectDomain();
+	}
+
+	public static function getThemesDomain ()
+	{
+		return self::getConnectionHead() . "themes." . self::getProjectDomain();
+	}
 
 	public static function isClosed (): bool
 	{

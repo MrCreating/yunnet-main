@@ -36,5 +36,5 @@ if ($endpoint_id === 1)
 	die(require_once __DIR__ . '/github/index.php');
 }
 
-die(header('Location: ' . Project::DEFAULT_URL));
+die(header('Location: ' . Project::getDefaultDomain()));
 ?>

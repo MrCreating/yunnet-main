@@ -305,7 +305,7 @@ class Conversation extends Chat
 	{
 		if ($this->getAccessLevel() !== 9) return '';
 
-		return is_empty($this->link) ? '' : Project::DEFAULT_URL . '/chats?c=' . $this->link;
+		return is_empty($this->link) ? '' : Project::getDefaultDomain() . '/chats?c=' . $this->link;
 	}
 
 	public function updateInviteLink (): bool
