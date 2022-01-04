@@ -17,3 +17,16 @@
 * `pages` - основной сайт: https://yunnet.ru/
 * `public` - точка "входа", отсюда начинаются все запррсы
 * `tests` - тесты :)
+
+# Запуск
+- Установить git
+- Выполнить `git clone https://github.com/MrCreating/yunnet-main`
+* Windows
+	- Установить `Docker Desktop`
+	- `start.cmd` - просто щапустите его :)
+	- Открыть `localhost`
+* Linux
+	- Выполнить `apt-get update && apt-get install docker docker-compose`
+	- Перейти в `config/local`: `cd config/local`
+	- Выполнить `docker-compose up`
+	- Открыть `localhost`
