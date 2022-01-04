@@ -21,11 +21,11 @@
 # Запуск
 - Установить git
 - Выполнить `git clone https://github.com/MrCreating/yunnet-main`
-* Windows
+- Windows
 	- Установить `Docker Desktop`
 	- `start.cmd` - просто щапустите его :)
 	- Открыть `localhost`
-* Linux
+- Linux
 	- Выполнить `apt-get update && apt-get install docker docker-compose`
 	- Перейти в `config/local`: `cd config/local`
 	- Выполнить `docker-compose up`
