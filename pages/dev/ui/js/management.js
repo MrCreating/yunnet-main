@@ -222,18 +222,20 @@ const management = {
 		let menuBody = pages.elements.menuBody().clear();
 		let rightMenu = pages.elements.buildRightMenu();
 
+		let url = window.location.host.match(/localhost/) ? 'http://localhost' : 'https://yunnet.ru';
+
 		let mainItem = rightMenu.addItem(settings.lang.getValue('main'), function () {
-			return ui.go('https://' + window.location.host + '/dev');
+			return ui.go(url + '/dev');
 		});
 
 		let bugsItem = rightMenu.addItem(settings.lang.getValue('bug_tracker'), function () {
-			return ui.go('https://' + window.location.host + '/dev?section=bugs');
+			return ui.go(url + '/dev?section=bugs');
 		})
 
 		let filesItem;
 		if (settings.users.current.user_level > 3) {
 			filesItem = rightMenu.addItem(settings.lang.getValue('files'), function () {
-				return ui.go('https://' + window.location.host + '/dev?section=files');
+				return ui.go(url + '/dev?section=files');
 			});
 		}
 

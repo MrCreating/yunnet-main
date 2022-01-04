@@ -91,7 +91,7 @@ unt.modules.uploads = {
 				finish: function (callback) {
 					win.finish = callback;
 					return this;
-				}
+				},
 				upload: function (files) {
 					return new Promise(function (resolve) {
 						continueButton.classList.add('disabled');

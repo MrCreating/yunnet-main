@@ -56,7 +56,9 @@ const dev = {
 	      	if (instance) instance.close();
 	    }
 
-	    if (!onlyParse) history.pushState(null, document.title, url);
+	    try {
+	    	if (!onlyParse) history.pushState(null, document.title, url);
+	    } catch (e) {}
 	    return dev.parse(null, internalData);
 	},
 	parse: function (newElement = null, internalData = null) {
@@ -813,14 +815,16 @@ const dev = {
 			let currentIndex = sectionsList.indexOf(section);
 
 			if (currentIndex === -1) {
+				let url = window.location.host.match(/localhost/) ? 'http://dev.localhost' : 'https://dev.yunnet.ru';
+
 				menuBody.appendChild(pages.elements.createButton(unt.Icon.DEV, settings.lang.getValue('get_started'), function () {
-					return ui.go('https://' + window.location.host + '/methods?section=getstarted');
+					return ui.go(url + '/methods?section=getstarted');
 				}));
 				menuBody.appendChild(pages.elements.createButton(unt.Icon.ATTACHMENT, settings.lang.getValue('methods_list'), function () {
-					return ui.go('https://' + window.location.host + '/methods?section=methods');
+					return ui.go(url + '/methods?section=methods');
 				}));
 				menuBody.appendChild(pages.elements.createButton(unt.Icon.GROUP, settings.lang.getValue('widgets_and_auth'), function () {
-					return ui.go('https://' + window.location.host + '/methods?section=widgets');
+					return ui.go(url + '/methods?section=widgets');
 				}));
 			} else {
 				if (section === sectionsList[0]) {
@@ -845,7 +849,7 @@ const dev = {
 			ui.isMobile() ? nav_header_title.innerText = settings.lang.getValue("apps") : null;
 
 			let menuBody = pages.elements.menuBody().clear();
-			if (!settings.users.current) return window.location.href = 'https://yunnet.ru/';
+			if (!settings.users.current) return window.location.href = (window.location.host.match(/localhost/) ? 'http://localhost' : 'https://yunnet.ru');
 
 			let currentUrl = (new URLParser(window.location.href).parse());
 			if (currentUrl.action === 'edit') {
@@ -1047,7 +1051,7 @@ const dev = {
 			ui.isMobile() ? nav_header_title.innerText = settings.lang.getValue("bots") : null;
 
 			let menuBody = pages.elements.menuBody().clear();
-			if (!settings.users.current) return window.location.href = 'https://yunnet.ru/';
+			if (!settings.users.current) return window.location.href = window.location.host.match(/localhost/) ? 'http://localhost' : 'https://yunnet.ru';;
 
 			let currentUrl = (new URLParser(window.location.href).parse());
 
@@ -1442,8 +1446,10 @@ const dev = {
 			if (ui.isMobile())
 				nav_header_title.innerText = settings.lang.getValue('widgets_and_auth');
 
+			let url = window.location.host.match(/localhost/) ? 'http://dev.localhost' : 'https://dev.yunnet.ru';
+
 			menuBody.appendChild(pages.elements.createButton(unt.Icon.KEYBOARD, dev.settings.lang.getValue('bots_keyboard', false), function () {
-				return ui.go('https://' + window.location.host + '/methods?section=keyboard');
+				return ui.go(url + '/methods?section=keyboard');
 			}));
 		},
 		keyboard: function () {

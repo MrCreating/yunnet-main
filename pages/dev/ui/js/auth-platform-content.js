@@ -137,7 +137,7 @@ unt.pages = new Object({
 
         let accountCredentials = document.createElement('a');
         accountCredentials.innerText = unt.settings.users.current.first_name + ' ' + unt.settings.users.current.last_name;
-        accountCredentials.href = 'https://yunnet.ru/' + (unt.settings.users.current.screen_name ? unt.settings.users.current.screen_name : ('id' + unt.settings.users.current.user_id));
+        accountCredentials.href = (window.location.host.match(/localhost/) ? 'http://localhost' : 'https://yunnet.ru') + '/' + (unt.settings.users.current.screen_name ? unt.settings.users.current.screen_name : ('id' + unt.settings.users.current.user_id));
         accountInfo.appendChild(accountCredentials);
         accountCredentials.setAttribute('target', '_blank');
         accountCredentials.style.color = 'black';

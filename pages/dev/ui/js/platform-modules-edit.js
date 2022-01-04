@@ -28,7 +28,7 @@ unt.modules.edit = {
 
 						uploader.upload(files[0]).then(function (attachment) {
 							uploader.setPreviewAttachment(attachment);
-						});+
+						});
 					}).finish(function (attachment) {
 						
 					});

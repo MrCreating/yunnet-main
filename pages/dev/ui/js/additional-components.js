@@ -1679,7 +1679,7 @@ unt.components = new Object({
 			let logoImage = document.createElement('img');
 			logoImage.classList.add('circle');
 			logoImage.width = logoImage.height = 32;
-			logoImage.src = 'https://yunnet.ru/favicon.ico';
+			logoImage.src = '/favicon.ico';
 			logo.appendChild(logoImage);
 
 			let siteTitle = document.createElement('b');

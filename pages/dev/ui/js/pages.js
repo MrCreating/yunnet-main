@@ -725,7 +725,7 @@ const pages = {
 
 			let siteLogo = document.createElement('img');
 			menuBody.appendChild(siteLogo);
-			siteLogo.src = "https://yunnet.ru/favicon.ico";
+			siteLogo.src = "/favicon.ico";
 			siteLogo.width = siteLogo.height = 96;
 			siteLogo.style.borderRadius = "120px";
 			siteLogo.style.boxShadow = "0 0 2px black";
@@ -1993,8 +1993,10 @@ const pages = {
 
 		let rightMenu = pages.elements.buildRightMenu().append();
 
+		let url = window.location.host.match(/localhost/) ? 'http://localhost' : 'https://yunnet.ru';
+
 		let mainItem = rightMenu.addItem(settings.lang.getValue("main"), function () {
-			return ui.go('https://' + window.location.host + '/edit?section=main');
+			return ui.go(url + '/edit?section=main');
 		});
 		mainItem.select();
 
@@ -2929,14 +2931,18 @@ const pages = {
 				unt.Icon.PALETTE,
 				settings.lang.getValue('installed_themes'),
 				function () {
-					return ui.go('https://' + window.location.host + '/themes?section=installed');
+					let url = window.location.host.match(/localhost/) ? 'http://localhost' : 'https://yunnet.ru';
+
+					return ui.go(url + '/themes?section=installed');
 				},
 				'black'
 			], [
 				unt.Icon.GROUP,
 				settings.lang.getValue('theme_repos'),
 				function () {
-					return ui.go('https://' + window.location.host + '/themes?section=repo');
+					let url = window.location.host.match(/localhost/) ? 'http://localhost' : 'https://yunnet.ru';
+
+					return ui.go(url + '/themes?section=repo');
 				},
 				'black'
 			]
@@ -3903,11 +3909,13 @@ const pages = {
 
 		if (!ui.isMobile() && sections.indexOf(selectedSection) === -1) selectedSection = 'main'; 
 
+		let url = window.location.host.match(/localhost/) ? 'http://localhost' : 'https://yunnet.ru';
+
 		if (!ui.isMobile()) {
 			let rightMenu = pages.elements.buildRightMenu().append();
 			sections.forEach(function (itemName) {
 				let element = rightMenu.addItem(settings.lang.getValue(itemName), function (itemSelected, itemElement) {
-					return ui.go('https://' + window.location.host + '/settings?section=' + itemElement.getAttribute('category'));
+					return ui.go(url + '/settings?section=' + itemElement.getAttribute('category'));
 				});
 
 				element.setAttribute('category', itemName);
@@ -3965,11 +3973,11 @@ const pages = {
 					[
 						unt.Icon.ACCOUNT,
 						settings.lang.getValue('main'),
-						function () { return ui.go('https://' + window.location.host + '/settings?section=main') }
+						function () { return ui.go(url + '/settings?section=main') }
 					], [
 						unt.Icon.NOTIFICATIONS,
 						settings.lang.getValue('notifications'),
-						function () { return ui.go('https://' + window.location.host + '/settings?section=notifications') }
+						function () { return ui.go(url + '/settings?section=notifications') }
 					]
 				]));
 
@@ -3977,15 +3985,15 @@ const pages = {
 					[
 						unt.Icon.LOCKED,
 						settings.lang.getValue('privacy'),
-						function () { return ui.go('https://' + window.location.host + '/settings?section=privacy') }
+						function () { return ui.go(url + '/settings?section=privacy') }
 					], [
 						unt.Icon.SECURITY,
 						settings.lang.getValue('security'),
-						function () { return ui.go('https://' + window.location.host + '/settings?section=security') }
+						function () { return ui.go(url + '/settings?section=security') }
 					], [
 						unt.Icon.LIST,
 						settings.lang.getValue('blacklist'),
-						function () { return ui.go('https://' + window.location.host + '/settings?section=blacklist') }
+						function () { return ui.go(url + '/settings?section=blacklist') }
 					]
 				]));
 
@@ -3993,11 +4001,11 @@ const pages = {
 					[
 						unt.Icon.GROUP,
 						settings.lang.getValue('accounts'),
-						function () { return ui.go('https://' + window.location.host + '/settings?section=accounts') }
+						function () { return ui.go(url + '/settings?section=accounts') }
 					], [
 						unt.Icon.PALETTE,
 						settings.lang.getValue('theming'),
-						function () { return ui.go('https://' + window.location.host + '/settings?section=theming') }
+						function () { return ui.go(url + '/settings?section=theming') }
 					]
 				]));
 
@@ -4005,7 +4013,7 @@ const pages = {
 					[
 						unt.Icon.STATS,
 						settings.lang.getValue('about'),
-						function () { return ui.go('https://' + window.location.host + '/settings?section=about') }
+						function () { return ui.go(url + '/settings?section=about') }
 					]
 				]));
 
