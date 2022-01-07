@@ -8,9 +8,9 @@ require_once __DIR__ . '/../../bin/functions/management.php';
  * Register actions
 */
 
-if (isset($_POST['action']))
+if (isset(Request::get()->data['action']))
 {
-	$action = strtolower($_POST['action']);
+	$action = strtolower(Request::get()->data['action']);
 	
 	if ($context->allowToUseUnt()) die(json_encode(array('error' => 1)));
 	if (is_register_closed()) die(json_encode(array('closed' => 1)));
@@ -47,8 +47,8 @@ if (isset($_POST['action']))
 			if ($currentStage === 0)
 			{
 				// checking the user's credentials.
-				$first_name = $_POST["first_name"];
-				$last_name  = $_POST["last_name"];
+				$first_name = Request::get()->data["first_name"];
+				$last_name  = Request::get()->data["last_name"];
 
 				// base checkout before saving
 				if (is_empty($first_name) || strlen($first_name) > 32 || preg_match("/[^a-zA-Zа-яА-ЯёЁ'-]/ui", $first_name))
@@ -75,7 +75,7 @@ if (isset($_POST['action']))
 			*/
 			if ($currentStage === 1)
 			{
-				$email = strval(trim($_POST["email"]));
+				$email = strval(trim(Request::get()->data["email"]));
 				if (is_empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 96)
 				{
 					die(json_encode(array(
@@ -112,7 +112,7 @@ if (isset($_POST['action']))
 			*/
 			if ($currentStage === 2)
 			{
-				$code = intval($_POST['email_code']);
+				$code = intval(Request::get()->data['email_code']);
 				if ($code < 100000 || $code > 999999)
 					die(json_encode(array(
 						'error_code' => 3
@@ -135,8 +135,8 @@ if (isset($_POST['action']))
 			*/
 			if ($currentStage === 3)
 			{
-				$password        = strval($_POST["password"]);
-				$repeat_password = strval($_POST["repeat_password"]);
+				$password        = strval(Request::get()->data["password"]);
+				$repeat_password = strval(Request::get()->data["repeat_password"]);
 
 				if (is_empty($password) || strlen($password) < 6 || strlen($password) > 64)
 					die(json_encode(array(
@@ -155,7 +155,7 @@ if (isset($_POST['action']))
 					)));
 
 				// temporaly constant.
-				$gender = intval($_POST['gender']) !== 1 && intval($_POST['gender']) !== 2 ? 1 : intval($_POST['gender']);
+				$gender = intval(Request::get()->data['gender']) !== 1 && intval(Request::get()->data['gender']) !== 2 ? 1 : intval(Request::get()->data['gender']);
 
 				$_SESSION["password"] = password_hash($password, PASSWORD_DEFAULT);
 				$_SESSION["gender"]   = $gender;

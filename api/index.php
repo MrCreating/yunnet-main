@@ -20,8 +20,8 @@ $api->callMethod($api->getRequestedMethod(), $api->getRequestParams(), function 
 
 $api->sendError(-2, 'API is temporally unavailable');
 /*session_write_close();
-parse_str(explode("?", $_SERVER["REQUEST_URI"])[1], $_REQUEST);
-$_REQUEST = array_merge($_REQUEST, $_POST);
+parse_str(explode("?", $_SERVER["REQUEST_URI"])[1], Request::get()->data);
+Request::get()->data = array_merge(Request::get()->data, Request::get()->data);
 
 require __DIR__ . '/../bin/functions/dev_functions.php';
 require __DIR__ . '/../bin/taskmanager/index.php';
@@ -38,13 +38,13 @@ if (strtolower($_SERVER["REQUEST_METHOD"]) !== "get" && strtolower($_SERVER["REQ
 	die(create_json_error(0, 'Request method must be GET or POST'));
 }
 
-$method_requested = strval($_REQUEST["method"]) === "" ? (explode("?", explode("/", strval($_SERVER["REQUEST_URI"]))[1])[0]) : (strval($_REQUEST["method"]));
-$key = strval($_REQUEST["key"]);
+$method_requested = strval(Request::get()->data["method"]) === "" ? (explode("?", explode("/", strval($_SERVER["REQUEST_URI"]))[1])[0]) : (strval(Request::get()->data["method"]));
+$key = strval(Request::get()->data["key"]);
 
 // now we can do auth.
 require __DIR__ . "/../bin/functions/auth.php";
 
-$auth       = strtolower($_REQUEST["auth"]);
+$auth       = strtolower(Request::get()->data["auth"]);
 $connection = get_database_connection();
 
 // parsing method name and groupd
@@ -73,7 +73,7 @@ if ($auth === "local")
 	header("Access-Control-Allow-Origin: *");
 	if (!in_array($method_group, $free_groups))
 	{
-		$context = auth_by_token($connection, $_REQUEST["key"]);
+		$context = auth_by_token($connection, Request::get()->data["key"]);
 		if (!$context)
 		{
 			die(create_json_error(-1, 'Authentication failed: incorrect access key'));

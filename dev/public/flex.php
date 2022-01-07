@@ -36,7 +36,7 @@ if ($action === 'get_apps_list')
 	if (!function_exists('get_apps_list'))
 		require __DIR__ . '/../../bin/functions/auth.php';
 
-	$apps_list = get_apps_list($connection, $context->getCurrentUser()->getId(), intval($_POST['offset']), intval($_POST['count']));
+	$apps_list = get_apps_list($connection, $context->getCurrentUser()->getId(), intval(Request::get()->data['offset']), intval(Request::get()->data['count']));
 
 	$result = [];
 	foreach ($apps_list as $index => $app) {
@@ -52,7 +52,7 @@ if ($action === 'get_apps_list')
 if ($action === 'get_dev_lang_value')
 {
 	$currentLanguage = get_dev_language($connection);
-	$value = strval($_POST['value']);
+	$value = strval(Request::get()->data['value']);
 
 	if ($value === '*')
 		die(json_encode(array($currentLanguage)));

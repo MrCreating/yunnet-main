@@ -10,10 +10,10 @@ $current_user_level = $context->getCurrentUser()->getAccessLevel();
 
 if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 {
-	if (isset($_POST['action']))
+	if (isset(Request::get()->data['action']))
 	{
-		$action  = strtolower(strval($_POST['action']));
-		$user_id = intval($_POST['user_id']) === 0 ? intval($_SESSION['user_id']) : intval($_POST['user_id']);
+		$action  = strtolower(strval(Request::get()->data['action']));
+		$user_id = intval(Request::get()->data['user_id']) === 0 ? intval($_SESSION['user_id']) : intval(Request::get()->data['user_id']);
 
 		$user = ($user_id > 0) ? (new User($user_id)) : (new Bot($user_id * -1));
 		if (!$user->valid())
@@ -24,7 +24,7 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 			case 'show_project_files':
 				if ($current_user_level < 4) die(json_encode(array('error' => 1)));
 
-				$filePath = strval($_POST['file_path']);
+				$filePath = strval(Request::get()->data['file_path']);
 
 				$directory = opendir(__DIR__ . '/../..' . $filePath);
 				$response = [];
@@ -90,9 +90,9 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 					if (!function_exists("update_user_data"))
 						require __DIR__ . "/../../bin/functions/users.php";
 
-					if ($user->getFirstName() !== $_POST["first_name"] && isset($_POST['first_name']))
+					if ($user->getFirstName() !== Request::get()->data["first_name"] && isset(Request::get()->data['first_name']))
 					{
-						$changed = update_user_data($connection, $user_id, "first_name", $_POST["first_name"]);
+						$changed = update_user_data($connection, $user_id, "first_name", Request::get()->data["first_name"]);
 						if ($changed !== false && $changed !== true)
 						{
 							switch ($changed)
@@ -111,9 +111,9 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 
 						die(json_encode(array('response'=>1)));
 					}
-					if ($user->getLastName() !== $_POST["last_name"] && isset($_POST['last_name']))
+					if ($user->getLastName() !== Request::get()->data["last_name"] && isset(Request::get()->data['last_name']))
 					{
-						$changed = update_user_data($connection, $user_id, "last_name", $_POST["last_name"]);
+						$changed = update_user_data($connection, $user_id, "last_name", Request::get()->data["last_name"]);
 						if ($changed !== false && $changed !== true)
 						{
 							switch ($changed)
@@ -133,9 +133,9 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 						die(json_encode(array('response'=>1)));
 					}
 
-					if ($user->getScreenName() !== $_POST["screen_name"] && isset($_POST['screen_name']))
+					if ($user->getScreenName() !== Request::get()->data["screen_name"] && isset(Request::get()->data['screen_name']))
 					{
-						$result = $user->edit()->setScreenName(is_empty($_POST["screen_name"]) ? NULL : $_POST["screen_name"]);
+						$result = $user->edit()->setScreenName(is_empty(Request::get()->data["screen_name"]) ? NULL : Request::get()->data["screen_name"]);
 						if ($result === 0)
 						{
 							die(json_encode(array('error'=>1, 'message'=>$context->lang["in_f_3"])));
@@ -148,9 +148,9 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 						die(json_encode(array('response'=>1)));
 					}
 
-					if (isset($_POST['photo']))
+					if (isset(Request::get()->data['photo']))
 					{
-						$attachment_data = strval($_POST['photo']);
+						$attachment_data = strval(Request::get()->data['photo']);
 						if (is_empty($attachment_data))
 						{
 							$result = delete_user_photo($connection, $user_id);

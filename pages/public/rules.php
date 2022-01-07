@@ -1,8 +1,8 @@
 <?php
 
-if (isset($_POST['action']))
+if (isset(Request::get()->data['action']))
 {
-	$action = strtolower(trim($_POST['action']));
+	$action = strtolower(trim(Request::get()->data['action']));
 
 	if ($action === "get_rules_text")
 	{

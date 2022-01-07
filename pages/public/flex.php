@@ -6,9 +6,9 @@ require_once __DIR__ . '/../../bin/functions/messages.php';
 require_once __DIR__ . '/../../bin/functions/users.php';
 require_once __DIR__ . '/../../bin/objects/chats.php';
 
-if (isset($_POST['action']))
+if (isset(Request::get()->data['action']))
 {
-	$action = strtolower($_POST['action']);
+	$action = strtolower(Request::get()->data['action']);
 
 	switch ($action) {
 		case 'test':
@@ -21,7 +21,7 @@ if (isset($_POST['action']))
 		break;
 
 		case 'get_language_value':
-			$value         = strtolower($_POST["value"]);
+			$value         = strtolower(Request::get()->data["value"]);
 			$languageValue = $context->getLanguage()->{$value};
 			if ($value === '*')
 			{
@@ -34,8 +34,8 @@ if (isset($_POST['action']))
 		break;
 		
 		case 'get_user_data':
-			$entity_id = intval($_POST["id"]);
-			$fields    = strval($_POST["fields"]);
+			$entity_id = intval(Request::get()->data["id"]);
+			$fields    = strval(Request::get()->data["fields"]);
 
 			if ($entity_id === 0) 
 				$entity_id = intval($context->getCurrentUser() === NULL ? 0 : $context->getCurrentUser()->getId());
@@ -51,7 +51,7 @@ if (isset($_POST['action']))
 		break;
 
 		case 'get_user_data_by_link':
-			$screen_name = strtolower($_POST["screen_name"]);
+			$screen_name = strtolower(Request::get()->data["screen_name"]);
 			if ($context->getCurrentUser() && $context->getCurrentUser()->isBanned())
 				$screen_name = 'id' . $context->getCurrentUser()->getId();
 
@@ -64,7 +64,7 @@ if (isset($_POST['action']))
 		break;
 
 		case 'get_attachment_info':
-			$attachmentCredentials = strval(trim($_POST['credentials']));
+			$attachmentCredentials = strval(trim(Request::get()->data['credentials']));
 
 			$resultedAttachment = (new AttachmentsParser())->getObject($attachmentCredentials);
 			if (!$resultedAttachment)
@@ -87,9 +87,9 @@ if (isset($_POST['action']))
 		break;
 
 		case 'publish_post':
-			$text = strval($_POST['text']);
-			$atts = strval($_POST['attachments']);
-			$wall = intval($_POST['wall_id']) !== 0 ? intval($_POST['wall_id']) : $context->getCurrentUser()->getId();
+			$text = strval(Request::get()->data['text']);
+			$atts = strval(Request::get()->data['attachments']);
+			$wall = intval(Request::get()->data['wall_id']) !== 0 ? intval(Request::get()->data['wall_id']) : $context->getCurrentUser()->getId();
 
 			$result = create_post($connection, $context->getCurrentUser()->getId(), $wall, $text, $atts);
 
@@ -107,10 +107,10 @@ if (isset($_POST['action']))
 		break;
 
 		case 'edit_post':
-			$text = strval($_POST['text']);
-			$atts = strval($_POST['attachments']);
-			$wall = intval($_POST['wall_id']);
-			$post = intval($_POST['post_id']);
+			$text = strval(Request::get()->data['text']);
+			$atts = strval(Request::get()->data['attachments']);
+			$wall = intval(Request::get()->data['wall_id']);
+			$post = intval(Request::get()->data['post_id']);
 
 			$result = update_post_data($context->getConnection(), $context->getCurrentUser()->getId(), $wall, $post, $text, $atts);
 
@@ -128,7 +128,7 @@ if (isset($_POST['action']))
 		break;
 
 		case 'get_chat_by_peer':
-			$sel = strval($_POST['peer_id']);
+			$sel = strval(Request::get()->data['peer_id']);
 			$chat_data = parse_id_from_string($sel);
 
 			// if format is invalid
@@ -143,7 +143,7 @@ if (isset($_POST['action']))
 		break;
 
 		case 'get_chat_permissions':
-			$chat_data = parse_id_from_string($_POST['peer_id']);
+			$chat_data = parse_id_from_string(Request::get()->data['peer_id']);
 			if (!$chat_data)
 				die(json_encode(array('error' => 1)));
 
@@ -166,7 +166,7 @@ if (isset($_POST['action']))
 		break;
 
 		case 'get_my_permissions_level':
-			$chat_data = parse_id_from_string($_POST['peer_id']);
+			$chat_data = parse_id_from_string(Request::get()->data['peer_id']);
 			if (!$chat_data)
 				die(json_encode(array('error' => 1)));
 
@@ -188,12 +188,12 @@ if (isset($_POST['action']))
 		break;
 
 		case 'get_friends':
-			$user_id = intval($_POST['user_id']);
+			$user_id = intval(Request::get()->data['user_id']);
 
 			if (!user_exists($connection, $user_id) || !can_access_closed($connection, $context->getCurrentUser()->getId(), $user_id) || in_blacklist($connection, $user_id, $context->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
-			$section = strval($_POST['section']);
+			$section = strval(Request::get()->data['section']);
 			if (!in_array($section, ['friends', 'subscribers', 'outcoming'])) $section = 'friends';
 
 			$friends_list = get_friends_list($connection, $user_id, $section, true);
@@ -213,7 +213,7 @@ if (isset($_POST['action']))
 		break;
 
 		case 'set_status':
-			$requested_status = trim(strval($_POST['new_status']));
+			$requested_status = trim(strval(Request::get()->data['new_status']));
 			if (strlen($requested_status) > 128)
 				die(json_decode(array('error' => 1)));
 

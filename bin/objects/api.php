@@ -19,9 +19,6 @@ class API
 
 	public function __construct ()
 	{
-		parse_str(explode('?', $_SERVER['REQUEST_URI'])[1], $_REQUEST);
-		$_REQUEST = array_merge($_REQUEST, array_merge($_GET, $_POST));
-
 		$this->currentConnection = DataBaseManager::getConnection();
 
 		$this->isValid = false;
@@ -87,7 +84,7 @@ class API
 
 		$result = [];
 
-		foreach ($_REQUEST as $index => $value) {
+		foreach (Request::get()->data as $index => $value) {
 			if (in_array(strtolower($index), $excludes)) continue;
 
 			$result[$index] = $value;
@@ -227,9 +224,9 @@ class API
 	////////////////////////
 	public static function getRequestValue (string $value)
 	{
-		if (isset($_REQUEST[$value])) return $_REQUEST[$value];
+		if (isset(Request::get()->data[$value])) return Request::get()->data[$value];
 
-		return $_SERVER['REQUEST_METHOD'] === 'GET' ? $_GET[$value] : $_POST[$value];
+		return $_SERVER['REQUEST_METHOD'] === 'GET' ? Request::get()->data[$value] : Request::get()->data[$value];
 	}
 
 	public static function get (): API

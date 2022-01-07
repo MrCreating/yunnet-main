@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/../../../pages/page_templates.php';
 
-if (isset($_POST['action']))
+if (isset(Request::get()->data['action']))
 {
 
 }

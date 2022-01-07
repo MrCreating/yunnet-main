@@ -3,24 +3,24 @@ $origin = get_page_origin();
 
 header("Content-Type: application/json");
 header('Access-Control-Allow-Origin: ' . $origin);
-header('Access-Control-Allow-Credentials: true');
+header('Access-Control-Allow-Credentials: true');;
 
 require_once __DIR__ . '/../../bin/functions/uploads.php';
-require_once __DIR__ . '/../../bin/functions/polls.php';
+require_once __DIR__ . '/../../bin/objects/poll.php';
 
-if (isset($_POST['action']))
+if (isset(Request::get()->data['action']))
 {
-	$action = strtolower($_POST['action']);
+	if (!$context->allowToUseUnt()) 
+		die(json_encode(array('error' => 1)));
 
-	if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
-
+	$action = strtolower(Request::get()->data['action']);
+	
 	switch ($action) {
 		case 'get':
-			if (isset($_POST["type"]))
+			if (isset(Request::get()->data["type"]))
 			{
-				if (!$context->isLogged() || $context->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
+				$attachmentType = strtolower(Request::get()->data['type']);
 
-				$attachmentType = strtolower($_POST['type']);
 				if ($attachmentType === 'theme' || $attachmentType === 'image')
 				{
 					$data = get_upload_link($connection, $context->getCurrentUser()->getId(), $origin, $attachmentType);
@@ -29,12 +29,12 @@ if (isset($_POST['action']))
 				}
 				if ($attachmentType === 'poll')
 				{
-					$poll_title           = strval($_POST['poll_title']);
-					$anonymous_poll       = boolval(intval($_POST['poll_anonymous']));
-					$poll_multi_selection = boolval(intval($_POST['poll_multi_selection']));
+					$poll_title           = strval(Request::get()->data['poll_title']);
+					$anonymous_poll       = boolval(intval(Request::get()->data['poll_anonymous']));
+					$poll_multi_selection = boolval(intval(Request::get()->data['poll_multi_selection']));
 					$variant_list         = array();
 
-					$got_variants = json_decode(strval($_POST['poll_answers_list']), true);
+					$got_variants = json_decode(strval(Request::get()->data['poll_answers_list']), true);
 					foreach ($got_variants as $index => $answer) 
 					{
 						if (intval($index) >= 10) break;
@@ -50,7 +50,7 @@ if (isset($_POST['action']))
 					if (count($variant_list) < 1)
 						die(json_encode(array('error' => 1)));
 
-					$poll = create_poll($connection, $poll_title, $context->getCurrentUser()->getId(), $variant_list, $anonymous_poll, $poll_multi_selection, true, 0);
+					$poll = Poll::create($poll_title, $variant_list, 0, $anonymous_poll, $poll_multi_selection, true);
 					if ($poll)
 					{
 						die(json_encode($poll->toArray()));
@@ -66,11 +66,11 @@ if (isset($_POST['action']))
 	die(json_encode(array('error' => 1)));
 }
 
-if (strtolower($_REQUEST['action']) === "upload")
+if (strtolower(Request::get()->data['action']) === "upload")
 {
 	if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
 	
-	$objects = fetch_upload($connection, $_REQUEST['query'], $context->getCurrentUser()->getId());
+	$objects = fetch_upload($connection, Request::get()->data['query'], $context->getCurrentUser()->getId());
 	if ($objects)
 		die(json_encode($objects->toArray()));
 }

@@ -5,6 +5,7 @@
  */
 
 // connect the default modules
+require_once __DIR__ . '/objects/request.php';
 require_once __DIR__ . '/objects/context.php';
 require_once __DIR__ . '/platform-tools/cache.php';
 require_once __DIR__ . '/platform-tools/database.php';

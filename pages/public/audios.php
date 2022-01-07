@@ -3,21 +3,21 @@
 require_once __DIR__ . '/../../bin/functions/accounts.php';
 require_once __DIR__ . '/../../bin/functions/audios.php';
 
-if (isset($_POST['action']))
+if (isset(Request::get()->data['action']))
 {
-	$action = strtolower($_POST['action']);
+	$action = strtolower(Request::get()->data['action']);
 
 	if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
-	$accountType = intval($_POST['type']);
+	$accountType = intval(Request::get()->data['type']);
 
 	switch ($action) {
 		case 'bound_account':
 			if ($accountType === 1)
 			{
-				$login = strval($_POST['login']);
-				$password = strval($_POST['password']);
-				$code = intval($_POST['auth_code']) > 0 ? strval($_POST['auth_code']) : '';
+				$login = strval(Request::get()->data['login']);
+				$password = strval(Request::get()->data['password']);
+				$code = intval(Request::get()->data['auth_code']) > 0 ? strval(Request::get()->data['auth_code']) : '';
 
 				$result = add_account($connection, $login, $password, $context->getCurrentUser()->getId(), 1, $code);
 				if ($result === true)
@@ -45,8 +45,8 @@ if (isset($_POST['action']))
 		break;
 
 		case 'get_audio':
-			$currentOfffset = intval($_POST['offset']);
-			$audiosCount = intval($_POST['count']);
+			$currentOfffset = intval(Request::get()->data['offset']);
+			$audiosCount = intval(Request::get()->data['count']);
 
 			$audios_list = get_audio($connection, $context->getCurrentUser()->getId(), 1, $currentOfffset, $audiosCount);
 			if ($audios_list === false)

@@ -18,7 +18,7 @@ class Context
 		$user_id = intval($_SESSION['user_id']);
 		$session = new Session(strval($_SESSION['session_id']));
 
-		parse_str(explode("?", $_SERVER["REQUEST_URI"])[1], $_REQUEST);
+		parse_str(explode("?", $_SERVER["REQUEST_URI"])[1], Request::get()->data);
 
 		if ($session->valid() && $session->isLogged())
 		{

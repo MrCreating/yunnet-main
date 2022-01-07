@@ -3,15 +3,15 @@
 require_once __DIR__ . '/../../bin/functions/theming.php';
 require_once __DIR__ . '/../../bin/objects/theme.php';
 
-if (isset($_POST["action"]))
+if (isset(Request::get()->data["action"]))
 {
-	$action = strtolower($_POST['action']);
+	$action = strtolower(Request::get()->data['action']);
 
 	if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
 	switch ($action) {
 		case 'get_themes':
-			$themes = get_themes($connection, $context->getCurrentUser()->getId(), intval($_POST['count']), intval($_POST['offset']));
+			$themes = get_themes($connection, $context->getCurrentUser()->getId(), intval(Request::get()->data['count']), intval(Request::get()->data['offset']));
 			$result = [];
 
 			foreach ($themes as $index => $theme) {
@@ -22,7 +22,7 @@ if (isset($_POST["action"]))
 		break;
 
 		case 'apply_theme':
-			die(json_encode(array('success'=>intval(apply_theme($connection, $context->getCurrentUser()->getId(), (new AttachmentsParser())->getObject($_POST['credentials']))))));
+			die(json_encode(array('success'=>intval(apply_theme($connection, $context->getCurrentUser()->getId(), (new AttachmentsParser())->getObject(Request::get()->data['credentials']))))));
 		break;
 
 		case 'reset_theme':
@@ -30,9 +30,9 @@ if (isset($_POST["action"]))
 		break;
 
 		case 'create_theme':
-			$title = trim(strval($_POST['theme_title']));
-			$desc  = trim(strval($_POST['theme_description']));
-			$is_private = intval(boolval(intval($_POST['is_private'])));
+			$title = trim(strval(Request::get()->data['theme_title']));
+			$desc  = trim(strval(Request::get()->data['theme_description']));
+			$is_private = intval(boolval(intval(Request::get()->data['is_private'])));
 
 			$result = create_theme($connection, $context->getCurrentUser()->getId(), $title, $desc, $is_private);
 			if (!$result)
@@ -42,7 +42,7 @@ if (isset($_POST["action"]))
 		break;
 
 		case 'delete_theme':
-			$theme_id = intval($_POST['theme_id']);
+			$theme_id = intval(Request::get()->data['theme_id']);
 
 			$result = delete_theme($connection, $context->getCurrentUser()->getId(), intval($_SESSION['user_id']), $theme_id);
 			if (!$result)
@@ -52,11 +52,11 @@ if (isset($_POST["action"]))
 		break;
 
 		case 'update_theme_info':
-			$theme = new Theme(intval($_POST['owner_id']), intval($_POST['theme_id']));
+			$theme = new Theme(intval(Request::get()->data['owner_id']), intval(Request::get()->data['theme_id']));
 			if (!$theme->valid())
 				die(json_encode(array('error'=>1)));
 
-			$result = update_theme($connection, $theme, $context->getCurrentUser()->getId(), strval($_POST["new_title"]), strval($_POST["new_description"]), intval($_POST["private_mode"]));
+			$result = update_theme($connection, $theme, $context->getCurrentUser()->getId(), strval(Request::get()->data["new_title"]), strval(Request::get()->data["new_description"]), intval(Request::get()->data["private_mode"]));
 			
 			if (!$result)
 				die(json_encode(array('error'=>1)));
@@ -65,10 +65,10 @@ if (isset($_POST["action"]))
 		break;
 
 		case 'update_theme_code':
-			$theme_id  = intval($_POST['theme_id']);
-			$owner_id  = intval($_POST['owner_id']);
-			$code_type = strtolower(trim($_POST['code_type']));
-			$new_code  = trim(strval($_POST['new_code']));
+			$theme_id  = intval(Request::get()->data['theme_id']);
+			$owner_id  = intval(Request::get()->data['owner_id']);
+			$code_type = strtolower(trim(Request::get()->data['code_type']));
+			$new_code  = trim(strval(Request::get()->data['new_code']));
 
 			$theme = new Theme($owner_id, $theme_id);
 			if (!$theme->valid())

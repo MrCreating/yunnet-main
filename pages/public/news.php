@@ -2,9 +2,9 @@
 	
 require_once __DIR__ . "/../../bin/functions/wall.php";
 
-if (isset($_POST['action']))
+if (isset(Request::get()->data['action']))
 {
-	$action = strtolower($_POST['action']);
+	$action = strtolower(Request::get()->data['action']);
 
 	if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
 

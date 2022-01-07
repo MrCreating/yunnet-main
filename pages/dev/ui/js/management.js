@@ -835,8 +835,9 @@ const management = {
 		}
 
 		if (section === sections[2]) {
-			if (settings.users.current.user_level < 2)
+			if (settings.users.current.user_level < 2) {
 				return ui.go('https://' + window.location.host + '/dev');
+			}
 
 			bugsItem.select();
 

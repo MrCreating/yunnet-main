@@ -6,17 +6,17 @@ require_once __DIR__ . "/../../bin/functions/users.php";
  * Profile editing page and actions.
 */
 
-if (isset($_POST['action']))
+if (isset(Request::get()->data['action']))
 {
-	$action = strtolower($_POST['action']);
+	$action = strtolower(Request::get()->data['action']);
 
 	if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
 	switch ($action) {
 		case 'save':
-			if ($context->getCurrentUser()->getFirstName() !== $_POST["first_name"] && isset($_POST['first_name']))
+			if ($context->getCurrentUser()->getFirstName() !== Request::get()->data["first_name"] && isset(Request::get()->data['first_name']))
 			{
-				$changed = update_user_data($connection, $context->getCurrentUser()->getId(), "first_name", $_POST["first_name"]);
+				$changed = update_user_data($connection, $context->getCurrentUser()->getId(), "first_name", Request::get()->data["first_name"]);
 				if ($changed !== false && $changed !== true)
 				{
 					switch ($changed)
@@ -35,9 +35,9 @@ if (isset($_POST['action']))
 
 				die(json_encode(array('response'=>1)));
 			}
-			if ($context->getCurrentUser()->getFirstName() !== $_POST["last_name"] && isset($_POST['last_name']))
+			if ($context->getCurrentUser()->getFirstName() !== Request::get()->data["last_name"] && isset(Request::get()->data['last_name']))
 			{
-				$changed = update_user_data($connection, $context->getCurrentUser()->getId(), "last_name", $_POST["last_name"]);
+				$changed = update_user_data($connection, $context->getCurrentUser()->getId(), "last_name", Request::get()->data["last_name"]);
 				if ($changed !== false && $changed !== true)
 				{
 					switch ($changed)
@@ -57,9 +57,9 @@ if (isset($_POST['action']))
 				die(json_encode(array('response'=>1)));
 			}
 
-			if ($context->getCurrentUser()->getScreenName() !== $_POST["screen_name"] && isset($_POST['screen_name']))
+			if ($context->getCurrentUser()->getScreenName() !== Request::get()->data["screen_name"] && isset(Request::get()->data['screen_name']))
 			{
-				$result = Context::get()->getCurrentUser()->edit()->setScreenName(is_empty($_POST["screen_name"]) ? NULL : $_POST["screen_name"]);
+				$result = Context::get()->getCurrentUser()->edit()->setScreenName(is_empty(Request::get()->data["screen_name"]) ? NULL : Request::get()->data["screen_name"]);
 				if ($result === 0)
 				{
 					die(json_encode(array('error'=>1, 'message'=>$context->getLanguage()->in_f_3)));
@@ -72,9 +72,9 @@ if (isset($_POST['action']))
 				die(json_encode(array('response'=>1)));
 			}
 
-			if (isset($_POST['photo']))
+			if (isset(Request::get()->data['photo']))
 			{
-				$attachment = (new AttachmentsParser())->getObject($_POST['photo']);
+				$attachment = (new AttachmentsParser())->getObject(Request::get()->data['photo']);
 				
 				$result = Context::get()->getCurrentUser()->edit()->setPhoto($attachment);
 				if ($result === false)

@@ -30,11 +30,11 @@ if ($wall_id !== 0)
 		$post = get_post_by_id($connection, $wall_id, $post_id, $context->getCurrentUser()->getId());
 		if ($post)
 		{
-			if (isset($_POST["action"]))
+			if (isset(Request::get()->data["action"]))
 			{
 				if (!$context->isLogged()) die(json_encode(array('unauth'=>1)));
 				
-				$action = strtolower($_POST["action"]);
+				$action = strtolower(Request::get()->data["action"]);
 				switch ($action) {
 					case 'like':
 						if (!$context->isLogged()) die(json_encode(array('unauth'=>1)));
@@ -68,8 +68,8 @@ if ($wall_id !== 0)
 					case 'save_post':
 						if (!$context->isLogged()) die(json_encode(array('unauth'=>1)));
 
-						$text = strval($_POST['text']);
-						$attachments = strval($_POST['attachments']);
+						$text = strval(Request::get()->data['text']);
+						$attachments = strval(Request::get()->data['attachments']);
 
 						$result = update_post_data($connection, $context->getCurrentUser()->getId(), $wall_id, $post_id, $text, $attachments);
 						if (!$result)
@@ -85,7 +85,7 @@ if ($wall_id !== 0)
 						die(json_encode($post->toArray()));
 					break;
 					case 'get_comments':
-						$comments = get_comments($connection, "wall".$wall_id.'_'.$post_id, intval($_POST['count']), intval($_POST['offset']));
+						$comments = get_comments($connection, "wall".$wall_id.'_'.$post_id, intval(Request::get()->data['count']), intval(Request::get()->data['offset']));
 
 						$result = [];
 						foreach ($comments as $index => $comment) {
@@ -100,8 +100,8 @@ if ($wall_id !== 0)
 						if (!can_comment($connection, $context->getCurrentUser()->getId(), $wall_id))
 							die(json_encode(array('error'=>1)));
 
-						$text        = strval($_POST['text']);
-						$attachments = strval($_POST['attachments']);
+						$text        = strval(Request::get()->data['text']);
+						$attachments = strval(Request::get()->data['attachments']);
 
 						$result = create_comment($connection, $context->getCurrentUser()->getId(), $wall_id, $post_id, $text, $attachments);
 						if (!$result)
@@ -112,13 +112,13 @@ if ($wall_id !== 0)
 					case 'delete_comment':
 						if (!$context->isLogged()) die(json_encode(array('unauth'=>1)));
 
-						$comment = get_comment_by_id($connection, "wall".$wall_id."_".$post_id, intval($context->getCurrentUser()->getId()), intval($_POST['comment_id']));
+						$comment = get_comment_by_id($connection, "wall".$wall_id."_".$post_id, intval($context->getCurrentUser()->getId()), intval(Request::get()->data['comment_id']));
 						if (!$comment)
 							die(json_encode(array('error'=>1)));
 
 						if ($wall_id === $context->getCurrentUser()->getId() || $comment->getOwnerId() === $context->getCurrentUser()->getId())
 						{
-							die(json_encode(array('success'=>intval(delete_comment($connection, "wall".$wall_id."_".$post_id, intval($_POST['comment_id']))))));
+							die(json_encode(array('success'=>intval(delete_comment($connection, "wall".$wall_id."_".$post_id, intval(Request::get()->data['comment_id']))))));
 						}
 
 						die(json_encode(array('error'=>1)));
@@ -129,7 +129,7 @@ if ($wall_id !== 0)
 				}
 			}
 		} else {
-			if (isset($_POST["action"]))
+			if (isset(Request::get()->data["action"]))
 				die(json_encode(array('error'=>1)));
 		}
 	}

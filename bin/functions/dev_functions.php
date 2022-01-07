@@ -62,7 +62,7 @@ function create_json_error ($error_code, $error_description, $addidional_info = 
 
 	$currentIndex = 0;
 
-	foreach ($_REQUEST as $key => $value) 
+	foreach (Request::get()->data as $key => $value) 
 	{
 		$currentIndex++;
 		if ($key !== "key" && $key !== "auth")

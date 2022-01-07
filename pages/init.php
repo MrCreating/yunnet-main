@@ -53,6 +53,11 @@ if (strtoupper($_SERVER['REQUEST_METHOD']) === "POST")
 		require_once __DIR__ . '/public/photo.php';
 	}
 
+	if (substr(strtolower(REQUESTED_PAGE), 0, 5) === "/poll")
+	{
+		require_once __DIR__ . '/public/poll.php';
+	}
+
 	require_once __DIR__ . '/public/profile.php';
 
 	die(json_encode(array('error' => 1)));

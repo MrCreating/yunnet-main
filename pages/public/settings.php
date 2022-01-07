@@ -8,9 +8,9 @@ require_once __DIR__ . '/../../bin/functions/accounts.php';
  * Here we will handle actions with settings.
 */
 
-if (isset($_POST["action"]))
+if (isset(Request::get()->data["action"]))
 {
-	$action = strtolower($_POST['action']);
+	$action = strtolower(Request::get()->data['action']);
 
 	if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
@@ -27,7 +27,7 @@ if (isset($_POST["action"]))
 		case 'change_language':
 			$accountSettings = $context->getCurrentUser()->getSettings()->getSettingsGroup('account');
 
-			die(json_encode(array('success' => intval($accountSettings->setLanguageId($_POST['lang'])->getLanguageId() === strtolower($_POST['lang'])))));
+			die(json_encode(array('success' => intval($accountSettings->setLanguageId(Request::get()->data['lang'])->getLanguageId() === strtolower(Request::get()->data['lang'])))));
 		break;
 
 		case 'set_privacy_settings':
@@ -40,8 +40,8 @@ if (isset($_POST["action"]))
 				4 => 'can_comment_posts'
 			];
 
-			$group  = $groups[intval($_POST['group'])];
-			$value  = intval($_POST['value']);
+			$group  = $groups[intval(Request::get()->data['group'])];
+			$value  = intval(Request::get()->data['value']);
 			$result = intval($privacySettings->setGroupValue($group, $value)->getGroupValue($group) === $value);
 
 			if (!$result)
@@ -57,13 +57,13 @@ if (isset($_POST["action"]))
 		break;
 
 		case 'toggle_push_settings':
-			$settingsGroup = strval($_POST['settings_group']);
+			$settingsGroup = strval(Request::get()->data['settings_group']);
 			$groups = ['notifications', 'sound'];
 
 			if (!in_array($settingsGroup, $groups))
 				die(json_encode(array('error' => 1)));
 
-			$new_value = boolval(intval($_POST['new_value']));
+			$new_value = boolval(intval(Request::get()->data['new_value']));
 			
 			$pushSettings = $context->getCurrentUser()->getSettings()->getSettingsGroup('push');
 			if ($settingsGroup === $groups[0])
@@ -78,7 +78,7 @@ if (isset($_POST["action"]))
 		break;
 
 		case 'get_blacklisted':
-			$users  = get_blacklist($connection, $context->getCurrentUser()->getId(), intval($_POST['count']), intval($_POST['offset']));
+			$users  = get_blacklist($connection, $context->getCurrentUser()->getId(), intval(Request::get()->data['count']), intval(Request::get()->data['offset']));
 			$result = [];
 
 			foreach ($users as $key => $value) {
@@ -89,7 +89,7 @@ if (isset($_POST["action"]))
 		break;
 
 		case 'verify_password':
-			$password = strval($_POST['password']);
+			$password = strval(Request::get()->data['password']);
 
 			$result = check_password($connection, $context->getCurrentUser()->getId(), $password);
 
@@ -97,8 +97,8 @@ if (isset($_POST["action"]))
 		break;
 
 		case 'change_password':
-			$oldPassword = strval($_POST['old_password']);
-			$newPassword = strval($_POST['new_password']);
+			$oldPassword = strval(Request::get()->data['old_password']);
+			$newPassword = strval(Request::get()->data['new_password']);
 
 			if (!check_password($connection, $context->getCurrentUser()->getId(), $oldPassword, $newPassword))
 				die(json_encode(array('error' => 1)));
@@ -121,7 +121,7 @@ if (isset($_POST["action"]))
 		break;
 
 		case 'update_menu_items':
-			$items  = explode(',', strval($_POST['items']));
+			$items  = explode(',', strval(Request::get()->data['items']));
 
 			$themingSettings = $context->getCurrentUser()->getSettings()->getSettingsGroup('theming');
 			$success         = $themingSettings->setMenuItemIds($items);
@@ -153,7 +153,7 @@ if (isset($_POST["action"]))
 		break;
 
 		case 'end_session':
-			$session = new Session(strval($_POST['session_id']));
+			$session = new Session(strval(Request::get()->data['session_id']));
 			if (!$session->valid() || !$session->isCloseable())
 				die(json_encode(array('error' => 1)));
 
@@ -163,7 +163,7 @@ if (isset($_POST["action"]))
 		break;
 
 		case 'set_gender':
-			$result = Context::get()->getCurrentUser()->edit()->setGender(intval($_POST['gender']));
+			$result = Context::get()->getCurrentUser()->edit()->setGender(intval(Request::get()->data['gender']));
 			if (!$result)
 				die(json_encode(array('error' => 1)));
 

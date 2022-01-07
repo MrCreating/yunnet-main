@@ -3234,6 +3234,7 @@ const pages = {
 				return ui.canBack ? ui.go(null, true) : window.location.href = "/";
 			});
 	},
+	poll: function () {},
 	photo: function () {
 		if (settings.users.current)
 			if (settings.users.current.is_banned) return pages.unauth.banned();

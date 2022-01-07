@@ -18,8 +18,6 @@ class Context
 		$user_id = intval($_SESSION['user_id']);
 		$session = new Session(strval($_SESSION['session_id']));
 
-		parse_str(explode("?", $_SERVER["REQUEST_URI"])[1], $_REQUEST);
-
 		if ($session->valid() && $session->isLogged())
 		{
 			$this->current_session = $session;
@@ -34,7 +32,7 @@ class Context
 	public function allowToUseUnt (): bool
 	{
 		if (!$this->isLogged()) return false;
-		if ($this->getCurrentUser()->isBanned() && $this->getCurrentUser()->getAccessLevel() < 3) return false;
+		if ($this->getCurrentUser()->isBanned()) return false;
 
 		return true;
 	}

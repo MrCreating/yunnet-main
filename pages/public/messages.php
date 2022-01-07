@@ -2,9 +2,9 @@
 
 require_once __DIR__ . '/../../bin/objects/chat.php';
 
-if (isset($_POST['action']))
+if (isset(Request::get()->data['action']))
 {
-	$action = strtolower($_POST['action']);
+	$action = strtolower(Request::get()->data['action']);
 
 	switch ($action) {
 		case 'get_chat_info_by_link':
@@ -17,9 +17,9 @@ if (isset($_POST['action']))
 
 	if (!Context::get()->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
-	if (isset($_POST['peer_id']) || isset($_POST['chat_id']))
+	if (isset(Request::get()->data['peer_id']) || isset(Request::get()->data['chat_id']))
 	{
-		$peer_id = strval(trim(strtolower(isset($_POST['chat_id']) ? strval($_POST['chat_id']) : strval($_POST['peer_id']))));
+		$peer_id = strval(trim(strtolower(isset(Request::get()->data['chat_id']) ? strval(Request::get()->data['chat_id']) : strval(Request::get()->data['peer_id']))));
 		$chat    = Chat::findById($peer_id);
 
 		if (!$chat || !$chat->valid())
@@ -27,7 +27,7 @@ if (isset($_POST['action']))
 
 		switch ($action) {
 			case 'send_message':
-				$result = $chat->sendMessage(strval($_POST['text']), strval($_POST['attachments']), strval($_POST['fwd']), strval($_POST['payload']));
+				$result = $chat->sendMessage(strval(Request::get()->data['text']), strval(Request::get()->data['attachments']), strval(Request::get()->data['fwd']), strval(Request::get()->data['payload']));
 				if ($result <= 0)
 					die(json_encode(array('error' => 1)));
 
@@ -59,8 +59,8 @@ if (isset($_POST['action']))
 				if ($chat->getType() !== 'conversation')
 					die(json_encode(array('error' => 1)));
 
-				$new_level = intval($_POST['new_level']);
-				$user_id   = intval($_POST['user_id']);
+				$new_level = intval(Request::get()->data['new_level']);
+				$user_id   = intval(Request::get()->data['user_id']);
 
 				$result = $chat->setUserPermissionsLevel($user_id, $new_level);
 				if ($result <= 0)
@@ -93,7 +93,7 @@ if (isset($_POST['action']))
 			break;
 
 			case 'get_messages':
-				die(json_encode(array('list' => array_map(function (Message $message) { return $message->toArray(); }, $chat->getMessages(intval($_POST['count']) !== 0 ? intval($_POST['count']) : 100, intval($_POST['offset']) !== 0 ? intval($_POST['offset']) : 0)))));
+				die(json_encode(array('list' => array_map(function (Message $message) { return $message->toArray(); }, $chat->getMessages(intval(Request::get()->data['count']) !== 0 ? intval(Request::get()->data['count']) : 100, intval(Request::get()->data['offset']) !== 0 ? intval(Request::get()->data['offset']) : 0)))));
 			break;
 
 			case 'toggle_notifications':
@@ -111,7 +111,7 @@ if (isset($_POST['action']))
 				if ($chat->getType() !== 'conversation')
 					die(json_encode(array('error' => 1)));
 
-				$result = $chat->setTitle(strval($_POST['new_title']));
+				$result = $chat->setTitle(strval(Request::get()->data['new_title']));
 				if ($result <= 0)
 					die(json_encode(array('error' => 1)));
 
@@ -122,7 +122,7 @@ if (isset($_POST['action']))
 				if ($chat->getType() !== 'conversation')
 					die(json_encode(array('error' => 1)));
 
-				$photo = (new AttachmentsParser())->getObject($_POST['photo']);
+				$photo = (new AttachmentsParser())->getObject(Request::get()->data['photo']);
 				if (!$photo)
 					die(json_encode(array('error' => 1)));
 
@@ -167,7 +167,7 @@ if (isset($_POST['action']))
 				if ($chat->getType() !== 'conversation')
 					die(json_encode(array('error' => 1)));
 
-				$user_id = intval($_POST['user_id']);
+				$user_id = intval(Request::get()->data['user_id']);
 
 				$result = $chat->toggleWriteAccess($user_id);
 				if ($result <= 0)
@@ -180,7 +180,7 @@ if (isset($_POST['action']))
 				if ($chat->getType() !== 'conversation')
 					die(json_encode(array('error' => 1)));
 
-				$user_ids = explode(',', $_POST['user_ids']);
+				$user_ids = explode(',', Request::get()->data['user_ids']);
 				$unique_ids = [];
 
 				foreach ($user_ids as $index => $user_id) 
@@ -212,7 +212,7 @@ if (isset($_POST['action']))
 				if ($chat->getType() !== 'conversation')
 					die(json_encode(array('error' => 1)));
 
-				$user_id = intval($_POST['user_id']);
+				$user_id = intval(Request::get()->data['user_id']);
 
 				$result = $chat->removeUser($user_id);
 				if ($result <= 0)
@@ -225,8 +225,8 @@ if (isset($_POST['action']))
 				if ($chat->getType() !== 'conversation')
 					die(json_encode(array('error' => 1)));
 
-				$group_name = strtolower($_POST['group_name']);
-				$new_value  = intval($_POST['value']);
+				$group_name = strtolower(Request::get()->data['group_name']);
+				$new_value  = intval(Request::get()->data['value']);
 
 				$result = $chat->setPermissionsValue($group_name, $new_value);
 				if ($result <= 0)
@@ -239,11 +239,11 @@ if (isset($_POST['action']))
 				if ($chat->canWrite() !== 1)
 					die(json_encode(array('error' => 1)));
 
-				$message = $chat->findMessageById(intval($_POST['message_id']));
+				$message = $chat->findMessageById(intval(Request::get()->data['message_id']));
 				if ($message)
 				{
-					$message->setText(strval($_POST['text']));
-					$message->setAttachments((new AttachmentsParser())->getObjects($_POST['attachments']));
+					$message->setText(strval(Request::get()->data['text']));
+					$message->setAttachments((new AttachmentsParser())->getObjects(Request::get()->data['attachments']));
 
 					if ($message->apply() === 1)
 					{
@@ -259,7 +259,7 @@ if (isset($_POST['action']))
 	{
 		switch ($action) {
 			case 'get_chats':
-				die(json_encode(array_map(function (Chat $item) { return $item->toArray(); }, Chat::getList(intval($_POST['count']), intval($_POST['offset']), intval($_POST['only_chats']) ? 1 : 0))));
+				die(json_encode(array_map(function (Chat $item) { return $item->toArray(); }, Chat::getList(intval(Request::get()->data['count']), intval(Request::get()->data['offset']), intval(Request::get()->data['only_chats']) ? 1 : 0))));
 			break;
 
 			case 'chat_create':
@@ -278,18 +278,18 @@ if (isset($_POST['action']))
 
 				foreach ($permissions as $index => $value)
 				{
-					if (isset($_POST['permission_' . $index]))
+					if (isset(Request::get()->data['permission_' . $index]))
 					{
-						if (intval($_POST['permission_' . $index]) >= 0 && intval($_POST['permission_' . $index]) <= 9) $permissions[$index] = intval($_POST['permission_' . $index]);
+						if (intval(Request::get()->data['permission_' . $index]) >= 0 && intval(Request::get()->data['permission_' . $index]) <= 9) $permissions[$index] = intval(Request::get()->data['permission_' . $index]);
 					}
 				}
 
-				$result = Chat::create(strval($_POST['title']),
+				$result = Chat::create(strval(Request::get()->data['title']),
 										array_map(function ($user_id) { 
 											return intval($user_id); 
 										}, 
-										explode(',', $_POST['members'])), 
-										(new AttachmentsParser())->getObject(strval($_POST['photo'])), 
+										explode(',', Request::get()->data['members'])), 
+										(new AttachmentsParser())->getObject(strval(Request::get()->data['photo'])), 
 										$permissions
 						);
 
@@ -309,13 +309,13 @@ if (isset($_POST['action']))
 
 /*
 
-if (isset($_POST["action"]))
+if (isset(Request::get()->data["action"]))
 {
-	$action = strtolower($_POST["action"]);
+	$action = strtolower(Request::get()->data["action"]);
 
 	switch ($action) {
 		case 'get_chat_info_by_link':
-			$chat = get_chat_by_query($connection, $_POST['link_query'], ($context->getCurrentUser() ? $context->getCurrentUser()->getId() : 0));
+			$chat = get_chat_by_query($connection, Request::get()->data['link_query'], ($context->getCurrentUser() ? $context->getCurrentUser()->getId() : 0));
 			if (!$chat)
 				die(json_encode(array('error'=>3)));
 
@@ -341,7 +341,7 @@ if (isset($_POST["action"]))
 	switch ($action)
 	{
 		case "delete_messages":
-			$chat_data = parse_id_from_string($_REQUEST['s']);
+			$chat_data = parse_id_from_string(Request::get()->data['s']);
 			if (!$chat_data)
 				die(json_encode(array('error' => 1)));
 
@@ -351,8 +351,8 @@ if (isset($_POST["action"]))
 			if (!$uid)
 				die(json_encode(array('error' => 1)));
 
-			$messages    = explode(',', strval($_POST["message_ids"]));
-			$del_for_all = intval($_POST["delete_for_all"]);
+			$messages    = explode(',', strval(Request::get()->data["message_ids"]));
+			$del_for_all = intval(Request::get()->data["delete_for_all"]);
 			if ($uid < 0)
 			{
 				$chat = new Chat($connection, $uid);
@@ -388,7 +388,7 @@ if (isset($_POST["action"]))
 		break;
 
 		case 'join_to_chat_by_link':
-			$chat = get_chat_by_query($connection, $_POST['link_query'], $context->getCurrentUser()->getId());
+			$chat = get_chat_by_query($connection, Request::get()->data['link_query'], $context->getCurrentUser()->getId());
 			if (!$chat)
 				die(json_encode(array('error'=>3)));
 
@@ -414,7 +414,7 @@ if (isset($_POST["action"]))
 		break;
 
 		case 'set_typing_state':
-			$chat_data = parse_id_from_string($_POST["peer_id"]);
+			$chat_data = parse_id_from_string(Request::get()->data["peer_id"]);
 			if (!$chat_data)
 				die(json_encode(array('error' => 1)));
 

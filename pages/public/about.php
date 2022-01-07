@@ -4,9 +4,9 @@
  * This is a current portfolio
 */
 
-if (isset($_POST['action']))
+if (isset(Request::get()->data['action']))
 {
-	$action = strtolower($_POST['action']);
+	$action = strtolower(Request::get()->data['action']);
 
 	switch ($action) {
 		case 'get_stats':

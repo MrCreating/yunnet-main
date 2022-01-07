@@ -4,9 +4,9 @@ session_start();
 require_once __DIR__ . '/../../bin/objects/session.php';
 
 // restore actions!
-if (isset($_POST['action']))
+if (isset(Request::get()->data['action']))
 {
-	$action = strtolower($_POST['action']);
+	$action = strtolower(Request::get()->data['action']);
 
 	if ($context->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
@@ -22,7 +22,7 @@ if (isset($_POST['action']))
 		break;
 
 		case 'check_query':
-			$query = strval($_POST["query"]);
+			$query = strval(Request::get()->data["query"]);
 			$exp_t = intval(time());
 
 			$saved_query = strval($_SESSION['restore_query']);
@@ -53,7 +53,7 @@ if (isset($_POST['action']))
 			*/
 			if ($currentStage === 0)
 			{
-				$email = strval($_POST["email"]);
+				$email = strval(Request::get()->data["email"]);
 				if (is_empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 96)
 				{
 					die(json_encode(array(
@@ -74,7 +74,7 @@ if (isset($_POST['action']))
 			*/
 			if ($currentStage === 1)
 			{
-				$last_name  = $_POST["last_name"];
+				$last_name  = Request::get()->data["last_name"];
 				if (is_empty($last_name) || strlen($last_name) > 32 || preg_match("/[^a-zA-Zа-яА-ЯёЁ'-]/ui", $last_name))
 					die(json_encode(array(
 						'error_code' => 1
@@ -111,8 +111,8 @@ if (isset($_POST['action']))
 			*/
 			if ($currentStage === 3)
 			{
-				$password        = strval($_POST["password"]);
-				$repeat_password = strval($_POST["repeat_password"]);
+				$password        = strval(Request::get()->data["password"]);
+				$repeat_password = strval(Request::get()->data["repeat_password"]);
 
 				if (strlen($password) < 6 || strlen($password) > 64)
 					die(json_encode(array(

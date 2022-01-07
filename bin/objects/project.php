@@ -114,6 +114,10 @@ class Project
 
 		$link = substr($link, 0, 1) == '/' ? substr($link, 1, strlen($link)) : $link;
 
+		if (substr($link, 0, 5) === 'photo') return true;
+		if (substr($link, 0, 4) === 'wall') return true;
+		if (substr($link, 0, 4) === 'poll') return true;
+
 		return Entity::findByScreenName($link) != NULL;
 	}
 

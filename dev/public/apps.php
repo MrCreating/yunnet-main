@@ -11,9 +11,9 @@ if (!class_exists('App'))
 if (!class_exists('Entity'))
 	require __DIR__ . '/../../bin/objects/entities.php';
 
-if (isset($_POST['action']))
+if (isset(Request::get()->data['action']))
 {
-	$action = strtolower($_POST['action']);
+	$action = strtolower(Request::get()->data['action']);
 
 	switch ($action) 
 	{
@@ -21,9 +21,9 @@ if (isset($_POST['action']))
 			if (!function_exists('create_token'))
 				require __DIR__ . "/../../bin/functions/auth.php";
 
-			$app_id   = intval($_POST['app_id']);
-			$owner_id = intval($_POST['bot_id']) > 0 ? (intval($_POST['bot_id']) * -1) : $context->getCurrentUser()->getId();
-			$perms    = explode(',', strval($_POST['permissions']));
+			$app_id   = intval(Request::get()->data['app_id']);
+			$owner_id = intval(Request::get()->data['bot_id']) > 0 ? (intval(Request::get()->data['bot_id']) * -1) : $context->getCurrentUser()->getId();
+			$perms    = explode(',', strval(Request::get()->data['permissions']));
 
 			$permissions = [];
 			foreach ($perms as $index => $id)
@@ -46,8 +46,8 @@ if (isset($_POST['action']))
 			if (!function_exists('update_token'))
 				require __DIR__ . "/../../bin/functions/auth.php";
 
-			$perms = explode(',', $_POST["permissions"]);
-			$token_id = intval($_POST['token_id']);
+			$perms = explode(',', Request::get()->data["permissions"]);
+			$token_id = intval(Request::get()->data['token_id']);
 
 			if (count($perms) > 4)
 				die(json_encode(array('error'=>1)));
@@ -85,7 +85,7 @@ if (isset($_POST['action']))
 		break;
 
 		case 'delete_token':
-			$token_id = intval($_POST['token_id']);
+			$token_id = intval(Request::get()->data['token_id']);
 
 			if (!function_exists('get_token_by_id'))
 				require __DIR__ . "/../../bin/functions/auth.php";
@@ -112,12 +112,12 @@ if (isset($_POST['action']))
 		break;
 
 		case 'create_app':
-			$app_title = strval($_POST['app_title']);
+			$app_title = strval(Request::get()->data['app_title']);
 
 			if (!function_exists('create_app'))
 				require __DIR__ . "/../../bin/functions/auth.php";
 
-			$app = create_app($connection, $context->getCurrentUser()->getId(), $_POST["app_title"]);
+			$app = create_app($connection, $context->getCurrentUser()->getId(), Request::get()->data["app_title"]);
 			if (!$app)
 				die(json_encode(array('error'=>1)));
 
@@ -125,7 +125,7 @@ if (isset($_POST['action']))
 		break;
 
 		case 'get_tokens':
-			$app = new App(intval($_POST['app_id']));
+			$app = new App(intval(Request::get()->data['app_id']));
 			if (!$app->valid() || ($app->getOwnerId() !== $context->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
@@ -152,11 +152,11 @@ if (isset($_POST['action']))
 			if (!class_exists('App'))
 				require __DIR__ . '/../../bin/objects/apps.php';
 			
-			$app = new App(intval($_POST['app_id']));
+			$app = new App(intval(Request::get()->data['app_id']));
 			if (!$app->valid() || ($app->getOwnerId() !== $context->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
-			if (!$app->setTitle($_POST["new_title"])->apply())
+			if (!$app->setTitle(Request::get()->data["new_title"])->apply())
 				die(json_encode(array('error'=>1)));
 
 			die(json_encode(array('success'=>1)));
@@ -166,7 +166,7 @@ if (isset($_POST['action']))
 			if (!class_exists('App'))
 				require __DIR__ . '/../../bin/objects/apps.php';
 			
-			$app = new App(intval($_POST['app_id']));
+			$app = new App(intval(Request::get()->data['app_id']));
 			if (!$app->valid() || ($app->getOwnerId() !== $context->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
@@ -174,14 +174,14 @@ if (isset($_POST['action']))
 		break;
 
 		case 'set_photo':
-			$photo = strval($_POST["photo"]);
+			$photo = strval(Request::get()->data["photo"]);
 
 			if (!class_exists('AttachmentsParser'))
 				require __DIR__ . "/../../bin/objects/attachment.php";
 			if (!class_exists('App'))
 				require __DIR__ . '/../../bin/objects/apps.php';
 
-			$app = new App(intval($_POST['app_id']));
+			$app = new App(intval(Request::get()->data['app_id']));
 			if (!$app->valid() || ($app->getOwnerId() !== $context->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
@@ -200,7 +200,7 @@ if (isset($_POST['action']))
 			if (!class_exists('App'))
 				require __DIR__ . '/../../bin/objects/apps.php';
 
-			$app = new App(intval($_POST['app_id']));
+			$app = new App(intval(Request::get()->data['app_id']));
 			if (!$app->valid() || ($app->getOwnerId() !== $context->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
