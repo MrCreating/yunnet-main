@@ -8167,12 +8167,18 @@ const pages = {
 						pollContainer.appendChild(pollVariants);
 
 						let pollVoting = false;
-						let pollVoted = true;
+						let pollVoted = false;
+
+						console.log(doneObjects[i].poll);
 
 						doneObjects[i].poll.variants_list.forEach(function (variant) {
+							if (variant.selected)
+								pollVoted = true;
+
 							let answer = document.createElement('a');
-							answer.classList = ['card waves-effect waves-light valign-wrapper hidet-aone'];
+							answer.classList = ['card waves-effect waves-light valign-wrapper hidet-aone answer'];
 							answer.style = 'background-color: gray !important';
+							answer.boundVariant = variant;
 
 							let answerTextDiv = document.createElement('div');
 							answer.appendChild(answerTextDiv);
@@ -8189,6 +8195,7 @@ const pages = {
 
 							let answerStates = document.createElement('div');
 							answer.appendChild(answerStates);
+							answerStates.classList.add('valign-wrapper');
 
 							let pollLoaderProgress = pages.elements.getLoader().setColor('white');
 							pollLoaderProgress.setArea(15);
@@ -8202,22 +8209,118 @@ const pages = {
 							doneDiv.getElementsByTagName('svg')[0].width.baseVal.value = 15;
 							doneDiv.style.display = 'none';
 
+							let donePercent = document.createElement('div');
+							donePercent.classList.add('done-percent');
+							donePercent.boundVariant = variant;
+							answerStates.appendChild(donePercent);
+							donePercent.style.marginLeft = '10px';
+							donePercent.style.display = 'none';
+
+							if (doneObjects[i].poll.voted_by_me) {
+								donePercent.style.display = '';
+								let votedPercent = (variant.count && variant.count > 0) ? parseInt((variant.count ? variant.count : 0) / doneObjects[i].poll.data.voted * 100) : 0;
+								donePercent.innerText = votedPercent + '%';
+							}
+
+							if (variant.selected)
+								doneDiv.style.display = 'flex';
+
 							answer.addEventListener('click', function (event) {
-								if (pollVoting) return;
+								if (pollVoting || pollVoted) return;
 
 								pollVoting = true;
 
-								pollLoaderProgress.style.display = '';
-								return setTimeout(function () {
-									pollLoaderProgress.style.display = 'none';
-									doneDiv.style.display = '';
+								let data = new FormData();
 
-									pollVoted = true;
-								}, 2000);
-							})
+								data.append('action', 'add_vote');
+								data.append('answer_id', variant.id);
+
+								pollLoaderProgress.style.display = '';
+								return ui.Request({
+									url: '/poll' + doneObjects[i].poll.owner_id + '_' + doneObjects[i].poll.id + '_' + doneObjects[i].poll.access_key,
+									method: 'POST',
+									data: data,
+									success: function (response) {
+										pollVoting = false;
+										pollLoaderProgress.style.display = 'none';
+
+										try {
+											response = JSON.parse(response);
+											if (response.error) {
+												return unt.toast({html: settings.lang.getValue('upload_error')});
+											}
+
+											let allVotedCount = 0;
+											for (let key in response.stats) {
+												allVotedCount += response.stats[key].count;
+											}
+
+											if (allVotedCount <= 0) {
+												votedStats.innerText = settings.lang.getValue('vote_first').replace('%', ((settings.users.current && settings.users.current.gender === 1) ? 'ым' : 'ой'));
+											} else {
+												if (settings.lang.getValue('id') === 'ru') {
+													votedStats.innerText = settings.lang.getValue('voted');
+													if (allVotedCount > 1)
+														votedStats.innerText += 'и';
+													votedStats.innerText += ' ' + pages.parsers.niceString(allVotedCount) + ' ';
+													votedStats.innerText += ' ' + pages.parsers.morph(allVotedCount, pages.parsers.forms.PEOPLE_RUSSIAN);
+												} else {
+													votedStats.innerText = settings.lang.getValue('voted') + ' ' + pages.parsers.niceString(allVotedCount) + ' ' + settings.lang.getValue('people');
+												}
+											}
+
+											let answers = pollVariants.querySelectorAll('.answer');
+											for (let k = 0; k < answers.length; k++) {
+												let variantInfo = answers[k].boundVariant;
+												let donePercent = answers[k].querySelectorAll('.done-percent')[0];
+
+												if (donePercent) {
+													let usersVoted = response.stats[variantInfo.id] ? response.stats[variantInfo.id].count : 0;
+
+													let percent = parseInt(usersVoted / allVotedCount * 100) || 0;
+												
+													donePercent.style.display = '';
+													donePercent.innerText = percent + '%';
+												}
+											}
+
+											doneDiv.style.display = 'flex';
+											pollVoted = true;
+										} catch (e) {
+											console.log(e);
+											return unt.toast({html: settings.lang.getValue('upload_error')});
+										}
+									},
+									error: function () {
+										pollVoting = false;
+
+										pollLoaderProgress.style.display = 'none';
+										return unt.toast({html: settings.lang.getValue('upload_error')});
+									}
+								});
+							});
 
 							return pollVariants.appendChild(answer);
 						});
+
+						let votedStats = document.createElement('div');
+						votedStats.style.marginTop = '10px';
+						pollContainer.appendChild(votedStats);
+						votedStats.classList.add('center');
+
+						if (doneObjects[i].poll.data.voted <= 0) {
+							votedStats.innerText = settings.lang.getValue('vote_first').replace('%', ((settings.users.current && settings.users.current.gender === 1) ? 'ым' : 'ой'));
+						} else {
+							if (settings.lang.getValue('id') === 'ru') {
+								votedStats.innerText = settings.lang.getValue('voted');
+								if (doneObjects[i].poll.data.voted > 1)
+									votedStats.innerText += 'и';
+								votedStats.innerText += ' ' + pages.parsers.niceString(doneObjects[i].poll.data.voted) + ' ';
+								votedStats.innerText += pages.parsers.morph(doneObjects[i].poll.data.voted, pages.parsers.forms.PEOPLE_RUSSIAN);
+							} else {
+								votedStats.innerText = settings.lang.getValue('voted') + ' ' + pages.parsers.niceString(doneObjects[i].poll.data.voted) + ' ' + settings.lang.getValue('people');
+							}
+						}
 					}
 					if (doneObjects[i].type === 'photo') {
 						if (i >= 0 && i <= 1 && !group_1_has) {

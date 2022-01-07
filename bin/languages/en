@@ -570,5 +570,8 @@
   "auth_welcome": "Welcome! Login or register to start using all the site's features.",
   "auth_failed": "Login failed. You may have entered incorrect data, please check it and try again.",
   "work_account": "Special account",
-  "work_account_info": "This is the special account. Not the user."
+  "work_account_info": "This is the special account. Not the user.",
+  "voted": "Voted by",
+  "people": "People",
+  "vote_first": "Vote first!"
 }

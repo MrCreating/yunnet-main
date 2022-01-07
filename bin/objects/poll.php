@@ -19,6 +19,7 @@ class Poll extends Attachment
 
 	private $creation_time    = 0;
 	private $end_time         = 0;
+	private $voted_count      = 0;
 
 	private $currentConnection = false;
 
@@ -28,7 +29,7 @@ class Poll extends Attachment
 	{
 		$this->currentConnection = DataBaseManager::getConnection();
 
-		$res = $this->currentConnection->prepare("SELECT id, owner_id, access_key, title, isAnonymous, canRevote, canMultiSelect, endTime, creationTime FROM polls.info WHERE id = :id AND owner_id = :owner_id AND access_key = :access_key LIMIT 1;");
+		$res = $this->currentConnection->prepare("SELECT polls.info.id, owner_id, access_key, title, isAnonymous, canRevote, canMultiSelect, endTime, creationTime, COUNT(DISTINCT user_id) AS voted FROM polls.info JOIN polls.users ON polls.info.id = polls.users.poll_id WHERE polls.info.id = :id AND owner_id = :owner_id AND access_key = :access_key AND is_cancelled = 0 LIMIT 1");
 
 		$p_owner_id   = intval($owner_id);
 		$p_poll_id    = intval($poll_id);
@@ -45,10 +46,11 @@ class Poll extends Attachment
 			{
 				$this->isValid = true;
 
-				$this->poll_id    = intval($poll_data['id']);
-				$this->owner_id   = intval($poll_data['owner_id']);
-				$this->access_key = strval($poll_data['access_key']);
-				$this->poll_title = strval($poll_data['title']);
+				$this->poll_id     = intval($poll_data['id']);
+				$this->owner_id    = intval($poll_data['owner_id']);
+				$this->access_key  = strval($poll_data['access_key']);
+				$this->poll_title  = strval($poll_data['title']);
+				$this->voted_count = intval($poll_data['voted']);
 
 				$this->can_revote       = boolval(intval($poll_data['canRevote']));
 				$this->can_multi_select = boolval(intval($poll_data['canMultiSelect']));
@@ -65,6 +67,11 @@ class Poll extends Attachment
 	public function getType (): string
 	{
 		return "poll";
+	}
+
+	public function getVotedCount (): int
+	{
+		return intval($this->voted_count);
 	}
 
 	public function getOwnerId (): int
@@ -125,10 +132,12 @@ class Poll extends Attachment
 					'can_revote'       => $this->canRevote(),
 					'can_multi_select' => $this->canMultiSelect(),
 					'is_anonymous'     => $this->isAnonymous(),
-					'end_time'         => $this->getEndTime()
+					'end_time'         => $this->getEndTime(),
+					'voted'            => $this->getVotedCount()
 				],
 				'creation_time' => $this->getCreationTime(),
-				'variants_list' => $this->getAnswers()
+				'variants_list' => $this->getAnswers(),
+				'voted_by_me'   => count($this->getSelectedAnswers()) > 0
 			]
 		];
 	}
@@ -137,19 +146,32 @@ class Poll extends Attachment
 	{
 		if (!$this->valid()) return false;
 
+		$variants_selected = $this->getSelectedAnswers();
+
+		if (count($variants_selected) > 0)
+		{
+			$stats = $this->getStats();
+		}
+
 		if (count($this->currentVariants) === 0)
 		{
-			$res = $this->currentConnection->prepare("SELECT poll_id, title, var_id FROM polls.variants WHERE poll_id = ? LIMIT 10;");
+			$res = $this->currentConnection->prepare("SELECT title, var_id FROM polls.variants WHERE poll_id = ? LIMIT 10");
 			
 			if ($res->execute([$this->poll_id]))
 			{
 				$answers_list = $res->fetchAll(PDO::FETCH_ASSOC);
 				foreach ($answers_list as $index => $answer)
 				{
-					$this->currentVariants[] = [
-						'id'   => intval($answer['var_id']),
-						'text' => strval($answer['title'])
+					$var_info = [
+						'id'       => intval($answer['var_id']),
+						'text'     => strval($answer['title']),
+						'selected' => in_array(intval($answer['var_id']), $variants_selected)
 					];
+
+					if ($stats)
+						$var_info['count'] = intval($stats[intval($answer['var_id'])]['count']);
+
+					$this->currentVariants[] = $var_info;
 				}
 			}
 		}
@@ -195,8 +217,80 @@ class Poll extends Attachment
 		return false;
 	}
 
-	public function vote ($user_id, $answer_id): bool
+	public function getSelectedAnswers (): array
 	{
+		if ($this->variants_selected)
+			return $this->variants_selected;
+
+		$res = $this->currentConnection->prepare("SELECT DISTINCT var_id FROM polls.users WHERE poll_id = ? AND user_id = ? AND is_cancelled = 0 LIMIT 10");
+		if ($res->execute([$this->getId(), intval($_SESSION['user_id'])]))
+		{
+			$data = $res->fetchAll(PDO::FETCH_ASSOC);
+
+			$result = [];
+
+			foreach ($data as $index => $var_info) {
+				$result[] = intval($var_info['var_id']);
+			}
+
+			$this->variants_selected = $result;
+
+			return $result;
+		}
+
+		return [];
+	}
+
+	public function getStats (): ?array
+	{
+		$res = $this->currentConnection->prepare('SELECT polls.users.var_id AS id, polls.variants.title, COUNT(DISTINCT polls.users.user_id) AS voted FROM polls.users JOIN polls.variants ON polls.users.var_id = polls.variants.var_id WHERE is_cancelled = 0 AND polls.variants.poll_id = ? AND polls.users.poll_id = ? GROUP BY polls.users.var_id, polls.variants.title');
+
+		if ($res->execute([$this->getId(), $this->getId()]))
+		{
+			$data = $res->fetchAll(PDO::FETCH_ASSOC);
+
+			$result = [];
+			foreach ($data as $stat) 
+			{
+				$result[intval($stat['id'])] = [
+					'id'    => intval($stat['id']),
+					'title' => strval($stat['title']),
+					'count' => intval($stat['voted'])
+				];
+			}
+
+			return $result;
+		}
+
+		return NULL;
+	}
+
+	public function vote ($answer_id): bool
+	{
+		$vars = $this->getAnswers();
+		foreach ($vars as $variant) 
+		{
+			if ($variant['id'] === intval($answer_id))
+			{
+				if ($variant['selected']) return true;
+
+				if (!$this->canMultiSelect() && count($this->getSelectedAnswers()) >= 1) return false;
+
+				$res = $this->currentConnection->prepare("SELECT is_cancelled FROM polls.users WHERE poll_id = ? AND user_id = ? AND var_id = ? LIMIT 1");
+				if ($res->execute([$this->getId(), intval($_SESSION['user_id']), intval($answer_id)]))
+				{
+					$is_cancelled = boolval(intval($res->fetch(PDO::FETCH_ASSOC)['is_cancelled']));
+					if ($is_cancelled)
+					{
+						return $this->currentConnection->prepare("UPDATE polls.users SET is_cancelled = 0 WHERE poll_id = ? AND user_id = ? AND var_id = ? LIMIT 1")->execute([$this->getId(), intval($_SESSION['user_id']), intval($answer_id)]);
+					} else
+					{
+						return $this->currentConnection->prepare("INSERT INTO polls.users (poll_id, var_id, user_id, is_cancelled) VALUES (?, ?, ?, 0)")->execute([$this->getId(), intval($answer_id), intval($_SESSION['user_id'])]);
+					}
+				}
+			}
+		}
+
 		return false;
 	}
 
