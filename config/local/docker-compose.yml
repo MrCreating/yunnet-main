@@ -6,6 +6,7 @@ services:
             context: $PWD/docker/context/nginx
             dockerfile: $PWD/docker/nginx
         restart: unless-stopped
+        hostname: yunnet.ru
         tty: true
         ports:
             - "80:80"
@@ -20,6 +21,9 @@ services:
             - php
         command: bash /home/unt/config/local/scripts/nginx.sh
     php:
+        restart: unless-stopped
+        hostname: yunnet.ru
+        tty: true
         build:
             context: $PWD/docker/context/php
             dockerfile: $PWD/docker/php
@@ -33,20 +37,33 @@ services:
         links:
             - memcached
             - text_engine
+            - mail
     memcached:
         image: memcached:latest
         container_name: memcached
     mail:
+        restart: unless-stopped
+        hostname: yunnet.ru
+        tty: true
         build:
-            context: $PWD/docker/context/postfix
             dockerfile: $PWD/docker/postfix
+            context: $PWD/docker/context/postfix
         volumes:
             - $PWD/../../:/home/unt
-            - $PWD/config/postfix:/config
-            - $PWD/config/postfix/mailname:/etc/mailname
+            - $PWD/config/postfix/exim4.conf.template:/etc/exim4/exim4.conf.template
+            - $PWD/config/postfix:/etc/postfix
+            - $PWD/config/postfix/mail-addresses:/etc/mail-addresses
+        environment:
+            - "MAILNAME=yunnet.ru"
+            - "MAIN_FORCE_SENDER=yunnet.ru"
         env_file:
             - $PWD/configs.env
+        ports:
+            - "25:25"
     text_engine:
+        restart: unless-stopped
+        hostname: yunnet.ru
+        tty: true
         env_file:
             - $PWD/configs.env
         build:
@@ -57,6 +74,9 @@ services:
         links:
             - memcached
     poll_engine:
+        restart: unless-stopped
+        hostname: yunnet.ru
+        tty: true
         env_file:
             - $PWD/configs.env
         volumes:

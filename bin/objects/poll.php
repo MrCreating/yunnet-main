@@ -119,6 +119,35 @@ class Poll extends Attachment
 		return intval($this->creation_time);
 	}
 
+	public function isVoted (): bool
+	{
+		return count($this->getSelectedAnswers()) > 0;
+	}
+
+	public function getVoters (int $variant_id, int $offset = 0, int $count = 30): array
+	{
+		$res = $this->currentConnection->prepare("SELECT DISTINCT user_id FROM polls.users WHERE poll_id = ? AND var_id = ? AND is_cancelled = 0 LIMIT 30");
+		if ($res->execute([$this->getId(), $variant_id]))
+		{
+			$data = $res->fetchAll(PDO::FETCH_ASSOC);
+
+			$result = [];
+			foreach ($data as $info) 
+			{
+				$user_id = intval($info['user_id']);
+
+				$entity = Entity::findById($user_id);
+
+				if ($entity)
+					$result[] = $entity;
+			}
+
+			return $result;
+		}
+
+		return [];
+	}
+
 	public function toArray (): array
 	{
 		return [
@@ -137,7 +166,7 @@ class Poll extends Attachment
 				],
 				'creation_time' => $this->getCreationTime(),
 				'variants_list' => $this->getAnswers(),
-				'voted_by_me'   => count($this->getSelectedAnswers()) > 0
+				'voted_by_me'   => $this->isVoted()
 			]
 		];
 	}

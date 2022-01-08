@@ -8172,8 +8172,7 @@ const pages = {
 						console.log(doneObjects[i].poll);
 
 						doneObjects[i].poll.variants_list.forEach(function (variant) {
-							if (variant.selected)
-								pollVoted = true;
+							pollVoted = doneObjects[i].poll.voted_by_me;
 
 							let answer = document.createElement('a');
 							answer.classList = ['card waves-effect waves-light valign-wrapper hidet-aone answer'];
@@ -8183,7 +8182,15 @@ const pages = {
 							let answerTextDiv = document.createElement('div');
 							answer.appendChild(answerTextDiv);
 
-							answerTextDiv.innerText = variant.text;
+							let answerText = document.createElement('div');
+							let answerStatsProgress = document.createElement('div');
+							answerStatsProgress.classList.add('progress-bar');
+							answerStatsProgress.style = 'margin-left: -10px !important; margin-top: -10px; border-radius: 2px; background-color: lightgray; position: absolute; width: 0%; height: 100%; opacity: 0.3; display: none';
+
+							answerTextDiv.appendChild(answerStatsProgress);
+							answerTextDiv.appendChild(answerText);
+
+							answerText.innerHTML = htmlspecialchars(variant.text) + (doneObjects[i].poll.voted_by_me ? (' <i color="aliceblue">(' +  pages.parsers.niceString(variant.count) + ')</i>') : '');
 
 							answer.style.cursor = 'pointer';
 							answer.style.display = 'flex';
@@ -8220,12 +8227,83 @@ const pages = {
 								donePercent.style.display = '';
 								let votedPercent = (variant.count && variant.count > 0) ? parseInt((variant.count ? variant.count : 0) / doneObjects[i].poll.data.voted * 100) : 0;
 								donePercent.innerText = votedPercent + '%';
+								answerStatsProgress.style.display = '';
+								answerStatsProgress.style.width = votedPercent + '%';
 							}
 
 							if (variant.selected)
 								doneDiv.style.display = 'flex';
 
 							answer.addEventListener('click', function (event) {
+								if (pollVoted && !doneObjects[i].poll.data.is_anonymous) {
+									let win = pages.elements.createWindow();
+
+									let menuWin = win.getContent();
+									win.getFooter().remove();
+
+									let variantTitleDiv = document.createElement('div');
+									menuWin.appendChild(variantTitleDiv);
+									variantTitleDiv.style.paddingBottom = '15px';
+									variantTitleDiv.innerText = variant.text;
+									variantTitleDiv.classList.add('unselectable');
+
+									let loader = pages.elements.getLoader();
+									menuWin.appendChild(loader);
+
+									let data = new FormData();
+
+									data.append('action', 'get_voted');
+									data.append('variant_id', variant.id);
+
+									return ui.Request({
+										url: '/poll' + doneObjects[i].poll.owner_id + '_' + doneObjects[i].poll.id + '_' + doneObjects[i].poll.access_key,
+										method: 'POST',
+										data: data,
+										success: function (response) {
+											try {
+												response = JSON.parse(response);
+												if (response.error) {
+													win.getInstance().close();
+													return unt.toast({html: settings.lang.getValue('upload_error')});
+												}
+
+												let collectionsDiv = document.createElement('div');
+												collectionsDiv.classList.add('collection');
+												menuWin.appendChild(collectionsDiv);
+												loader.remove();
+
+												response.users.forEach(function (user) {
+													let userDiv = document.createElement('div');
+													userDiv.style.padding = 0;
+													userDiv.style.paddingBottom = '10px';
+													userDiv.classList.add('collection-item');
+													userDiv.classList.add('valign-wrapper');
+													collectionsDiv.appendChild(userDiv);
+													userDiv.style.cursor = 'pointer';
+													userDiv.addEventListener('click', function () {
+														window.open('/' + user.screen_name || (user.account_type === 'user' ? ('id' + user.user_id) : ('bot' + user.bot_id)));
+													});
+
+													let img = document.createElement('img');
+													img.classList.add('circle');
+													img.height = img.width = 32;
+													userDiv.appendChild(img);
+													img.src = user.photo_url;
+													img.style.marginRight = '15px';
+
+													let credentialsDiv = document.createElement('div');
+													userDiv.appendChild(credentialsDiv);
+													credentialsDiv.innerText = user.name || (user.first_name + ' ' + user.last_name);
+												});
+											} catch (e) {
+												win.getInstance().close();
+											}
+										},
+										error: function () {
+											win.getInstance().close();
+										}
+									});
+								}
 								if (pollVoting || pollVoted) return;
 
 								pollVoting = true;
@@ -8273,11 +8351,16 @@ const pages = {
 											for (let k = 0; k < answers.length; k++) {
 												let variantInfo = answers[k].boundVariant;
 												let donePercent = answers[k].querySelectorAll('.done-percent')[0];
+												let answerStatsProgress = answers[k].querySelectorAll('.progress-bar')[0];
 
 												if (donePercent) {
 													let usersVoted = response.stats[variantInfo.id] ? response.stats[variantInfo.id].count : 0;
 
 													let percent = parseInt(usersVoted / allVotedCount * 100) || 0;
+													if (answerStatsProgress) {
+														answerStatsProgress.style.display = '';
+														answerStatsProgress.style.width = percent + '%';
+													}
 												
 													donePercent.style.display = '';
 													donePercent.innerText = percent + '%';

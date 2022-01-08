@@ -1,13 +1,23 @@
-FROM debian:10.8
+FROM debian:buster
 
-RUN apt update && \
-    apt upgrade -y && \
-    apt install -y postfix
+MAINTAINER Oluwaseun Obajobi "oluwaseun.obajobi@namshi.com"
 
-RUN mkdir /config && \
-    mv /etc/postfix/main.cf /config/main.cf && \
-    mv /etc/postfix/master.cf /config/master.cf && \
-    ln -s /config/main.cf /etc/postfix/main.cf && \
-    ln -s /config/master.cf /etc/postfix/master.cf
+RUN apt-get update && \
+    apt-get install -y exim4-daemon-light dos2unix && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
+    find /var/log -type f | while read f; do echo -ne '' > $f; done;
 
-CMD ["postfix", "start-fg"]
+COPY entrypoint.sh /bin/
+COPY set-exim4-update-conf /bin/
+
+RUN chmod a+x /bin/entrypoint.sh && \
+    chmod a+x /bin/set-exim4-update-conf
+
+EXPOSE 25
+
+RUN dos2unix /bin/entrypoint.sh
+RUN dos2unix /bin/set-exim4-update-conf
+
+ENTRYPOINT ["/bin/entrypoint.sh"]
+CMD ["exim", "-bd", "-q15m", "-v"]
