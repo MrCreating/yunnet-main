@@ -16,7 +16,7 @@ class ThemingSettingsGroup extends SettingsGroup
 	private bool  $newDesignUsed;
 	private array $menuItemIds;
 
-	public function __construct (Entity $user, PDO $connection, array $params = [])
+	public function __construct (Entity $user, DataBaseManager $connection, array $params = [])
 	{
 		$this->currentEntity     = $user;
 

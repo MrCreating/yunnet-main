@@ -54,9 +54,7 @@ const realtime = {
 			return startPolling(response.url, response.last_event_id, eventHandler);
 		}
 
-		let lpurl = window.location.host.match(/localhost/) ? 'http://lp.localhost' : 'https://lp.yunnet.ru';
-
-		x.open('GET', lpurl + '/?mode=get');
+		x.open('GET', ui.getUrl('lp') + '/?mode=get');
 		return x.send();
 	}
 };

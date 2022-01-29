@@ -10,11 +10,12 @@
 	<script type="text/javascript">
 		window.addEventListener('DOMContentLoaded', function () {
 			let session = Unt.Auth().init({app_id: 11});
+			let url = window.location.host.match(/localhost/) ? 'http://localhost/' : 'https://yunnet.ru/';
 			if (session.isLogged()) {
 				let user = session.getCurrentUser();
 
 				authCheckWindow.innerHTML = 'Пользователь авторизован как: <b>' + (user.name || (user.first_name + ' ' + user.last_name)) + '</b><br><br>'
-											+ 'yunNet: <a href="https://yunnet.ru/' + (user.screen_name ? user.screen_name : (user.user_id ? ("id" + user.user_id) : ("bot" + user.bot_id))) + '">' + (user.name || (user.first_name + ' ' + user.last_name)) + '</a>';
+											+ 'yunNet: <a href="' + url + (user.screen_name ? user.screen_name : (user.user_id ? ("id" + user.user_id) : ("bot" + user.bot_id))) + '">' + (user.name || (user.first_name + ' ' + user.last_name)) + '</a>';
 				someAction.innerHTML = 'Выйти?';
 				someAction.addEventListener('click', function () {
 					session.endSession();

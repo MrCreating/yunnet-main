@@ -344,7 +344,9 @@ unt.actions = new Object({
 				}
 			}
 
-			unt.components.navPanel ? unt.components.navPanel.setTitle(document.title) : '';
+			if (document.title !== 'yunNet.')
+				unt.components.navPanel ? unt.components.navPanel.setTitle(document.title) : '';
+
 			if (unt.settings.users.current) {
 				if (unt.actions.linkWorker.returnable()) {
 					unt.components.navPanel.getBackButton().style.display = '';
@@ -1769,7 +1771,9 @@ unt.components = new Object({
 
 				let currentUserProfileLink = document.createElement('a');
 				userInfoContent.appendChild(currentUserProfileLink);
-				currentUserProfileLink.href = '/' + (unt.settings.users.current.screen_name ? unt.settings.users.current.screen_name : ('id' + unt.settings.users.current.user_id));
+
+				if (!unt.settings.users.current.is_banned)
+					currentUserProfileLink.href = '/' + (unt.settings.users.current.screen_name ? unt.settings.users.current.screen_name : ('id' + unt.settings.users.current.user_id));
 
 				let infoDiv = document.createElement('div');
 				infoDiv.classList.add('valign-wrapper');
@@ -1791,7 +1795,9 @@ unt.components = new Object({
 				ulDropdownContent.appendChild(fdividerLi);
 
 				let settingsButtonLi = document.createElement('li');
-				ulDropdownContent.appendChild(settingsButtonLi);
+
+				if (!unt.settings.users.current.is_banned)
+					ulDropdownContent.appendChild(settingsButtonLi);
 
 				let settingsButton = document.createElement('a');
 				settingsButtonLi.appendChild(settingsButton);
@@ -1822,6 +1828,8 @@ unt.components = new Object({
 			}
 
 			navFixed.setTitle = function (title) {
+				if (!unt.settings.users.current || unt.settings.users.current.is_banned) return navFixed;
+
 				currentPage.innerText = title;
 
 				return navFixed;
@@ -1931,7 +1939,7 @@ unt.components = new Object({
 			menuContainer.style.height = '100%';
 			mainDiv.appendChild(menuContainer);
 
-			if (unt.settings.users.current) {
+			if (unt.settings.users.current && !unt.settings.users.current.is_banned) {
 				let leftMenuContainer = document.createElement('div');
 				leftMenuContainer.classList = ['col s3'];
 				leftMenuContainer.style.padding = 0;
@@ -1983,7 +1991,8 @@ unt.components = new Object({
 				credDiv.appendChild(b);
 				b.innerText = (unt.settings.users.current.first_name + ' ' + unt.settings.users.current.last_name);*/
 
-				unt.components.buildMenuItemsTable(unt.settings.current.theming.menu_items, collectionUl);
+				if (unt.settings.current)
+					unt.components.buildMenuItemsTable(unt.settings.current.theming.menu_items, collectionUl);
 
 				resultedMenuPlaceholder.style.paddingLeft = '7px';
 				resultedMenuPlaceholder.style.paddingRight = '7px';
@@ -2005,7 +2014,7 @@ unt.components = new Object({
 			}
 		}
 	},
-	buildMenuItemsTable: function (currentMenuItems = [1, 2, 3, 4, 5, 6], ulToAppend) {
+	buildMenuItemsTable: function (currentMenuItems = [1, 2, 3, 4, 5, 6, 7, 8], ulToAppend) {
 		langValues = ['news', 'notifications', 'friends', 'messages', 'groups', 'archive', 'audios', 'settings'];
 		identifiers = ['news_item', 'notifications_item', 'friends_item', 'messages_item', 'archive_item', 'audios_item', 'settings_item'];
 
@@ -2023,8 +2032,9 @@ unt.components = new Object({
 		links = ['/', '/notifications', '/friends', '/messages', '/groups', '/archive', '/audios', '/settings'];
 
 		currentMenuItems.forEach(function (itemId) {
-			if (unt.settings.users.current && unt.settings.users.current.is_banned) return;
+			if (!unt.settings.users.current) return;
 			if (itemId === 8 && !unt.tools.isMobile()) return;
+			if (unt.settings.users.current.is_banned && itemId !== 8) return;
 
 			let menuItemIndex = itemId - 1;
 
@@ -2059,7 +2069,7 @@ unt.components = new Object({
 
 unt.tools = new Object({
 	isMobile: function () {
-		if ("m.yunnet.ru" === window.location.host) return true;
+		if (window.location.host.startsWith('m.')) return true;
 
         let t = false;
         let e;

@@ -222,20 +222,18 @@ const management = {
 		let menuBody = pages.elements.menuBody().clear();
 		let rightMenu = pages.elements.buildRightMenu();
 
-		let url = window.location.host.match(/localhost/) ? 'http://localhost' : 'https://yunnet.ru';
-
 		let mainItem = rightMenu.addItem(settings.lang.getValue('main'), function () {
-			return ui.go(url + '/dev');
+			return ui.go(ui.getUrl() + '/dev');
 		});
 
 		let bugsItem = rightMenu.addItem(settings.lang.getValue('bug_tracker'), function () {
-			return ui.go(url + '/dev?section=bugs');
+			return ui.go(ui.getUrl() + '/dev?section=bugs');
 		})
 
 		let filesItem;
 		if (settings.users.current.user_level > 3) {
 			filesItem = rightMenu.addItem(settings.lang.getValue('files'), function () {
-				return ui.go(url + '/dev?section=files');
+				return ui.go(ui.getUrl() + '/dev?section=files');
 			});
 		}
 
@@ -737,7 +735,7 @@ const management = {
 
 		if (section === sections[1]) {
 			if (settings.users.current.user_level < 3)
-				return ui.go('https://' + window.location.host + '/dev');
+				return ui.go(ui.getUrl() + '/dev');
 
 			filesItem.select();
 			let currentFilePath = '/';
@@ -836,7 +834,7 @@ const management = {
 
 		if (section === sections[2]) {
 			if (settings.users.current.user_level < 2) {
-				return ui.go('https://' + window.location.host + '/dev');
+				return ui.go(ui.getUrl() + '/dev');
 			}
 
 			bugsItem.select();

@@ -174,6 +174,26 @@ class Post extends Attachment
 
 	public function canComment (): bool
 	{
+		$user_id  = intval($_SESSION['user_id']);
+		$check_id = $this->getOwnerId();
+
+		if ($user_id === 0) return false;
+
+		if (intval($user_id) === intval($check_id)) return true;
+
+		if (intval($check_id) < 0) return true;
+
+		$user_object = Entity::findById(intval($check_id));
+		if (!$user_object || $user_object->isBanned()) return false;
+		if ($user_object->getType() === 'user' && $user_object->inBlacklist()) return false;
+
+		$settings = $user_object->getSettings()->getSettingsGroup('privacy')->getGroupValue('can_comment_posts');
+
+		if ($settings === 0) return true;
+
+		if ($settings === 1 && $user_object->getAccountType() === 'user' && $user_object->isFriends()) return true;
+		if (($settings === 1 || $settings === 2) && $user_object->getAccountType() === 'bot' && $user_object->getOwnerId() === $user_id) return true;
+
 		return false;
 	}
 

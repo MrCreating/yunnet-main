@@ -38,8 +38,6 @@ class Project
 	{
 		if (getenv("UNT_PRODUCTION") === '1') return 'yunnet.ru';
 
-		if (gethostname() === 'yunnet.ru') return 'yunnet.ru';
-
 		return 'localhost';
 	}
 
@@ -110,7 +108,7 @@ class Project
 
 	public static function isLinkUsed (string $link): bool
 	{
-		if (self::isDefaultLink($link)) return true;
+		if (self::isDefaultLink('/' . $link) || self::isDefaultLink($link)) return true;
 
 		$link = substr($link, 0, 1) == '/' ? substr($link, 1, strlen($link)) : $link;
 

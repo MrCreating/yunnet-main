@@ -16,7 +16,7 @@ const codes = {
 					], [
 						unt.Icon.SETTINGS,
 						settings.lang.getValue('cookies_manage'),
-						function () { return ui.go('https://' + window.location.host + '/cookies'); }
+						function () { return ui.go(ui.getUrl() + '/cookies'); }
 					]
 				]));
 
@@ -137,7 +137,7 @@ const codes = {
 			}
 			if (selectedSection === sections[3]) {
 				let activityHistoryButton = pages.elements.createButton(unt.Icon.FINGERPRINT, settings.lang.getValue('activity_history'), function () {
-					return ui.go('https://' + window.location.host + '/sessions');
+					return ui.go(ui.getUrl() + '/sessions');
 				});
 				menuBody.appendChild(activityHistoryButton);
 
@@ -347,7 +347,7 @@ const codes = {
 			}
 			if (selectedSection === sections[7]) {
 				menuBody.appendChild(pages.elements.createButton(unt.Icon.STATS, settings.lang.getValue('about'), function () {
-					return ui.go('https://' + window.location.host + '/about');
+					return ui.go(ui.getUrl() + '/about');
 				}));
 				menuBody.appendChild(pages.elements.createButton(unt.Icon.DEV, settings.lang.getValue('devs'), function () {
 					return window.location.href = 'https://dev.yunnet.ru/';
@@ -412,7 +412,7 @@ const codes = {
 
 				unt.Collapsible.init(permissionsDiv);
 			} else {
-				return ui.go('https://' + window.location.host + '/messages');
+				return ui.go(ui.getUrl() + '/messages');
 			}
 		},
 		showUserManagementPage: function (userObject, chatObject, myAccessLevel, permissions, menuBody, loader, chat) {
@@ -491,7 +491,7 @@ const codes = {
 					return pages.elements.confirm('', settings.lang.getValue('kick_confirmation'), function (response) {
 						if (response) {
 							return chat.removeUser(userObject.user_id || (userObject.bot_id * -1)).then(function (result) {
-								return ui.go('https://' + window.location.host + '/messages?s=' + chat.peer_id + '&action=info');
+								return ui.go(ui.getUrl() + '/messages?s=' + chat.peer_id + '&action=info');
 							}).catch(function (err) {
 								return unt.toast({html: settings.lang.getValue("upload_error")});
 							})
@@ -533,7 +533,7 @@ const codes = {
 					members: []
 				}
 
-				return ui.go('https://' + window.location.host + '/friends', false, false, false, true, internalData);
+				return ui.go(ui.getUrl() + '/friends', false, false, false, true, internalData);
 			}
 		},
 		chatInfoCallback: function (chatObject, permissions, myAccessLevel, menuBody, loader, chat) {
@@ -695,7 +695,7 @@ const codes = {
 
 			if (myAccessLevel >= 9 && !permissionsCurrent.is_kicked && !permissionsCurrent.is_leaved) {
 				let managementUl = pages.elements.createButton(unt.Icon.SETTINGS, settings.lang.getValue("management"), function (event) {
-					return ui.go('https://' + window.location.host + '/messages?s=' + chat.peer_id.toString() + '&action=info&mode=management');
+					return ui.go(ui.getUrl() + '/messages?s=' + chat.peer_id.toString() + '&action=info&mode=management');
 				});
 
 				menuBody.appendChild(managementUl);
@@ -750,7 +750,7 @@ const codes = {
 							userItem.onclick = function (event) {
 								event.preventDefault();
 
-								return ui.go('https://' + window.location.host + '/messages?s=' + chat.peer_id + '&action=info&mode=edit', false, false, false, true, {
+								return ui.go(ui.getUrl() + '/messages?s=' + chat.peer_id + '&action=info&mode=edit', false, false, false, true, {
 									userObject	: item,
 									menuBody: menuBody,
 									loader: loader,
@@ -1197,7 +1197,7 @@ const subPages = {
 		menuBody.appendChild(elementsEditor);
 
 		menuBody.appendChild(pages.elements.createButton(unt.Icon.PALETTE, settings.lang.getValue('account_themes'), function (event) {
-			return ui.go('https://' + window.location.host + '/themes');
+			return ui.go(ui.getUrl() + '/themes');
 		}));
 	},
 	audios: {

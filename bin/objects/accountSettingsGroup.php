@@ -15,7 +15,7 @@ class AccountSettingsGroup extends SettingsGroup
 	private bool   $closedProfile;
 	private string $currentLangId;
 
-	public function __construct (Entity $user, PDO $connection, array $params = [])
+	public function __construct (Entity $user, DataBaseManager $connection, array $params = [])
 	{
 		$this->currentEntity     = $user;
 		

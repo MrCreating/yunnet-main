@@ -30,6 +30,13 @@ define('REQUESTED_PAGE', $requested_page);
 require_once __DIR__ . '/../bin/objects/project.php';
 require_once __DIR__ . '/../bin/base_functions.php';
 
+if (getenv('UNT_PRODUCTION') !== '1')
+{
+	session_write_close();
+	ini_set('session.cookie_domain', $_SERVER['HTTP_HOST']);
+	session_start();
+}
+
 // checking domains.
 switch ($to)
 {

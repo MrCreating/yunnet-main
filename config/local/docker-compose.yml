@@ -38,6 +38,8 @@ services:
             - memcached
             - text_engine
             - mail
+        networks:
+            - default
     memcached:
         image: memcached:latest
         container_name: memcached
@@ -73,6 +75,8 @@ services:
             - $PWD/../../:/home/unt
         links:
             - memcached
+        networks:
+            - default
     poll_engine:
         restart: unless-stopped
         hostname: yunnet.ru
@@ -85,6 +89,8 @@ services:
             - memcached
         ports:
             - "8080:80"
+        networks:
+            - default
         build:
             context: $PWD/docker/context/poll_engine
             dockerfile: $PWD/docker/poll_engine

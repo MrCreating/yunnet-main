@@ -1,5 +1,8 @@
 unt.pages = new Object({
 	auth: function (internalData) {
+		if (unt.settings.users.current)
+			return this.news('/');
+
 		unt.components.navPanel ? unt.components.navPanel.hide() : null;
 		let menu = unt.components.menuElement;
 
@@ -144,6 +147,9 @@ unt.pages = new Object({
 		});
 	},
 	restore: function (internalData) {
+		if (unt.settings.users.current && unt.settings.users.current.is_banned)
+			return this.banned(internalData);
+
 		unt.components.navPanel ? unt.components.navPanel.hide() : null;
 
 		if (unt.settings.users.current)
@@ -211,9 +217,17 @@ unt.pages = new Object({
 		});
 	},
 	banned: function (internalData) {
-		unt.components.navPanel ? unt.components.navPanel.hide() : null;
+		if (!unt.settings.users.current.is_banned)
+			return this.auth(internalData);
+
+		document.title = 'yunNet.';
+		unt.components.navPanel ? unt.components.navPanel.setTitle('') : null;
+
 	},
 	news: function (internalData) {
+		if (unt.settings.users.current.is_banned)
+			return this.banned(internalData);
+
 		document.title = unt.settings.lang.getValue('news');
 		let menu = unt.components.menuElement;
 
@@ -266,11 +280,15 @@ unt.pages = new Object({
 			return newsDiv.show();
 		}).catch(function (err) {
 			newsDiv.show();
+			newsLoadCard.hide();
 
 			return newsDiv.appendChild(unt.components.alertBanner(unt.icons.failed, unt.settings.lang.getValue('upload_error'), unt.settings.lang.getValue('unknown_error')));
 		});
 	},
 	messages: function (internalData) {
+		if (unt.settings.users.current.is_banned)
+			return this.banned(internalData);
+
 		let url = new URLParser();
 
 		let menu = unt.components.menuElement;
@@ -350,19 +368,37 @@ unt.pages = new Object({
 		}
 	},
 	notifications: function (internalData) {
+		if (unt.settings.users.current.is_banned)
+			return this.banned(internalData);
+
 		document.title = unt.settings.lang.getValue('notifications');
 	},
 	friends: function (internalData) {
+		if (unt.settings.users.current.is_banned)
+			return this.banned(internalData);
+
 		document.title = unt.settings.lang.getValue('friends');
 	},
 	groups: function (internalData) {
+		if (unt.settings.users.current.is_banned)
+			return this.banned(internalData);
+
 		document.title = unt.settings.lang.getValue('groups');
 	},
-	group: function (internalData) {},
+	group: function (internalData) {
+		if (unt.settings.users.current.is_banned)
+			return this.banned(internalData);
+	},
 	archive: function (internalData) {
+		if (unt.settings.users.current.is_banned)
+			return this.banned(internalData);
+
 		document.title = unt.settings.lang.getValue('archive');
 	},
 	audios: function (internalData) {
+		if (unt.settings.users.current.is_banned)
+			return this.banned(internalData);
+
 		document.title = unt.settings.lang.getValue('audios');
 	},
 	settings: function (internalData) {
@@ -377,6 +413,9 @@ unt.pages = new Object({
 		let currentSection = urlData.getQueryValue('section') || (unt.tools.isMobile() ? '' : 'main');
 
 		if (!unt.tools.isMobile()) {
+			if (unt.settings.users.current.is_banned)
+				return this.banned(internalData);
+
 			let tabsUl = document.createElement('ul');
 			tabsUl.classList.add('hidesc');
 			tabsUl.classList.add('tabs');
@@ -424,6 +463,7 @@ unt.pages = new Object({
 
 				let userInfoDiv = document.createElement('div');
 				userInfoDiv.classList.add('valign-wrapper');
+				userInfoDiv.classList.add('unselectable');
 				profileCard.appendChild(userInfoDiv);
 
 				let userPhoto = document.createElement('img');
@@ -447,12 +487,14 @@ unt.pages = new Object({
 				onlineDiv.innerText = unt.parsers.online(unt.settings.users.current);
 
 				let editPageButton = document.createElement('a');
-				editPageButton.classList = ['btn btn-flat'];
+				editPageButton.classList = ['btn btn-flat unselectable'];
 				editPageButton.innerText = unt.settings.lang.getValue('edit');
 				editPageButton.href = '/edit';
 				editPageButton.style.padding = 0;
 				editPageButton.style.marginTop = '15px';
 				profileCard.appendChild(editPageButton);
+				if (unt.settings.users.current.is_banned)
+					editPageButton.classList.add('disabled');
 
 				let mainGroup = unt.components.cardButtonsGroup()
 									.addCardButton(unt.icons.main, unt.settings.lang.getValue('main'), function () { unt.actions.linkWorker.go('/settings?section=main') })
@@ -475,10 +517,12 @@ unt.pages = new Object({
 				themingGroup.style.marginBottom = 0;
 				projectGroup.style.marginBottom = 0;
 
-				menu.appendChild(mainGroup);
-				menu.appendChild(securityGroup);
-				menu.appendChild(themingGroup);
-				menu.appendChild(projectGroup);
+				if (!unt.settings.users.current.is_banned) {
+					menu.appendChild(mainGroup);
+					menu.appendChild(securityGroup);
+					menu.appendChild(themingGroup);
+					menu.appendChild(projectGroup);
+				}
 
 				menu.appendChild(unt.components.cardButton(unt.icons.logout, unt.settings.lang.getValue('logout'), function () {
 					return unt.actions.dialog(unt.settings.lang.getValue('logout_q'), unt.settings.lang.getValue('logout_qq')).then(function (response) {
@@ -495,6 +539,9 @@ unt.pages = new Object({
 		return currentSection !== '' ? unt.modules.settings[currentSection](menu) : null;
 	},
 	edit: function (internalData) {
+		if (unt.settings.users.current.is_banned)
+			return this.banned(internalData);
+
 		document.title = unt.settings.lang.getValue('edit');
 
 		let menu = unt.components.menuElement;
@@ -534,6 +581,9 @@ unt.pages = new Object({
 		}
 	},
 	profile: function (internalData) {
+		if (unt.settings.users.current && unt.settings.users.current.is_banned)
+			return this.banned(internalData);
+
 		unt.components.navPanel ? unt.components.navPanel.show() : null;
 
 		document.title = unt.settings.lang.getValue('profile');
@@ -822,9 +872,22 @@ unt.pages = new Object({
 		document.title = unt.settings.lang.getValue('about');
 	},
 	wall: function (internalData) {
+		if (unt.settings.users.current && unt.settings.users.current.is_banned)
+			return this.banned(internalData);
+
 		document.title = unt.settings.lang.getValue('wall');
+
+		let menu = unt.components.menuElement;
+
+		let loader = unt.components.loaderElement();
+		loader.style.padding = '15px';
+		loader.classList.add('center');
+		menu.appendChild(loader);
 	},
 	photo: function (internalData) {
+		if (unt.settings.users.current && unt.settings.users.current.is_banned)
+			return this.banned(internalData);
+
 		document.title = unt.settings.lang.getValue('photo');
 	}
 });

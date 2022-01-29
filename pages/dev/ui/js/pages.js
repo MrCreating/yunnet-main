@@ -301,7 +301,7 @@ const pages = {
 			})
 
 			if (settings.users.current && settings.users.current.user_level > 0 && ui.isMobile() && window.location.host !== "dev.yunnet.ru") {
-				leftMenu.appendChild(pages.tools.panel.buildItem(settings.lang.getValue('management'), 'https://yunnet.ru/dev', null));
+				leftMenu.appendChild(pages.tools.panel.buildItem(settings.lang.getValue('management'), ui.getUrl() + '/dev', null));
 			}
 
 			if (settings.users.current && settings.users.current.is_banned && ui.isMobile() && window.location.host !== "dev.yunnet.ru") {
@@ -466,7 +466,7 @@ const pages = {
 
 			if (!ui.isMobile()) document.getElementsByClassName('col s3')[1].innerHTML = '';
 
-			ui.urls.push('https://' + window.location.host + '/messages');
+			ui.urls.push(ui.getUrl() + '/messages');
 			ui.canBack = true;
 
 			document.title = "yunNet. - " + (settings.lang.getValue("create_chat"));
@@ -599,7 +599,7 @@ const pages = {
 
 					chatDiv.setLoading(true);
 					return messages.createChat(internalData.data).then(function (chatId) {
-						return ui.go('https://' + window.location.host + '/messages?s=' + chatId);
+						return ui.go(ui.getUrl() + '/messages?s=' + chatId);
 					}).catch(function (err) {
 						chatDiv.getElementsByTagName('input')[0].removeAttribute('disabled');
 
@@ -850,7 +850,7 @@ const pages = {
 
 				return pages.elements.confirm('', settings.lang.getValue('reg_privacy_warning'), function (response) {
 					if (response)
-						return ui.go('https://' + window.location.host + '/register');
+						return ui.go(ui.getUrl() + '/register');
 				});
 			}
 
@@ -1067,7 +1067,7 @@ const pages = {
 					return messages.utils.joinByLink(currentQuery).then(function (new_chat_id) {
 						loading.close();
 
-						return ui.go('https://' + window.location.host + '/messages?s=' + new_chat_id);
+						return ui.go(ui.getUrl() + '/messages?s=' + new_chat_id);
 					}).catch(function (err) {
 						loading.close();
 
@@ -1093,7 +1093,7 @@ const pages = {
 			}
 
 			if (err.errorCode === 2) {
-				return ui.go('https://' + window.location.host + '/messages?s=' + err.chatId);
+				return ui.go(ui.getUrl() + '/messages?s=' + err.chatId);
 			}
 
 			if (err.errorCode === 3) {
@@ -1478,7 +1478,7 @@ const pages = {
 		exitButton.onclick = function (event) {
 			return pages.elements.confirm('', (settings.lang.getValue("confirm_exit")), function (response) {
 				if (response) return account.restore.closeSession().then(function () {
-					return ui.go('https://' + window.location.host + '/');
+					return ui.go(ui.getUrl() + '/');
 				});
 			});
 		}
@@ -1739,7 +1739,7 @@ const pages = {
 					if (window.opener) {
 						return window.opener.postMessage('cancelled', 'https://auth.yunnet.ru/');
 					} else {
-						return ui.go('https://' + window.location.host + '/');
+						return ui.go(ui.getUrl() + '/');
 					}
 				});
 			});
@@ -1993,10 +1993,8 @@ const pages = {
 
 		let rightMenu = pages.elements.buildRightMenu().append();
 
-		let url = window.location.host.match(/localhost/) ? 'http://localhost' : 'https://yunnet.ru';
-
 		let mainItem = rightMenu.addItem(settings.lang.getValue("main"), function () {
-			return ui.go(url + '/edit?section=main');
+			return ui.go(ui.getUrl() + '/edit?section=main');
 		});
 		mainItem.select();
 
@@ -2540,7 +2538,7 @@ const pages = {
 			continueButton.classList.add('scale-out');
 
 			return internalData.chat.addMembers(internalData.members).then(function (response) {
-				return ui.go('https://' + window.location.host + '/messages?s=' + internalData.chat.peer_id);
+				return ui.go(ui.getUrl() + '/messages?s=' + internalData.chat.peer_id);
 			}).catch(function (err) {
 				let code = err.errorCode;
 				let errorString = settings.lang.getValue('upload_error');
@@ -2652,7 +2650,7 @@ const pages = {
 								if (event.target.nodeName === "svg" || event.target.nodeName === "path")
 									return;
 
-								return ui.go('https://' + window.location.host + '/id' + user.user_id);
+								return ui.go(ui.getUrl() + '/id' + user.user_id);
 							}
 
 							let containerDiv = document.createElement('div');
@@ -2722,7 +2720,7 @@ const pages = {
 		}).catch(function (error) {
 			loader.hide();
 
-			ui.go('https://' + window.location.host + '/id' + selectedUserId);
+			ui.go(ui.getUrl() + '/id' + selectedUserId);
 			return unt.toast({html: settings.lang.getValue("upload_error")});
 		});
 	},
@@ -2737,7 +2735,7 @@ const pages = {
 
 		let rightMenu = pages.elements.buildRightMenu().append();
 		let audiosItem = rightMenu.addItem(settings.lang.getValue('audios'), function () {
-			return ui.go('https://' + window.location.host + '/audios', false, false, false, true, {
+			return ui.go(ui.getUrl() + '/audios', false, false, false, true, {
 				section: 'audios'
 			})
 		});
@@ -2754,7 +2752,7 @@ const pages = {
 		return settings.accounts.get().then(function (accounts) {
 			if (accounts[0].bound) {
 				vkItem = rightMenu.addItem('VK', function () {
-					return ui.go('https://' + window.location.host + '/audios', false, false, false, true, {
+					return ui.go(ui.getUrl() + '/audios', false, false, false, true, {
 						section: 'vk_audios'
 					})
 				});
@@ -2931,18 +2929,14 @@ const pages = {
 				unt.Icon.PALETTE,
 				settings.lang.getValue('installed_themes'),
 				function () {
-					let url = window.location.host.match(/localhost/) ? 'http://localhost' : 'https://yunnet.ru';
-
-					return ui.go(url + '/themes?section=installed');
+					return ui.go(ui.getUrl() + '/themes?section=installed');
 				},
 				'black'
 			], [
 				unt.Icon.GROUP,
 				settings.lang.getValue('theme_repos'),
 				function () {
-					let url = window.location.host.match(/localhost/) ? 'http://localhost' : 'https://yunnet.ru';
-
-					return ui.go(url + '/themes?section=repo');
+					return ui.go(ui.getUrl() + '/themes?section=repo');
 				},
 				'black'
 			]
@@ -3571,13 +3565,13 @@ const pages = {
 					if (user.account_type === "user") {
 						if (user.user_id === settings.users.current.user_id) {
 							actions.push([settings.lang.getValue("edit"), function () {
-								return ui.go("https://" + window.location.host + "/edit");
+								return ui.go(ui.getUrl() + "/edit");
 							}]);
 						} else {
 							if (!user.is_banned) {
 								if (user.can_write_messages && !user.is_me_blacklisted && !user.is_blacklisted) {
 									actions.push([settings.lang.getValue("write_p"), function () {
-										return ui.go("https://" + window.location.host + "/messages?s=" + (ui.userVisited > 0 ? ui.userVisited : "b"+ui.userVisited*-1));
+										return ui.go(ui.getUrl() + "/messages?s=" + (ui.userVisited > 0 ? ui.userVisited : "b"+ui.userVisited*-1));
 									}]);
 								}
 
@@ -3622,7 +3616,7 @@ const pages = {
 						}
 						if (!user.is_me_blacklisted && user.can_access_closed) {
 							actions.push([settings.lang.getValue("show_friends"), function () {
-								return ui.go("https://" + window.location.host + "/friends?id=" + ui.userVisited, false, false, false, true, {
+								return ui.go(ui.getUrl() + "/friends?id=" + ui.userVisited, false, false, false, true, {
 									action: 'friends',
 									user_id: ui.userVisited
 								});
@@ -3635,12 +3629,12 @@ const pages = {
 						if (user.can_write_messages && !user.is_banned && !user.is_deleted) {
 							if (user.bot_can_write_messages)
 								actions.push([settings.lang.getValue("write_p"), function () {
-									return ui.go("https://" + window.location.host + "/messages?s=" + (ui.userVisited > 0 ? ui.userVisited : "b"+ui.userVisited*-1));
+									return ui.go(ui.getUrl() + "/messages?s=" + (ui.userVisited > 0 ? ui.userVisited : "b"+ui.userVisited*-1));
 								}]);
 
 							if (user.can_invite_to_chat)
 								actions.push([settings.lang.getValue("invite_to_the_chat"), function () {
-									return ui.go("https://" + window.location.host + "/messages", false, false, false, true, {
+									return ui.go(ui.getUrl() + "/messages", false, false, false, true, {
 										action: 'invite_to_chat',
 										user_id: ui.userVisited
 									});
@@ -3910,13 +3904,11 @@ const pages = {
 
 		if (!ui.isMobile() && sections.indexOf(selectedSection) === -1) selectedSection = 'main'; 
 
-		let url = window.location.host.match(/localhost/) ? 'http://localhost' : 'https://yunnet.ru';
-
 		if (!ui.isMobile()) {
 			let rightMenu = pages.elements.buildRightMenu().append();
 			sections.forEach(function (itemName) {
 				let element = rightMenu.addItem(settings.lang.getValue(itemName), function (itemSelected, itemElement) {
-					return ui.go(url + '/settings?section=' + itemElement.getAttribute('category'));
+					return ui.go(ui.getUrl() + '/settings?section=' + itemElement.getAttribute('category'));
 				});
 
 				element.setAttribute('category', itemName);
@@ -3974,11 +3966,11 @@ const pages = {
 					[
 						unt.Icon.ACCOUNT,
 						settings.lang.getValue('main'),
-						function () { return ui.go(url + '/settings?section=main') }
+						function () { return ui.go(ui.getUrl() + '/settings?section=main') }
 					], [
 						unt.Icon.NOTIFICATIONS,
 						settings.lang.getValue('notifications'),
-						function () { return ui.go(url + '/settings?section=notifications') }
+						function () { return ui.go(ui.getUrl() + '/settings?section=notifications') }
 					]
 				]));
 
@@ -3986,15 +3978,15 @@ const pages = {
 					[
 						unt.Icon.LOCKED,
 						settings.lang.getValue('privacy'),
-						function () { return ui.go(url + '/settings?section=privacy') }
+						function () { return ui.go(ui.getUrl() + '/settings?section=privacy') }
 					], [
 						unt.Icon.SECURITY,
 						settings.lang.getValue('security'),
-						function () { return ui.go(url + '/settings?section=security') }
+						function () { return ui.go(ui.getUrl() + '/settings?section=security') }
 					], [
 						unt.Icon.LIST,
 						settings.lang.getValue('blacklist'),
-						function () { return ui.go(url + '/settings?section=blacklist') }
+						function () { return ui.go(ui.getUrl() + '/settings?section=blacklist') }
 					]
 				]));
 
@@ -4002,11 +3994,11 @@ const pages = {
 					[
 						unt.Icon.GROUP,
 						settings.lang.getValue('accounts'),
-						function () { return ui.go(url + '/settings?section=accounts') }
+						function () { return ui.go(ui.getUrl() + '/settings?section=accounts') }
 					], [
 						unt.Icon.PALETTE,
 						settings.lang.getValue('theming'),
-						function () { return ui.go(url + '/settings?section=theming') }
+						function () { return ui.go(ui.getUrl() + '/settings?section=theming') }
 					]
 				]));
 
@@ -4014,7 +4006,7 @@ const pages = {
 					[
 						unt.Icon.STATS,
 						settings.lang.getValue('about'),
-						function () { return ui.go(url + '/settings?section=about') }
+						function () { return ui.go(ui.getUrl() + '/settings?section=about') }
 					]
 				]));
 
@@ -4188,7 +4180,7 @@ const pages = {
 				editHeader.style.display = 'none';
 
 				let chat = messages.utils.getChatInstance(workedUrl.s);
-				if (!chat) return ui.go('https://' + window.location.host + '/messages');
+				if (!chat) return ui.go(ui.getUrl() + '/messages');
 
 				actsHeader.style.display = 'none';
 				actsHeader.id = 'actsHeader';
@@ -4637,7 +4629,7 @@ const pages = {
 					};
 
 					actsHeader.close();
-					return ui.go('https://' + window.location.host + '/messages', false, false, false, false, internalData);
+					return ui.go(ui.getUrl() + '/messages', false, false, false, false, internalData);
 				});
 
 				editItem.disable();
@@ -4761,7 +4753,7 @@ const pages = {
 					menuBody.appendChild(pages.elements.backArrowButton(settings.lang.getValue("select_a_dialog"), function (event) {
 						event.preventDefault();
 
-						return ui.go('https://' + window.location.host + '/messages?s=' + internalData.fwdFrom);
+						return ui.go(ui.getUrl() + '/messages?s=' + internalData.fwdFrom);
 					}));
 				}
 				if (internalData.action === 'invite_to_chat') {
@@ -4778,7 +4770,7 @@ const pages = {
 							subaction: 'write'
 						}
 
-						return ui.go('https://' + window.location.host + '/friends', false, false, false, true, internalDataNew);
+						return ui.go(ui.getUrl() + '/friends', false, false, false, true, internalDataNew);
 					}],
 					[unt.Icon.FRIENDS, function () {
 						return pages.chats.create();
@@ -4851,7 +4843,7 @@ const pages = {
 										pages.elements.loadingMode().getInstance().close();
 
 										if (response) {
-											return ui.go("https://" + window.location.host + "/messages?s=" + (chat.peer_id || ("b" + (chat.bot_peer_id * -1))));
+											return ui.go(ui.getUrl() + "/messages?s=" + (chat.peer_id || ("b" + (chat.bot_peer_id * -1))));
 										}
 									}).catch(function (err) {
 										let code = err.errorCode;
@@ -5446,7 +5438,7 @@ const pages = {
 				contextMenuArray.push([
 					settings.lang.getValue('edit'),
 					function () {
-						return ui.go('https://' + window.location.host + '/themes?section=installed&mode=edit', false, false, false, true, {
+						return ui.go(ui.getUrl() + '/themes?section=installed&mode=edit', false, false, false, true, {
 							theme: theme
 						});
 					}
@@ -6777,7 +6769,7 @@ const pages = {
 				element.onclick = function (event) {
 					event.preventDefault();
 
-					return ui.go('https://' + window.location.host + "/messages?s=" + (chatObject.chat_info.is_bot_chat ? ("b" + (chatObject.bot_peer_id * -1)) : chatObject.peer_id), false, false, false, (!!internalData ? true : false), internalData);
+					return ui.go(ui.getUrl() + "/messages?s=" + (chatObject.chat_info.is_bot_chat ? ("b" + (chatObject.bot_peer_id * -1)) : chatObject.peer_id), false, false, false, (!!internalData ? true : false), internalData);
 				}
 
 				let img = document.createElement('img');
@@ -7942,7 +7934,7 @@ const pages = {
 				post_text_data.onclick = function (event) {
 					if (event.target.nodeName === 'A') return;
 
-					return (!ui.isMobile() ? pages.parsers.menu.posts.openWindowPost(post) : ui.go('https://' + window.location.host + '/wall'+post.user_id+'_'+post.id));
+					return (!ui.isMobile() ? pages.parsers.menu.posts.openWindowPost(post) : ui.go(ui.getUrl() + '/wall'+post.user_id+'_'+post.id));
 				}
 
 			element.appendChild(post_text_data);
@@ -8045,7 +8037,7 @@ const pages = {
 				if (settings.users.current) comms.style['margin-left'] = '10px';
 
 				comms.onclick = function () {
-					return ui.go('https://' + window.location.host + '/wall'+post.user_id+'_'+post.id);
+					return ui.go(ui.getUrl() + '/wall'+post.user_id+'_'+post.id);
 				}
 
 				counters_comments = document.createElement('div');
@@ -8137,7 +8129,7 @@ const pages = {
 						pollContainer.classList.add('card');
 						pollContainer.classList.add('full_section');
 
-						pollContainer.style = 'background-color: #909090 !important';
+						pollContainer.style = 'background-color: #909090 !important; color: white';
 						element.appendChild(pollContainer);
 
 						let pollTitle = document.createElement('div');
@@ -8211,6 +8203,7 @@ const pages = {
 
 							let doneDiv = document.createElement('div');
 							doneDiv.innerHTML = unt.Icon.SAVE;
+							doneDiv.getElementsByTagName('svg')[0].style.fill = 'white';
 							answerStates.appendChild(doneDiv);
 							doneDiv.getElementsByTagName('svg')[0].height.baseVal.value = 15;
 							doneDiv.getElementsByTagName('svg')[0].width.baseVal.value = 15;

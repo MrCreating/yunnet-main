@@ -7,6 +7,7 @@
 // connect the default modules
 require_once __DIR__ . '/objects/request.php';
 require_once __DIR__ . '/objects/context.php';
+require_once __DIR__ . '/objects/letter.php';
 require_once __DIR__ . '/platform-tools/cache.php';
 require_once __DIR__ . '/platform-tools/database.php';
 require_once __DIR__ . '/platform-tools/data.php';
@@ -18,7 +19,8 @@ require_once __DIR__ . '/parsers/attachments.php';
 // returns a page origin for CORS.
 function get_page_origin () 
 {
-	return substr($_SERVER['HTTP_REFERER'], 0, strlen($_SERVER['HTTP_REFERER']) - 1);
+	$link_without_params = (getenv('UNT_PRODUCTION') === '1' ? 'https://' : 'http://') . explode('/', explode('?', $_SERVER['HTTP_REFERER'])[0])[2];
+	return substr($link_without_params, 0, strlen($link_without_params));
 }
 
 // explode string by length

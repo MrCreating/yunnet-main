@@ -20,7 +20,7 @@ class Bot extends Entity
 
 		if ($user_id === 0) return;
 
-		$res = $this->currentConnection->prepare("SELECT id, name, owner_id, screen_name, photo_path, settings, is_verified, is_banned FROM bots.info WHERE id = ? AND is_deleted = 0 LIMIT 1");
+		$res = $this->currentConnection->cache("Bot_" . $bot_id)->prepare("SELECT id, name, owner_id, screen_name, photo_path, settings, is_verified, is_banned FROM bots.info WHERE id = ? AND is_deleted = 0 LIMIT 1");
 
 		if ($res->execute([$bot_id]))
 		{
@@ -93,7 +93,7 @@ class Bot extends Entity
 
 	public function getRelationsState (int $send_id = 0): int
 	{
-		$res = $this->currentConnection->prepare("SELECT state FROM users.bot_relations WHERE user_id = ? AND bot_id = ? LIMIT 1");
+		$res = $this->currentConnection->cache("Bot_relations_" . $send_id)->prepare("SELECT state FROM users.bot_relations WHERE user_id = ? AND bot_id = ? LIMIT 1");
 		if ($res->execute([$send_id, $this->getId()]))
 		{
 			return intval($res->fetch(PDO::FETCH_ASSOC)["state"]);

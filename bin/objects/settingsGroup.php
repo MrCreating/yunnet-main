@@ -13,7 +13,7 @@ abstract class SettingsGroup
 	protected string $type;
 
 	// this constructor all for all
-	abstract public function __construct (Entity $entity, PDO $connection, array $params);
+	abstract public function __construct (Entity $entity, DataBaseManager $connection, array $params);
 
 	// must be convertable to array
 	abstract public function toArray (): array;

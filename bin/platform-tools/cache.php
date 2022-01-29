@@ -30,15 +30,15 @@ class Cache
 		return $result;
 	}
 
-	public function putItem ($name, $value): Cache
+	public function putItem ($name, $value, $aliveTime = 86400): Cache
 	{
 		$item = $this->getItem($name);
 		if ($item)
 		{
-			$this->currentCacheServer->replace($this->currentCacheName . '/' . $name, strval($value), 3600);
+			$this->currentCacheServer->replace($this->currentCacheName . '/' . $name, strval($value), $aliveTime);
 		} else
 		{
-			$this->currentCacheServer->set($this->currentCacheName . '/' . $name, strval($value), 3600);
+			$this->currentCacheServer->set($this->currentCacheName . '/' . $name, strval($value), $aliveTime);
 		}
 
 		return $this;

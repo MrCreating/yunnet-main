@@ -63,10 +63,9 @@ if (isset(Request::get()->data['action']))
 
 				$_SESSION["first_name"]   = capitalize($first_name);
 				$_SESSION["last_name"]    = capitalize($last_name);
-				$_SESSION["stage"]        = 1;
 
 				die(json_encode(array(
-					"stage" => 1
+					"stage" => ($_SESSION["stage"] = 1)
 				)));
 			}
 
@@ -94,12 +93,13 @@ if (isset(Request::get()->data['action']))
 				$_SESSION["email"] = $email;
 				$_SESSION["code"]  = rand(100000, 999999);
 				$_SESSION["next_code_time"] = time() + 300;
-				$_SESSION["stage"] = 2;
 
-				if (mail($email, Context::get()->getLanguage()->email_activation, str_replace(array('%username%', '%code%'), array(htmlspecialchars($_SESSION["first_name"]), strval($_SESSION["code"])), Context::get()->getLanguage()->email_message)))
+				$letter = new Letter(Context::get()->getLanguage()->email_activation, str_replace(array('%username%', '%code%'), array(htmlspecialchars($_SESSION["first_name"]), strval($_SESSION["code"])), Context::get()->getLanguage()->email_message));
+
+				if ($letter->send($email))
 				{
 					die(json_encode(array(
-						"stage" => 2
+						"stage" => ($_SESSION["stage"] = 2)
 					)));
 				} else
 				{
@@ -167,10 +167,9 @@ if (isset(Request::get()->data['action']))
 					unset($_SESSION["password"]);
 					unset($_SESSION["gender"]);
 
-					$_SESSION["stage"] = 1;
 					die(json_encode(array(
 						'error_code' => 4,
-						'stage'  => 1,
+						'stage'  => ($_SESSION["stage"] = 1),
 						'error_message' => Context::get()->getLanguage()->found_user
 					)));
 				}

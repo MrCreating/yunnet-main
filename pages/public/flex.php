@@ -77,7 +77,7 @@ if (isset(Request::get()->data['action']))
 		break;
 	}
 
-	if (!Context::get()->allowToUseUnt()) die(json_encode(array('error' => 1)));
+	if (!Context::get()->isLogged()) die(json_encode(array('error' => 1)));
 
 	switch ($action) {
 		case 'get_settings':
@@ -87,6 +87,8 @@ if (isset(Request::get()->data['action']))
 		break;
 
 		case 'publish_post':
+			if (Context::get()->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
+
 			$text = strval(Request::get()->data['text']);
 			$atts = strval(Request::get()->data['attachments']);
 			$wall = intval(Request::get()->data['wall_id']) !== 0 ? intval(Request::get()->data['wall_id']) : $context->getCurrentUser()->getId();
@@ -107,6 +109,8 @@ if (isset(Request::get()->data['action']))
 		break;
 
 		case 'edit_post':
+			if (Context::get()->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
+
 			$text = strval(Request::get()->data['text']);
 			$atts = strval(Request::get()->data['attachments']);
 			$wall = intval(Request::get()->data['wall_id']);
@@ -143,6 +147,8 @@ if (isset(Request::get()->data['action']))
 		break;
 
 		case 'get_chat_permissions':
+			if (Context::get()->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
+
 			$chat_data = parse_id_from_string(Request::get()->data['peer_id']);
 			if (!$chat_data)
 				die(json_encode(array('error' => 1)));
@@ -188,6 +194,8 @@ if (isset(Request::get()->data['action']))
 		break;
 
 		case 'get_friends':
+			if (Context::get()->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
+
 			$user_id = intval(Request::get()->data['user_id']);
 
 			if (!user_exists($connection, $user_id) || !can_access_closed($connection, $context->getCurrentUser()->getId(), $user_id) || in_blacklist($connection, $user_id, $context->getCurrentUser()->getId()))
@@ -207,12 +215,16 @@ if (isset(Request::get()->data['action']))
 		break;
 
 		case 'get_counters':
+			if (Context::get()->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
+
 			$result = get_counters($connection, $context->getCurrentUser()->getId());
 
 			die(json_encode($result));
 		break;
 
 		case 'set_status':
+			if (Context::get()->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
+			
 			$requested_status = trim(strval(Request::get()->data['new_status']));
 			if (strlen($requested_status) > 128)
 				die(json_decode(array('error' => 1)));

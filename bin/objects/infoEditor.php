@@ -16,11 +16,7 @@ abstract class InfoEditor
 	{
 		if (!$boundedEntity->valid()) return;
 
-		$connection = $_SERVER['dbConnection'];
-		if (!$connection)
-			$connection = get_database_connection();
-
-		$this->currentConnection = $connection;
+		$this->currentConnection = DataBaseManager::getConnection();
 		$this->boundedEntity     = $boundedEntity;
 	}
 

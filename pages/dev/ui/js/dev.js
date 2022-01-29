@@ -775,7 +775,7 @@ const dev = {
 				  					internalData.tokenAction = 'edit';
 				  					internalData.token = tokenObject;
 
-									return ui.go('https://' + window.location.host + '/' + type + '?action=edit&section=tokens', false, false, false, true, internalData);
+									return ui.go(ui.getUrl('dev') + '/' + type + '?action=edit&section=tokens', false, false, false, true, internalData);
 				  				});
 
 				  				tokensDiv.appendChild(tokenItem);
@@ -849,7 +849,7 @@ const dev = {
 			ui.isMobile() ? nav_header_title.innerText = settings.lang.getValue("apps") : null;
 
 			let menuBody = pages.elements.menuBody().clear();
-			if (!settings.users.current) return window.location.href = (window.location.host.match(/localhost/) ? 'http://localhost' : 'https://yunnet.ru');
+			if (!settings.users.current) return window.location.href = ui.getUrl();
 
 			let currentUrl = (new URLParser(window.location.href).parse());
 			if (currentUrl.action === 'edit') {
@@ -939,14 +939,14 @@ const dev = {
 			  		}
 
 			  		menuBody.appendChild(pages.elements.createButton('', settings.lang.getValue('tokens'), function (event) {
-						return ui.go('https://' + window.location.host + '/apps?action=edit&section=tokens', false, false, false, true, internalData);
+						return ui.go(ui.getUrl('dev') + '/apps?action=edit&section=tokens', false, false, false, true, internalData);
 					}));
 
 			  		menuBody.appendChild(pages.elements.createButton('', settings.lang.getValue('delete_application'), function (event) {
 			  			return pages.elements.confirm('', settings.lang.getValue('delete_application') + '?', function (response) {
 			  				if (response) {
 			  					return dev.apps.delete(internalData.app.id).then(function (result) {
-			  						return ui.go('https://' + window.location.host + '/apps');
+			  						return ui.go(ui.getUrl('dev') + '/apps');
 			  					}).catch(function (err) {
 			  						return unt.toast({html: settings.lang.getValue('upload_error')});
 			  					});
@@ -957,7 +957,7 @@ const dev = {
 			  		return;
 				}
 
-				return ui.go('https://' + window.location.host + '/apps', false, false, false, false, null);
+				return ui.go(ui.getUrl('dev') + '/apps', false, false, false, false, null);
 			} else {
 				let loader = pages.elements.getLoader();
 				loader.style.marginTop = '15px';
@@ -994,7 +994,7 @@ const dev = {
 						inputField.getInput().disabled = true;
 
 						return dev.apps.create(inputField.getValue()).then(function (result) {
-							return ui.go('https://' + window.location.host + '/apps');
+							return ui.go(ui.getUrl('dev') + '/apps');
 						}).catch(function (err) {
 							continueButton.classList.remove('disabled');
 						
@@ -1051,7 +1051,7 @@ const dev = {
 			ui.isMobile() ? nav_header_title.innerText = settings.lang.getValue("bots") : null;
 
 			let menuBody = pages.elements.menuBody().clear();
-			if (!settings.users.current) return window.location.href = window.location.host.match(/localhost/) ? 'http://localhost' : 'https://yunnet.ru';;
+			if (!settings.users.current) return window.location.href = ui.getUrl();
 
 			let currentUrl = (new URLParser(window.location.href).parse());
 
@@ -1196,7 +1196,7 @@ const dev = {
 					saveButtonDiv.style.textAlign = 'end';
 
 					menuBody.appendChild(pages.elements.createButton('', settings.lang.getValue('tokens'), function (event) {
-						return ui.go('https://' + window.location.host + '/bots?action=edit&section=tokens', false, false, false, true, internalData);
+						return ui.go(ui.getUrl('dev') + '/bots?action=edit&section=tokens', false, false, false, true, internalData);
 					}));
 
 			  		let callPrivacyGroup = pages.elements.createCollapsible([
@@ -1248,7 +1248,7 @@ const dev = {
 			  		return;
 				}
 
-				return ui.go('https://' + window.location.host + '/bots', false, false, false, false, null);
+				return ui.go(ui.getUrl('dev') + '/bots', false, false, false, false, null);
 			} else {
 				let loader = pages.elements.getLoader();
 				loader.style.marginTop = '15px';
@@ -1287,7 +1287,7 @@ const dev = {
 								inputField.getInput().disabled = true;
 
 								return dev.bots.create(inputField.getValue()).then(function (result) {
-									return ui.go('https://' + window.location.host + '/bots');
+									return ui.go(ui.getUrl('dev') + '/bots');
 								}).catch(function (err) {
 									continueButton.classList.remove('disabled');
 								

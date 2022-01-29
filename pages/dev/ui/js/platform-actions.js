@@ -25,7 +25,25 @@ unt.actions.wall = new Object({
 		});
 	},
 	getPostById: function (wallId, postId) {
+		return unt.tools.Request({
+			url: '/wall' + Number(wallId) + '_' + Number(postId),
+			method: 'POST',
+			data: (new POSTData()).append('action', 'get_info').build(),
+			success: function (result) {
+				try {
+					result = JSON.parse(result);
+					if (result.error)
+						return reject(new TypeError('Unable to fetch post'));
 
+					return resolve(result);
+				} catch (e) {
+					return reject(e);
+				}
+			},
+			error: function (error) {
+				return reject(error);
+			}
+		});
 	},
 	getNews: function (offset = 0, count = 30) {
 		return new Promise(function (resolve, reject) {

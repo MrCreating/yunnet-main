@@ -5,8 +5,8 @@ module.exports = (function () {
 	let q = {
 		connect: function () {
 			q.connection = mysql.createConnection({
-				host: '212.109.219.153',
-				port: (process.env.UNT_PRODUCTION === '1' ? 3306 : 3310),
+				host: (process.env.UNT_PRODUCTION === '1' ? 'mysql_prod' : '212.109.219.153'),
+				port: (process.env.UNT_PRODUCTION === '1' ? 3306 : 59876),
 				user: 'root',
 				password: process.env.UNT_PRODUCTION === '1' ? 'default-prod-unt-user-iA22021981_' : 'unt-user-test-pc2021_die',
 				database: 'users',

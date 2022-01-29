@@ -849,6 +849,8 @@ acl_check_rcpt:
 # is the ACL in which you can test a message's headers or body, and in
 # particular, this is where you can invoke external virus or spam scanners.
 
+add_header = List-Unsubscribe: https://yunnet.ru/settings?section=main
+
 acl_check_data:
 
   # Deny if the message contains an overlong line.  Per the standards

@@ -58,21 +58,18 @@ if (isset(Request::get()->data['action']))
 				}
 			}
 		break;
+
+		case "upload":
+			$objects = fetch_upload($connection, Request::get()->data['query'], $context->getCurrentUser()->getId());
+			if ($objects)
+				die(json_encode($objects->toArray()));
+		break;
 		
 		default:
 		break;
 	}
 
 	die(json_encode(array('error' => 1)));
-}
-
-if (strtolower(Request::get()->data['action']) === "upload")
-{
-	if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
-	
-	$objects = fetch_upload($connection, Request::get()->data['query'], $context->getCurrentUser()->getId());
-	if ($objects)
-		die(json_encode($objects->toArray()));
 }
 
 ?>

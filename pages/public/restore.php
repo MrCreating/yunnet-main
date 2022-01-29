@@ -99,10 +99,16 @@ if (isset(Request::get()->data['action']))
 				$_SESSION["expire_query"]  = time() + 86400;
 				$_SESSION["waiting_id"]    = $user->getId();
 
-				mail($email, Context::get()->getLanguage()->restore_account, $text);
+				$letter = new Letter(Context::get()->getLanguage()->restore_account, $text);
+				if ($letter->send($email))
+				{
+					die(json_encode(array(
+						"stage" => 2
+					)));
+				}
 
 				die(json_encode(array(
-					"stage" => 2
+					'error_code' => 1
 				)));
 			}
 
