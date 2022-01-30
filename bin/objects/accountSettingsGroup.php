@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/settingsGroup.php';
+require_once __DIR__ . '/cookieManager.php';
 
 /**
  * Class for Account settings
@@ -25,13 +26,10 @@ class AccountSettingsGroup extends SettingsGroup
 		$this->currentLangId = $params['lang_id'];
 		$this->closedProfile = $params['is_closed'];
 
-		$this->balance = new Data([
-			'cookies'     => $params['cookies'],
-			'halfCookies' => $params['half_cookies']
-		]);
+		$this->balance = new CookieManager($user, $params['cookies'], $params['half_cookies']);
 	}
 
-	public function getBalance (): Data
+	public function getBalance (): CookieManager
 	{
 		return $this->balance;
 	}
@@ -75,8 +73,8 @@ class AccountSettingsGroup extends SettingsGroup
 	{
 		return [
 			'balance' => [
-				'cookies'      => $this->getBalance()->cookies,
-				'half_cookies' => $this->getBalance()->halfCookies
+				'cookies'      => $this->getBalance()->getCookiesCount(),
+				'half_cookies' => $this->getBalance()->getBiteCookiesCount()
 			],
 			'is_closed' => intval($this->isProfileClosed()),
 			'language'  => strval($this->getLanguageId())
