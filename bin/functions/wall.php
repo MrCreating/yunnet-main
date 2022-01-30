@@ -10,42 +10,6 @@ require_once __DIR__ . '/../objects/comment.php';
 require_once __DIR__ . "/notifications.php";
 require_once __DIR__ . '/users.php';
 
-/**
- * Getting posts for user
-*/
-function get_posts ($connection, $user_id, $my_id = 0, $count = 50, $only_my_posts = false, $offset = 0)
-{
-	if (intval($count) > 100 || intval($count) < 1)
-		return false;
-
-	$result = [];
-
-	$pinned_post = [];
-	if (!$only_my_posts && $offset === 0)
-	{
-		$res = $connection->prepare('SELECT local_id FROM wall.posts WHERE to_id = ? AND owner_id = ? AND is_deleted = 0 AND is_pinned = 1 LIMIT 1;');
-		$res->execute([intval($user_id), intval($user_id)]);
-		$data = $res->fetch(PDO::FETCH_ASSOC);
-
-		if ($data)
-			$pinned_post[] = $data;
-	}
-
-	$res = $connection->prepare('SELECT local_id FROM wall.posts WHERE to_id = ? '.($only_my_posts ? 'AND owner_id = '.intval($user_id).' ' : '').'AND is_deleted = 0 AND is_pinned = 0 ORDER BY time DESC LIMIT '.intval($offset).','.intval($count).';');
-	$res->execute([intval($user_id)]);
-
-	$posts = array_merge($pinned_post, $res->fetchAll(PDO::FETCH_ASSOC));
-	foreach ($posts as $index => $post) {
-		$post = new Post(intval($user_id), intval($post['local_id']));
-		if ($post->valid())
-		{
-			$result[] = $post;
-		}
-	}
-
-	return $result;
-}
-
 // get news of user
 function get_news ($connection, $user_id)
 {
@@ -61,7 +25,7 @@ function get_news ($connection, $user_id)
 			foreach ($data as $index => $post) {
 				$local_id = intval($post['local_id']);
 
-				$post = get_post_by_id($connection, $friend_id, $local_id, $user_id);
+				$post = Post::findById($friend_id, $local_id);
 				if ($post)
 					$result[] = $post->toArray();
 			}
@@ -89,25 +53,6 @@ function get_post_by_id ($connection, $wall_id, $post_id, $user_id = 0)
 	}
 
 	return false;
-}
-
-// get comments by credentials
-function get_comments ($connection, $attachment, $count = 50, $offset = 0)
-{
-	$result = [];
-	if (intval($count) <= 0 || intval($count) > 100)
-		return $result;
-
-	if (substr($attachment, 0, 4) === "wall")
-	{
-		$post = (new AttachmentsParser())->getObject($attachment);
-		if (!$post)
-			return $result;
-
-		return $post->getComments($count, $offset);
-	}
-
-	return $result;
 }
 
 /**
@@ -227,152 +172,6 @@ function post_exists ($connection, $wall_id, $post_id)
 	}
 
 	return false;
-}
-
-// likes selected post
-function like_post ($connection, $wall_id, $post_id, $user_id, $post_owner_id)
-{
-	if (!post_exists($connection, $wall_id, $post_id)) return false;
-
-	$credentials = "wall" . $wall_id . "_" . $post_id;
-
-	$res = $connection->prepare("SELECT is_liked FROM users.likes WHERE attachment = :attachment AND user_id = :user_id LIMIT 1;");
-
-	$res->bindParam(":attachment", $credentials, PDO::PARAM_STR);
-	$res->bindParam(":user_id",    $user_id,     PDO::PARAM_INT);
-	if ($res->execute())
-	{
-		$data = $res->fetch(PDO::FETCH_ASSOC);
-		if (!$data)
-		{
-			$res = $connection->prepare("INSERT INTO users.likes (user_id, is_liked, attachment) VALUES (:user_id, 1, :attachment);");
-			$res->bindParam(":attachment", $credentials, PDO::PARAM_STR);
-			$res->bindParam(":user_id",    $user_id,     PDO::PARAM_INT);
-			if ($res->execute())
-			{
-				if ($wall_id !== $user_id)
-					create_notification($connection, $post_owner_id, "post_like", [
-						'user_id' => intval($user_id),
-						'data'    => [
-							'wall_id' => intval($wall_id),
-							'post_id' => intval($post_id)
-						]
-					]);
-				$state = 1;
-			}
-		}
-
-		$is_liked = intval($data["is_liked"]);
-		if ($is_liked)
-		{
-			$res = $connection->prepare("UPDATE users.likes SET is_liked = 0 WHERE attachment = :attachment AND user_id = :user_id LIMIT 1;");
-			$res->bindParam(":attachment", $credentials, PDO::PARAM_STR);
-			$res->bindParam(":user_id",    $user_id,     PDO::PARAM_INT);
-			if ($res->execute())
-			{
-				$state = 0;
-			}
-		} else if (!$is_liked && $data)
-		{
-			$res = $connection->prepare("UPDATE users.likes SET is_liked = 1 WHERE attachment = :attachment AND user_id = :user_id LIMIT 1;");
-			$res->bindParam(":attachment", $credentials, PDO::PARAM_STR);
-			$res->bindParam(":user_id",    $user_id,     PDO::PARAM_INT);
-			if ($res->execute())
-			{
-				$state = 1;
-			}
-		}
-	}
-
-	if ($state !== NULL)
-	{
-		$res = $connection->prepare("SELECT COUNT(DISTINCT user_id) FROM users.likes WHERE attachment = :attachment AND is_liked = 1;");
-		$res->bindParam(":attachment", $credentials, PDO::PARAM_STR);
-		$res->execute();
-		$likes_count = intval($res->fetch(PDO::FETCH_ASSOC)["COUNT(DISTINCT user_id)"]);
-
-		return [
-			'state' => $state,
-			'count' => $likes_count
-		];
-	}
-
-	return false;
-}
-
-/**
- * Pin or unpin the post.
- * @return true if ok or false if error
- *
- * Parameters:
- * @param $user_id - current user id.
- * @param $wall_id - user id (owner of wall)
- * @param $post_id - post in on the wall
-*/
-function pin_post ($connection, $user_id, $wall_id, $post_id)
-{
-	if (!post_exists($connection, $wall_id, $post_id)) return false;
-	
-	// we can pin only my posts
-	if (intval($wall_id) !== intval($user_id)) return false;
-
-	// getting the requested post
-	$post = get_post_by_id($connection, $wall_id, $post_id, $user_id);
-
-	// non-existing posts are not allowed
-	if (!$post->valid()) return false;
-
-	// only on my wall posts can pin/
-	if ($post->getWallId() !== intval($user_id)) return false;
-
-	// only my posts can be pin
-	if ($post->getOwnerId() !== intval($user_id)) return false;
-
-	// unpin all user's posts
-	if ($connection->prepare("UPDATE wall.posts SET is_pinned = 0 WHERE to_id = ?;")->execute([intval($wall_id)]))
-	{
-		if (!$post->isPinned())
-		{
-			return $connection->prepare("UPDATE wall.posts SET is_pinned = 1 WHERE to_id = ? AND local_id = ? LIMIT 1;")->execute([intval($wall_id), intval($post_id)]);
-		}
-
-		return -1;
-	}
-
-	// error?
-	return false;
-}
-
-/**
- * Deletes a post.
- * @return true if ok or false if error
- *
- * Parameters:
- * @param $user_id - current user id.
- * @param $wall_id - user id (owner of wall)
- * @param $post_id - post in on the wall
-*/
-function delete_post ($connection, $user_id, $wall_id, $post_id)
-{
-	/**
-	 * We can delete all posts on my wall or all my posts from another wall.
-	*/
-
-	// getting the requested post
-	$post = get_post_by_id($connection, $wall_id, $post_id, $user_id);
-
-	// non-existing posts are not allowed
-	if (!$post->valid()) return false;
-
-	// if not my wall - starts couple of checks
-	if (intval($wall_id) !== intval($user_id))
-	{
-		// can delete only my posts from another wall.
-		if ($post->getOwnerId() !== intval($user_id)) return false;
-	}
-
-	// deleting the post
-	return $connection->prepare("UPDATE wall.posts SET is_deleted = 1 WHERE to_id = ? AND local_id = ? LIMIT 1;")->execute([intval($wall_id), intval($post_id)]);
 }
 
 /**
@@ -556,37 +355,4 @@ function can_comment ($connection, $user_id, $check_id)
 	return false;
 }
 
-/**
- * Deletes an a comment from attachment
- * @return true if ok or false if error
- *
- * Parameters:
- * @param $attachment - attachment string,
- * @param $comment_id - comment id.
-*/
-function delete_comment ($connection, $attachment, $comment_id)
-{
-	// preparing deletion
-	$res = $connection->prepare("UPDATE wall.comments SET is_deleted = 1 WHERE attachment = :attachment AND local_id = :local_id AND is_deleted = 0 LIMIT 1;");
-
-	// binding params
-	$res->bindParam(":attachment", $attachment, PDO::PARAM_STR);
-	$res->bindParam(":local_id",   $comment_id, PDO::PARAM_INT);
-
-	// ok!
-	return $res->execute();
-}
-
-/**
- * Setting new status for user.
- * @return true if ok or false if error
- *
- * Parameters:
- * @param $user_id - user which status will change
- * @param $new_status - max 512 length.
-*/
-function set_user_status ($connection, $user_id, $new_status)
-{
-	return Context::get()->getCurrentUser()->edit()->setStatus($new_status);
-}
 ?>

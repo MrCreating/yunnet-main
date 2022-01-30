@@ -426,28 +426,9 @@ function get_friendship_state ($connection, $user_id, $check_id)
 */
 function can_access_closed ($connection, $user_id, $select_id)
 {
-	// always can check;
-	if ($user_id === $select_id) return true;
-	if ($select_id < 0) return true;
-
-	// connecting modules
-	if (!class_exists('Entity'))
-		require __DIR__ . "/../objects/entities.php";
-
 	$user = new User(intval($select_id));
 
-	// if profile closed.
-	if ($user->getSettings()->getSettingsGroup('account')->isProfileClosed())
-	{
-		// checking friendship state. Must be 2.
-		$state = get_friendship_state($connection, $user_id, $select_id)["state"];
-
-		// if not 2
-		if ($state !== 2) return false;
-	}
-
-	// else ok
-	return true;
+	return $user->canAccessClosed();
 }
 
 /**

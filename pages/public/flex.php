@@ -229,7 +229,7 @@ if (isset(Request::get()->data['action']))
 			if (strlen($requested_status) > 128)
 				die(json_decode(array('error' => 1)));
 
-			$result = set_user_status($connection, $context->getCurrentUser()->getId(), $requested_status);
+			$result = Context::get()->getCurrentUser()->edit()->setStatus($requested_status);
 			if ($result)
 				die(json_encode(array(
 					'success' => 1,

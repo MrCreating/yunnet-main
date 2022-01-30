@@ -1,5 +1,6 @@
 <?php
 
+require_once __DIR__ . "/../../bin/objects/post.php";
 require_once __DIR__ . "/../../bin/functions/wall.php";
 require_once __DIR__ . "/../../bin/functions/users.php";
 
@@ -13,8 +14,61 @@ $string = explode('_', substr(REQUESTED_PAGE, 5));
 $wall_id = intval($string[0]);
 $post_id = intval($string[1]);
 
+if (isset(Request::get()->data["action"]))
+{
+	$entity = Entity::findById($wall_id);
+	if ($entity && $entity->getType() === 'user' && ($entity->inBlacklist() || !$entity->canAccessClosed()))
+		die(json_encode(array('error' => 1)));
+
+	$post = Post::findById($wall_id, $post_id);
+
+	if (!$post)
+		die(json_encode(array('error' => 1)));
+
+	$action = strtolower(Request::get()->data["action"]);
+	switch ($action) 
+	{
+		case 'get':
+			die(json_encode($post->toArray()));
+		break;
+
+		case 'get_comments':
+			die(json_encode(array_map(function ($item) {
+				return $item->toArray();
+			}, $post->getComments())));
+		break;
+	}
+
+	if (!Context::get()->allowToUseUnt())
+		die(json_encode(array('error' => 1)));
+
+	switch ($action) 
+	{
+		case 'like':
+			$result = $post->like();
+
+			if (!$result || ($result->getState() !== 0 && $result->getState() !== 1))
+				die(json_encode(array('error' => 1)));
+
+			die(json_encode(array('result' => $result->getState(), 'count' => $result->getLikesCount())));
+		break;
+
+		case 'pin':
+			$result = $post ? $post->pin() : 0;
+
+			if (!$result)
+				die(json_encode(array('error' => 1)));
+
+			die(json_encode(array('result' => intval($result))));
+		break;
+		
+		default:
+		break;
+	}
+}
+
 // if wall is valid
-if ($wall_id !== 0)
+/*if ($wall_id !== 0)
 {
 	// if current user is not blacklisted on wall owner
 	if (!in_blacklist($connection, $wall_id, $context->getCurrentUser()->getId()))
@@ -24,10 +78,8 @@ if ($wall_id !== 0)
 		if (!$can_access_closed)
 			die(header("Location: /id".$wall_id));
 
-		$found = true;
-
 		// handle actions with post HERE!!!
-		$post = get_post_by_id($connection, $wall_id, $post_id, $context->getCurrentUser()->getId());
+		$post = Post::findById($wall_id, $post_id);
 		if ($post)
 		{
 			if (isset(Request::get()->data["action"]))
@@ -49,7 +101,8 @@ if ($wall_id !== 0)
 					break;
 					case 'pin':
 						if (!$context->isLogged()) die(json_encode(array('unauth'=>1)));
-						$result = pin_post($connection, $context->getCurrentUser()->getId(), $wall_id, $post_id);
+
+						$result = $post ? $post->pin() : 0;
 
 						if (!$result)
 							die(json_encode(array('error'=>1)));
@@ -78,10 +131,6 @@ if ($wall_id !== 0)
 						die(json_encode(array('result'=>1)));
 					break;
 					case 'get':
-						$post = get_post_by_id($connection, $wall_id, $post_id, $context->getCurrentUser()->getId());
-						if (!$post->valid())
-							die(json_encode(array('error'=>1)));
-
 						die(json_encode($post->toArray()));
 					break;
 					case 'get_comments':
@@ -133,5 +182,6 @@ if ($wall_id !== 0)
 				die(json_encode(array('error'=>1)));
 		}
 	}
-}
+}*/
+
 ?>

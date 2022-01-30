@@ -139,10 +139,10 @@ class User extends Entity
 		{
 			$state = intval($res->fetch(PDO::FETCH_ASSOC)["state"]);
 			
-			if ($state === 0) return false;
+			if ($state === -1) return true;
 		}
 
-		return true;
+		return false;
 	}
 
 	public function block (int $user_id): bool
@@ -176,6 +176,25 @@ class User extends Entity
 		return false;
 	}
 
+	public function canAccessClosed (): bool
+	{
+		if (!$this->valid()) return false;
+
+		$user_id  = intval($_SESSION['user_id']);
+		$check_id = $this->getId();
+
+		if ($user_id === $check_id) return true;
+
+		if ($this->getSettings()->getSettingsGroup('account')->isProfileClosed())
+		{
+			if ($user_id !== 0 && $this->isFriends()) return true;
+
+			return false;
+		}
+
+		return true;
+	}
+
 	public function edit (): UserInfoEditor
 	{
 		return new UserInfoEditor($this);
@@ -188,6 +207,7 @@ class User extends Entity
 
 	public function canInviteToChat (): bool
 	{
+		if (!$this->valid()) return false;
 		if ($this->getId() === intval($_SESSION['user_id'])) return true;
 
 		if (!$this->valid()) return false;

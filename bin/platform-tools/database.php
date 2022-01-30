@@ -38,6 +38,11 @@ class DataBaseManager
 		$this->cacheClient = $_SERVER['cacheConnection'];
 	}
 
+	public function getClient (): PDO
+	{
+		return $this->dbClient;
+	}
+
 	public function prepare (string $query): DataBaseStatemenet
 	{
 		return new DataBaseStatemenet($query, $this->dbClient, $this->cacheClient, $this->cacheKey, $this->cacheTime);
