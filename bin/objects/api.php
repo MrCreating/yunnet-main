@@ -25,7 +25,7 @@ class API
 
 		$access_key = self::getRequestValue("key");
 
-		$res = $this->currentConnection->prepare("SELECT app_id, id FROM apps.tokens WHERE token = ? AND is_deleted = 0 LIMIT 1");
+		$res = $this->currentConnection->cache('API_' . $access_key)->prepare("SELECT app_id, id FROM apps.tokens WHERE token = ? AND is_deleted = 0 LIMIT 1");
 		if ($res->execute([$access_key]))
 		{
 			$data = $res->fetch(PDO::FETCH_ASSOC);
@@ -37,19 +37,13 @@ class API
 					$token = new Token($app, intval($data['id']));
 					if ($token->valid() && $token->getToken() === $access_key)
 					{
-						$entity = Entity::findById($token->getOwnerId());
-						if (!$entity || !$entity->valid()) return;
+						$entity = $token->auth();
+						if (!$entity) return;
 						
 						$this->accessKey = $token;
 						$this->boundApp  = $app;
 						$this->owner     = $entity;
 						$this->isValid   = true;
-
-						session_write_close();
-
-						$_SESSION = [];
-						$_SESSION['user_id']    = $this->accessKey->getOwnerId();
-						$_SESSION['session_id'] = $token->getToken();
 					}
 				}
 			}

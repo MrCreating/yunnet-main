@@ -91,7 +91,7 @@ if (isset(Request::get()->data["action"]))
 		case 'verify_password':
 			$password = strval(Request::get()->data['password']);
 
-			$result = check_password($connection, $context->getCurrentUser()->getId(), $password);
+			$result = Context::get()->getCurrentUser()->getSettings()->getSettingsGroup('security')->isPasswordCorrect($password);
 
 			die(json_encode(array('state' => intval($result))));
 		break;
@@ -100,10 +100,11 @@ if (isset(Request::get()->data["action"]))
 			$oldPassword = strval(Request::get()->data['old_password']);
 			$newPassword = strval(Request::get()->data['new_password']);
 
-			if (!check_password($connection, $context->getCurrentUser()->getId(), $oldPassword, $newPassword))
+			if (!Context::get()->getSettings()->getSettingsGroup('security')->isPasswordCorrect($oldPassword))
 				die(json_encode(array('error' => 1)));
 
-			$result = change_password($connection, $context->getCurrentUser()->getId(), $oldPassword, $newPassword);
+			$result = Context::get()->getCurrentUser()->getSettings()->getSettingsGroup('security')->setPassword($newPassword);
+
 			if (!$result) die(json_encode(array('error' => 1)));
 
 			$sessions = Session::getList();

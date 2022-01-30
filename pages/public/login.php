@@ -1,7 +1,5 @@
 <?php
 
-require_once __DIR__ . '/../../bin/functions/auth.php';
-
 if (isset(Request::get()->data['action']))
 {
 	$action = strtolower(Request::get()->data['action']);
@@ -14,7 +12,7 @@ if (isset(Request::get()->data['action']))
 		header('Access-Control-Allow-Credentials: true');
 
 		// auth result. It is array which contains id field.
-		$res = auth_user($connection, Request::get()->data['email'], Request::get()->data['password']);
+		$res = User::auth(Request::get()->data['email'], Request::get()->data['password']);
 		if (!$res)
 		{
 			die(json_encode(array("error" => 1)));

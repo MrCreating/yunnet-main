@@ -25,7 +25,7 @@ class App
 	{
 		$this->currentConnection = DataBaseManager::getConnection();;
 
-		$res = $this->currentConnection->prepare("SELECT id, title, owner_id, description, photo_path, direct_auth, creation_time FROM apps.info WHERE id = ? AND is_deleted != 1 LIMIT 1");
+		$res = $this->currentConnection->cache("App_" . $app_id)->prepare("SELECT id, title, owner_id, description, photo_path, direct_auth, creation_time FROM apps.info WHERE id = ? AND is_deleted != 1 LIMIT 1");
 		if ($res->execute([$app_id]))
 		{
 			$data = $res->fetch(PDO::FETCH_ASSOC);
@@ -85,6 +85,50 @@ class App
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Creates a token
+	 * @return Tokn instamce or NULL if creation has failed.
+	 *
+	 * Parameters:
+	 * @param $permissions - array of the permissions for the token.
+	 *
+	 * Permissions:
+	 * 1 - friends
+	 * 2 - messages
+	 * 3 - settings
+	 * 4 - management (create tokens, sessions, etc)
+	*/
+	public function createToken (array $permissions = [1, 2, 3, 4]): ?Token
+	{
+		if (!$this->valid()) return NULL;
+
+		$token = substr(str_shuffle('abcdefghijklmnopqrstuvwxyz'.rand(100000, 999999).'abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz'.rand(1000, 9999999)), 0, 75);
+	
+		$res = $this->currentConnection->prepare("INSERT INTO apps.tokens (app_id, owner_id, token, permissions) VALUES (:app_id, :owner_id, :token, :permissions)");
+
+		$res->bindParam(":app_id",      $this->getId(),       PDO::PARAM_INT);
+		$res->bindParam(":owner_id",    $_SESSION['user_id'], PDO::PARAM_INT);
+		$res->bindParam(":token",       $token,               PDO::PARAM_STR);
+		$res->bindParam(":permissions", '',                   PDO::PARAM_STR);
+
+		if ($res->execute())
+		{
+			// if OK - resolves an id and return a token with id.
+			$res = $this->currentConnection->prepare("SELECT LAST_INSERT_ID()");
+			if ($res->execute())
+			{
+				$token_id = intval($res->fetch(PDO::FETCH_ASSOC)["LAST_INSERT_ID()"]);
+				
+				$token = new Token($this, $token_id);
+				if (!$token->valid()) return NULL;
+
+				if ($token->setPermissions($permissions)->apply()) return $token;
+			}
+		}
+
+		return NULL;
 	}
 
 	public function isDirectAuthAllowed (): bool
@@ -155,7 +199,7 @@ class App
 		if (is_empty($new_title) || strlen($new_title) > 32)
 			return false;
 
-		$res = $this->currentConnection->prepare("UPDATE apps.info SET title = :new_title WHERE id = :id LIMIT 1;");
+		$res = $this->currentConnection->uncache("App_" . $This->getId())->prepare("UPDATE apps.info SET title = :new_title WHERE id = :id LIMIT 1");
 		$res->bindParam(":new_title", $new_title, PDO::PARAM_STR);
 		$res->bindParam(":id",        $current_id,  PDO::PARAM_INT);
 
@@ -164,7 +208,7 @@ class App
 			$photo = $this->getPhoto();
 			if (!$photo)
 			{
-				$res = $this->currentConnection->prepare("UPDATE apps.info SET photo_path = NULL WHERE id = :id LIMIT 1;");
+				$res = $this->currentConnection->uncache("App_" . $This->getId())->prepare("UPDATE apps.info SET photo_path = NULL WHERE id = :id LIMIT 1");
 				$res->bindParam(":id", $current_id, PDO::PARAM_INT);
 				$res->execute();
 			} else
@@ -176,7 +220,7 @@ class App
 				if (!$query)
 					return false;
 
-				$res = $this->currentConnection->prepare("UPDATE apps.info SET photo_path = :new_path WHERE id = :id LIMIT 1;");
+				$res = $this->currentConnection->uncache("App_" . $This->getId())->prepare("UPDATE apps.info SET photo_path = :new_path WHERE id = :id LIMIT 1");
 				$res->bindParam(":new_path",  $query,      PDO::PARAM_STR);
 				$res->bindParam(":id",        $current_id, PDO::PARAM_INT);
 				$res->execute();
@@ -198,7 +242,7 @@ class App
 
 		$this->isValid = false;
 
-		return $this->currentConnection->prepare("UPDATE apps.info SET is_deleted = 1 WHERE id = ? LIMIT 1;")->execute([$this->getId()]);
+		return $this->currentConnection->uncache("App_" . $This->getId())->prepare("UPDATE apps.info SET is_deleted = 1 WHERE id = ? LIMIT 1;")->execute([$this->getId()]);
 	}
 
 	//////////////////////////////////////////

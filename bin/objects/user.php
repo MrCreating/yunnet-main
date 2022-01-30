@@ -3,6 +3,7 @@
 require_once __DIR__ . '/entity.php';
 require_once __DIR__ . '/settings.php';
 require_once __DIR__ . '/userInfoEditor.php';
+require_once __DIR__ . '/../functions/notifications.php';
 require_once __DIR__ . '/../platform-tools/name_worker.php';
 
 /**
@@ -467,6 +468,38 @@ class User extends Entity
 				$user = new User($user_id);
 				if ($user->valid())
 					return $user;
+			}
+		}
+
+		return NULL;
+	}
+
+	public static function auth (string $email, string $password): ?User
+	{
+		$connection = DataBaseManager::getConnection();
+
+		$res = $connection->prepare("SELECT id, password FROM users.info WHERE email = ? AND is_deleted = 0 LIMIT 1");
+		if ($res->execute([$email]))
+		{
+			$data = $res->fetch(PDO::FETCH_ASSOC);
+
+			$user_id = intval($data['id']);
+			$hash    = strval($data['password']);
+
+			if (!$user_id || !password_verify($password, $hash)) return NULL;
+
+			$entity = Entity::findById($user_id);
+			if (!$entity) return NULL;
+
+			create_notification($connection, $user_id, "account_login", [
+				'ip'   => $_SERVER['REMOTE_ADDR'],
+				'time' => time()
+			]);
+
+			$result = Session::start($user_id);
+			if ($result && $result->setAsCurrent())
+			{
+				return $entity;
 			}
 		}
 

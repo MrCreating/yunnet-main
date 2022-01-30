@@ -36,22 +36,12 @@ if ($action === 'resolve_auth')
 	$app_id   = intval(Request::get()->data['app_id']);
 	$owner_id = Context::get()->getCurrentUser()->getId();
 
-	$perms    = explode(',', strval(Request::get()->data['permissions']));
-	$permissions = [];
-	foreach ($perms as $index => $id)
-	{
-		if (intval($id) < 1 || intval($id) > 4)
-			continue;
+	$app = new App($app_id);
 
-		$permissions[] = strval($id);
-	}
-
-	$result = create_token($connection, $owner_id, $app_id, $permissions);
-
-	if (!$result)
+	if (!($token = $app->createToken(explode(',', strval(Request::get()->data['permissions'])))))
 		die(json_decode(array('error' => 1)));
 
-	die(json_encode($result));
+	die(json_encode($result->toArray()));
 }
 
 ?>
