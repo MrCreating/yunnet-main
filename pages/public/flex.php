@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../bin/functions/wall.php';
 require_once __DIR__ . '/../../bin/functions/messages.php';
 require_once __DIR__ . '/../../bin/functions/users.php';
 require_once __DIR__ . '/../../bin/objects/chats.php';
+require_once __DIR__ . '/../../bin/objects/post.php';
 
 if (isset(Request::get()->data['action']))
 {
@@ -99,7 +100,7 @@ if (isset(Request::get()->data['action']))
 			if (!$result) die(json_encode(array('error'=>1)));
 
 			// fetching the new post data
-			$post = get_post_by_id($connection, intval($wall), intval($result), $context->getCurrentUser()->getId());
+			$post = Post::findById(intval($wall), intval($result));
 
 			// if not post found - it not be created.
 			if (!$post->valid()) die(json_encode(array('error'=>1)));
@@ -122,7 +123,7 @@ if (isset(Request::get()->data['action']))
 			if (!$result) die(json_encode(array('error' => 1)));
 
 			// fetching the new post data
-			$post = get_post_by_id($context->getConnection(), intval($wall), intval($post), $context->getCurrentUser()->getId());
+			$post = Post::findById(intval($wall), intval($post));
 
 			// if not post found - it not be created.
 			if (!$post->valid()) die(json_encode(array('error' => 1)));

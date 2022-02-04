@@ -295,7 +295,7 @@ class User extends Entity
 			{
 				if (!function_exists('can_access_closed')) require __DIR__ . '/../functions/users.php';
 
-				$result['can_access_closed'] = can_access_closed($this->currentConnection, intval($_SESSION['user_id']), $this->getId());
+				$result['can_access_closed'] = $this->canAccessClosed();
 			}
 			if (in_array("is_me_blacklisted", $resultedFields))
 			{

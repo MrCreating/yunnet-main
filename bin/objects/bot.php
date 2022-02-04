@@ -91,6 +91,48 @@ class Bot extends Entity
 		return "bot";
 	}
 
+	public function setName (string $name): Bot
+	{
+		$this->name = $name;
+
+		return $this;
+	}
+
+	public function setPhoto (?Photo $photo = NULL): Bot
+	{
+		$this->photo = $photo;
+
+		return $this;
+	}
+
+	public function apply (): bool
+	{
+		$new_name = trim($this->name);
+
+		if (is_empty($new_name) || strlen($new_name) > 64) return false;
+		if (preg_match("/[^a-zA-Zа-яА-ЯёЁ'-@$*#!%\d ]/ui", $new_name)) return false;
+
+		$res = $this->currentConnection->prepare("UPDATE bots.info SET name = :new_name WHERE id = :id AND is_deleted = 0 LIMIT 1");
+
+		$res->bindParam(":new_name", $new_name,      PDO::PARAM_STR);
+		$res->bindParam(":id",       $this->getId(), PDO::PARAM_INT);
+
+		if ($res->execute())
+		{
+			if ($this->photo && !$this->photo->valid()) return false;
+
+			$query = $this->photo->getQuery();
+			$res = $connection->prepare("UPDATE bots.info SET photo_path = :query WHERE id = :id AND is_deleted = 0 LIMIT 1;");
+
+			$res->bindParam(":query", $query,         PDO::PARAM_STR);
+			$res->bindParam(":id",    $this->getId(), PDO::PARAM_INT);
+
+			if ($res->execute()) return true;
+		}
+
+		return false;
+	}
+
 	public function getRelationsState (int $send_id = 0): int
 	{
 		$res = $this->currentConnection->cache("Bot_relations_" . $send_id)->prepare("SELECT state FROM users.bot_relations WHERE user_id = ? AND bot_id = ? LIMIT 1");
@@ -207,6 +249,73 @@ class Bot extends Entity
 	public function getSettings (): Settings
 	{
 		return $this->settings;
+	}
+
+	/////////////////////////////////////////
+	public static function getList (): array
+	{
+		$result = [];
+
+		$connection = DataBaseManager::getConnection();
+
+		$res = $connection->prepare("SELECT DISTINCT id FROM bots.info WHERE owner_id = ? AND is_deleted = 0 LIMIT 30");
+		if ($res->execute([intval($_SESSION['user_id'])]))
+		{
+			$data = $res->fetchAll(PDO::FETCH_ASSOC);
+			foreach ($data as $info) {
+				$bot_id = intval($info['id']);
+
+				$bot = new Bot($bot_id);
+				if ($bot->valid())
+					$result[] = $bot;
+			}
+		}
+
+		return $result;
+	}
+
+	public static function create (string $name, ?Photo $photo = NULL): ?Bot
+	{
+		if (count(self::getList()) >= 30) return NULL;
+
+		$bot_name = trim($name);
+
+		if (is_empty($bot_name) || strlen($bot_name) > 64) return NULL;
+
+		// only allowed letters and digits, space, and some symbols.
+		if (preg_match("/[^a-zA-Zа-яА-ЯёЁ'-@$*#!%\d ]/ui", $bot_name)) return NULL;
+
+		$settings = [
+			"privacy" => [
+				"can_write_messages"  => 0,
+				"can_write_on_wall"   => 2,
+				"can_invite_to_chats" => 1,
+				"can_comment_posts"   => 0
+			]
+		];
+
+		$res = $connection->prepare("INSERT INTO bots.info (name, owner_id, creation_time, settings) VALUES (:name, :owner_id, :cr_time, :settings)");
+
+		$res->bindParam(":name",     $bot_name,              PDO::PARAM_STR);
+		$res->bindParam(":owner_id", $owner_id,              PDO::PARAM_INT);
+		$res->bindParam(":cr_time",  time(),                 PDO::PARAM_INT);
+		$res->bindParam(":settings", json_encode($settings), PDO::PARAM_STR);
+
+		if ($res->execute())
+		{
+			$res = $connection->prepare("SELECT LAST_INSERT_ID()");
+
+			if ($res->execute())
+			{
+				$bot_id = intval($res->fetch(PDO::FETCH_ASSOC)["LAST_INSERT_ID()"]);
+
+				$bot = new Bot($bot_id);
+				if ($bot->valid())
+					return $bot;
+			}
+		}
+
+		return NULL;
 	}
 }
 

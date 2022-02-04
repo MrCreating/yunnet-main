@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/attachment.php';
+require_once __DIR__ . '/comment.php';
 require_once __DIR__ . '/../functions/notifications.php';
 
 /**
@@ -364,7 +365,7 @@ class Post extends Attachment
 						$owner_id = intval($data['owner_id']);
 						$local_id = intval($data['local_id']);
 
-						$comment = new Comment($this, $owner_id, $local_id);
+						$comment = new Comment($this, $local_id);
 						if ($comment->valid())
 							$result[] = $comment;
 					}
@@ -414,6 +415,62 @@ class Post extends Attachment
 		}
 
 		return $result;
+	}
+
+	public function getCommentById (int $comment_id): ?Comment
+	{
+		$comment = new Comment($this, $comment_id);
+
+		if (!$comment->valid()) return NULL;
+
+		return $comment;
+	}
+
+	public function createComment (string $text = '', $attachments = ''): ?Comment
+	{
+		if (!$this->canComment()) return NULL;
+
+		$text = trim($text);
+
+		$attachments_string = [];
+		$objects = (new AttachmentsParser())->getObjects($attachments);
+		foreach ($objects as $index => $attachment) 
+		{
+			$attachments_string[] = $attachment->getCredentials();
+		}
+
+		if (is_empty($text) && count($attachments_string) <= 0) return NULL;
+		if (strlen($text) > 64000) return NULL;
+
+		$attachments  = implode(',', $attachments_string);
+		$dest_attachm = $this->getCredentials();
+
+		$res = $this->currentConnection->prepare("SELECT COUNT(DISTINCT local_id) FROM wall.comments WHERE attachment = :attachment;");
+		$res->bindParam(":attachment", $dest_attachm, PDO::PARAM_STR);
+
+		if ($res->execute())
+		{
+			$new_local_id = intval($res->fetch(PDO::FETCH_ASSOC)['COUNT(DISTINCT local_id)']) + 1;
+			$time         = time();
+
+			$res = $this->currentConnection->prepare("INSERT INTO wall.comments (owner_id, local_id, text, time, attachments, attachment) VALUES (:owner_id, :local_id, :text, :time, :attachments, :attachment);");
+
+			$res->bindParam(":owner_id",    intval($_SESSION['user_id']), PDO::PARAM_INT);
+			$res->bindParam(":local_id",    $new_local_id,                PDO::PARAM_INT);
+			$res->bindParam(":text",        $text,                        PDO::PARAM_STR);
+			$res->bindParam(":time",        $time,                        PDO::PARAM_INT);
+			$res->bindParam(":attachments", $attachments,                 PDO::PARAM_STR);
+			$res->bindParam(":attachment",  $dest_attachm,                PDO::PARAM_STR);
+
+			if ($res->execute())
+			{
+				$comment = new Comment($this, $new_local_id);
+				if ($comment->valid())
+					return $comment;
+			}
+		}
+
+		return NULL;
 	}
 
 	////////////////////////////////////////

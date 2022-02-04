@@ -241,19 +241,6 @@ function get_counters ($connection, $user_id)
 	return $result;
 }
 
-// set's the user's privacy settings
-function set_privacy_settings ($connection, $user_id, $group_id, $new_value = 0)
-{
-	$groups = [
-		1 => 'can_write_messages',
-		2 => 'can_write_on_wall',
-		3 => 'can_invite_to_chats',
-		4 => 'can_comment_posts'
-	];
-
-	return Context::get()->getCurrentUser()->getSettings()->getSettingsGroup('privacy')->setGroupValue($groups[$group_id], $new_value)->getGroupValue($groups[$group_id]);
-}
-
 // get users who is blacklisted by $user_id
 function get_blacklist ($connection, $user_id, $count = 30, $offset = 0)
 {
@@ -277,16 +264,6 @@ function get_blacklist ($connection, $user_id, $count = 30, $offset = 0)
 	}
 
 	return $result;
-}
-
-// set another settings
-function set_user_settings ($connection, $user_id, $setting, $new_value = 0)
-{
-	$push = Context::get()->getCurrentUser()->getSettings()->getSettingsGroup('push');
-	if ($setting === 'notifications')
-		return $push->setNotificationsEnabled(boolval(intval($new_value)));
-	if ($setting === 'sound')
-		return $push->setSoundEnabled(boolval(intval($new_value)));
 }
 
 /** 

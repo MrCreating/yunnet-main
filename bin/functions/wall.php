@@ -40,141 +40,6 @@ function get_news ($connection, $user_id)
 }
 
 /**
- * get wall by credentials
- * $wall_id = wall id where post may be
- * $post_id = post id.
- */
-function get_post_by_id ($connection, $wall_id, $post_id, $user_id = 0)
-{
-	$post = new Post(intval($wall_id), intval($post_id));
-	if ($post->valid())
-	{
-		return $post;
-	}
-
-	return false;
-}
-
-/**
- * Creates a comment to the post
- * @return new comment id - for replying etc.
- *
- * Parameters:
- * @param $wall_id - wall id.
- * @param $post_id - post id.
- * @param $text - text of the comment
- * @param $attachments - attachments of the text
-*/
-function create_comment ($connection, $owner_id, $wall_id, $post_id, $text = '', $attachments = '')
-{
-	// if user can not comment - show it.
-	if (!can_comment($connection, $owner_id, $wall_id)) return false;
-
-	$attachments_string = [];
-	$objects = (new AttachmentsParser())->getObjects($attachments);
-	foreach ($objects as $index => $attachment) 
-	{
-		$attachments_string[] = $attachment->getCredentials();
-	}
-
-	// empty post is not allowed
-	if (is_empty($text) && count($attachments_string) <= 0) return false;
-
-	// too long text is not allowed
-	if (strlen($text) > 64000) return false;
-
-	// attachments
-	$attachments = implode(',', $attachments_string);
-
-	/**
-	 * Now getting the local id and increment it.
-	*/
-	$dest_attachm = "wall" . $wall_id . "_" . $post_id;
-	$res = $connection->prepare("SELECT COUNT(DISTINCT local_id) FROM wall.comments WHERE attachment = :attachment;");
-	$res->bindParam(":attachment", $dest_attachm, PDO::PARAM_STR);
-	if ($res->execute())
-	{
-		$new_local_id = intval($res->fetch(PDO::FETCH_ASSOC)['COUNT(DISTINCT local_id)']) + 1;
-		$time         = time();
-
-		// creating new post.
-		$res = $connection->prepare("INSERT INTO wall.comments (owner_id, local_id, text, time, attachments, attachment) VALUES (:owner_id, :local_id, :text, :time, :attachments, :attachment);");
-
-		// binding post data.
-		$res->bindParam(":owner_id",    $owner_id,     PDO::PARAM_INT);
-		$res->bindParam(":local_id",    $new_local_id, PDO::PARAM_INT);
-		$res->bindParam(":text",        $text,         PDO::PARAM_STR);
-		$res->bindParam(":time",        $time,         PDO::PARAM_INT);
-		$res->bindParam(":attachments", $attachments,  PDO::PARAM_STR);
-		$res->bindParam(":attachment",  $dest_attachm, PDO::PARAM_STR);
-		if ($res->execute())
-		{
-			return get_comment_by_id($connection, $dest_attachm, $owner_id, $new_local_id);
-		}
-	}
-
-	// another error
-	return false;
-}
-
-/**
- * Gets comment by credentials
- * @return array with data or false if error
- *
- * Parameters:
- * @param $wall_id - wall id where comment has been located
- * @param $post_id - post id where comment has been located
- * @param $local_id - local id of comment
-*/
-function get_comment_by_id ($connection, $attachment, $owner_id, $local_id)
-{
-	if (substr($attachment, 0, 4) === "wall")
-	{
-		$post = (new AttachmentsParser())->getObject($attachment);
-		if (!$post)
-			return $result;
-
-		$comment = new Comment($post, $owner_id, $local_id);
-
-		if (!$comment->valid())
-			return false;
-
-		return $comment;
-	}
-
-	// errors?
-	return false;
-}
-
-/**
- * Checks the psot existance
- *
- * Parameters:
- * @param:$wall_id - integer of wall post destination
- * @param:$post_id - post identifier on wall
- *
- * @return: Boolean - true if post exists
-*/
-function post_exists ($connection, $wall_id, $post_id) 
-{
-	$res = $connection->prepare("SELECT owner_id FROM wall.posts WHERE local_id = ? AND to_id = ? AND is_deleted = 0 LIMIT 1;");
-
-	$int_wall_id = intval($wall_id);
-	$int_post_id = intval($post_id);
-
-	if ($res->execute([$int_post_id, $int_wall_id]))
-	{
-		$data = intval($res->fetch(PDO::FETCH_ASSOC)["owner_id"]);
-
-		if (!$data) return false;
-
-		return true;
-	}
-
-	return false;
-}
-
-/**
  * Checks the posts write access
  * @return true if you can or false on error
  * 
@@ -307,10 +172,10 @@ function update_post_data ($connection, $user_id, $wall_id, $post_id, $text = ''
 	if (strlen($text) > 128000) return false;
 
 	// now getting post.
-	$post = get_post_by_id($connection, $wall_id, $post_id);
+	$post = Post::findById($wall_id, $post_id);
 
 	// non-existing posts is not allowed
-	if (!$post->valid()) return false;
+	if (!$post) return false;
 
 	/**
 	 * We can edit only own posts on any wall
@@ -318,41 +183,6 @@ function update_post_data ($connection, $user_id, $wall_id, $post_id, $text = ''
 	if ($post->getOwnerId() !== intval($user_id)) return false;
 
 	return $post->setText($text)->setAttachmentsList($attachments_list)->apply();
-}
-
-/**
- * Checks the post commenting allowance
- * @return true if ok or false if error
- *
- * Parameters:
- * @param $user_id - current user id.
- * @param $check_id - check id.
-*/
-function can_comment ($connection, $user_id, $check_id)
-{
-	// user_id must be not 0
-	if ($user_id === 0) return false;
-
-	// always can comment itself
-	if (intval($user_id) === intval($check_id)) return true;
-
-	// we always can comment bot posts
-	if (intval($check_id) < 0) return true;
-
-	// getting the user
-	$user_object = new User(intval($check_id));
-	if (!$user_object->valid()) return false;
-
-	$settings    = $user_object->getSettings()->getSettingGroup('privacy')->getGroupValue('can_comment_posts');
-
-	// all can comment posts
-	if ($settings === 0) return true;
-
-	// getting the friendship state
-	if ($settings === 1 && is_friends($connection, intval($check_id), intval($user_id))) return true;
-
-	// another errors
-	return false;
 }
 
 ?>
