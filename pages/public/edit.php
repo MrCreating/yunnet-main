@@ -16,7 +16,7 @@ if (isset(Request::get()->data['action']))
 		case 'save':
 			if ($context->getCurrentUser()->getFirstName() !== Request::get()->data["first_name"] && isset(Request::get()->data['first_name']))
 			{
-				$changed = update_user_data($connection, $context->getCurrentUser()->getId(), "first_name", Request::get()->data["first_name"]);
+				$changed = Context::get()->getCurrentUser()->edit()->setFirstName(Request::get()->data["first_name"]);
 				if ($changed !== false && $changed !== true)
 				{
 					switch ($changed)
@@ -37,7 +37,7 @@ if (isset(Request::get()->data['action']))
 			}
 			if ($context->getCurrentUser()->getFirstName() !== Request::get()->data["last_name"] && isset(Request::get()->data['last_name']))
 			{
-				$changed = update_user_data($connection, $context->getCurrentUser()->getId(), "last_name", Request::get()->data["last_name"]);
+				$changed = Context::get()->getCurrentUser()->edit()->setLastName(Request::get()->data["last_name"]);
 				if ($changed !== false && $changed !== true)
 				{
 					switch ($changed)

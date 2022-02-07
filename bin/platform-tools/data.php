@@ -11,6 +11,13 @@ class Data
 
 			$this->{$index} = $value;
 		}
+
+		//$this->toArray();
+	}
+
+	public function toArray (): array
+	{
+		return get_object_vars($this);
 	}
 }
 

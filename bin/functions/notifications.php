@@ -49,12 +49,4 @@ function create_notification ($connection, $to_id, $type, $data)
 	return $result;
 }
 
-/**
- * function who gets all notifications of selected $user_id
-*/
-function get_notifications ($connection, $user_id, $offset = 0, $count = 20)
-{
-	return Notification::getList($offset, $count);
-}
-
 ?>

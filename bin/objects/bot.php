@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/entity.php';
 require_once __DIR__ . '/settings.php';
+require_once __DIR__ . '/dialog.php';
 
 class Bot extends Entity 
 {
@@ -198,14 +199,9 @@ class Bot extends Entity
 
 		if (in_array("can_write_messages", $resultedFields)) 
 		{
-			if (!function_exists('get_uid_by_lid')) require __DIR__ . '/../functions/messages.php';
+			$dialog = new Dialog('b' . $this->getId());
 
-			$uid = intval(get_uid_by_lid($this->currentConnection, $this->getId(), $this->getType() === "bot", intval($_SESSION['user_id'])));
-
-			$result['can_write_messages'] = can_write_to_chat($this->currentConnection, $uid, intval($_SESSION['user_id']), [
-				"chat_id" => $this->getId(),
-				"is_bot"  => $this->getType() === "bot"
-			]);
+			$result['can_write_messages'] = $dialog->canWrite();
 		}
 		if (in_array("can_write_on_wall", $resultedFields))
 		{

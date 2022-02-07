@@ -185,38 +185,6 @@ function get_friends_list ($connection, $user_id, $section = "friends", $extende
 	return $result;
 }
 
-/**
- * Set new profile data
- *
- * Parameters:
- * @param $user_id - user_id which data chang
- * @param $data_type - type of data change. It can be:
- *												"first_name" - first name of user
- *												"last_name"  - last name of user
- *
- * @return true - data changed without problems
- * @return false - no changes made and no errors
- * @return -1 - value has forbidden characters
- * @return -2 - value has length error (short or long)
- * @return -3 - value is empty
-*/
-function update_user_data ($connection, $user_id, $data_type, $new_value)
-{
-	switch ($data_type)
-	{
-		case "first_name":
-			return Context::get()->getCurrentUser()->edit()->setFirstName($new_value);
-		break;
-		case "last_name":
-			return Context::get()->getCurrentUser()->edit()->setLastName($new_value);
-		break;
-		default:
-		break;
-	}
-
-	return false;
-}
-
 // get cunters for come user
 function get_counters ($connection, $user_id)
 {
@@ -237,31 +205,6 @@ function get_counters ($connection, $user_id)
 		'notifications' => $notes_count,
 		'friends'       => $friends_count
 	];
-
-	return $result;
-}
-
-// get users who is blacklisted by $user_id
-function get_blacklist ($connection, $user_id, $count = 30, $offset = 0)
-{
-	if ($count < 0) return [];
-	if ($offset > 15000000) return [];
-
-	if (!class_exists('Entity'))
-		require __DIR__ . "/../objects/entities.php";
-
-	$res = $connection->prepare("SELECT added_id FROM users.blacklist WHERE state = -1 AND user_id = ? LIMIT ".intval($offset).", ".intval($count).";");
-	$res->execute([intval($user_id)]);
-
-	$blacklist = $res->fetchAll(PDO::FETCH_ASSOC);
-	$result    = [];
-
-	foreach ($blacklist as $index => $id) {
-		$user = new User(intval($id["added_id"]));
-		if (!$user->valid()) continue;
-
-		$result[] = $user;
-	}
 
 	return $result;
 }

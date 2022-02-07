@@ -41,7 +41,7 @@ class AccountSettingsGroup extends SettingsGroup
 
 	public function setProfileClosed (bool $is_closed): AccountSettingsGroup
 	{
-		if ($this->currentConnection->prepare("UPDATE users.info SET settings_account_is_closed = ? WHERE id = ? LIMIT 1;")->execute([intval(boolval($is_closed)), intval($_SESSION['user_id'])]))
+		if ($this->currentConnection->uncache('User_' . $this->currentEntity->getId())->prepare("UPDATE users.info SET settings_account_is_closed = ? WHERE id = ? LIMIT 1;")->execute([intval(boolval($is_closed)), intval($_SESSION['user_id'])]))
 		{
 			$this->closedProfile = boolval($is_closed);
 		}
@@ -60,7 +60,7 @@ class AccountSettingsGroup extends SettingsGroup
 
 		if (in_array($newLangId, $langs))
 		{
-			if ($this->currentConnection->prepare("UPDATE users.info SET settings_account_language = ? WHERE id = ? LIMIT 1;")->execute([$newLangId, intval($_SESSION['user_id'])]))
+			if ($this->currentConnection->uncache('User_' . $this->currentEntity->getId())->prepare("UPDATE users.info SET settings_account_language = ? WHERE id = ? LIMIT 1;")->execute([$newLangId, intval($_SESSION['user_id'])]))
 			{
 				$this->currentLangId = $newLangId;
 			}

@@ -588,6 +588,52 @@ unt.components = new Object({
 
 		return tabsElement;
 	},
+	user: function (user) {
+		let element = document.createElement('div');
+		element.classList.add('card');
+		element.classList.add('waves-effect');
+		element.boundObject = user;
+		element.style.padding = '20px';
+		element.style.width = '100%';
+		element.style.cursor = 'pointer';
+		element.style.marginBottom = 0;
+		element.addEventListener('click', function () {
+			return unt.actions.linkWorker.go('/' + (user.screen_name ? user.screen_name : (user.account_type === 'bot' ? ('bot' + user.bot_id) : ('id' + user.user_id))));
+		});
+
+		let ownerInfoDiv = document.createElement('div');
+		element.appendChild(ownerInfoDiv);
+		ownerInfoDiv.classList.add('valign-wrapper');
+
+		let photoDiv = document.createElement('div');
+		ownerInfoDiv.appendChild(photoDiv);
+		photoDiv.style.marginRight = '15px';
+
+		let userImage = document.createElement('img');
+		userImage.classList.add('circle');
+		userImage.classList.add('unselectable');
+		userImage.width = userImage.height = 42;
+		userImage.src = user.photo_url;
+		photoDiv.appendChild(userImage);
+
+		let credentialsDiv = document.createElement('div');
+		credentialsDiv.classList.add('unselectable');
+		ownerInfoDiv.appendChild(credentialsDiv);
+		credentialsDiv.classList.add('halign-wrapper');
+
+		let usernameDiv = document.createElement('a');
+		credentialsDiv.appendChild(usernameDiv);
+		usernameDiv.innerText = user.name || (user.first_name + ' ' + user.last_name);
+		usernameDiv.style.color = 'black';
+		usernameDiv.style.fontWeight = 'bold';
+		usernameDiv.style.fontSize = '110%';
+
+		let postTimeDiv = document.createElement('div');
+		credentialsDiv.appendChild(postTimeDiv);
+		postTimeDiv.innerText = unt.parsers.online(user);
+
+		return element;
+	},
 	wall: new Object({
 		post: function (wallPostObject, isFullWindow = false) {
 			let element = document.createElement('div');
@@ -1564,10 +1610,18 @@ unt.components = new Object({
 				return resultedMenuSpace;
 			}
 
+			function escForExit (event) {
+				if (!defaultParams.closeAble) return;
+				a.click();
+				window.removeEventListener('keydown', escForExit);
+			};
+
+			window.addEventListener('keydown', escForExit);
+
 			return {
 				getMenu: function () {
 					return getMenuElement();
-				},
+				},	
 				show: function show () {
 					showWindow();
 
@@ -2143,6 +2197,88 @@ unt.tools = new Object({
 
 unt.settings = new Object({
 	current: null,
+	notifications: {
+		toggle: function () {
+			return new Promise(function (resolve, reject) {
+				return unt.tools.Request({
+					url: '/settings',
+					method: 'POST',
+					data: (new POSTData()).append('action', 'toggle_push_settings').append('settings_group', 'notifications').append('new_value', Number(!unt.settings.current.push.notifications)).build(),
+					success: function (response) {
+						try {
+							response = JSON.parse(response);
+							if (response.error)
+								throw new Error();
+
+							unt.settings.current.push.notifications = !unt.settings.current.push.notifications;
+
+							return resolve(true);
+						} catch (e) {
+							return reject(e);
+						}
+					},
+					error: function (e) {
+						return reject(e);
+					}
+				});
+			});
+		}
+	},
+	sound: {
+		toggle: function () {
+			return new Promise(function (resolve, reject) {
+				return unt.tools.Request({
+					url: '/settings',
+					method: 'POST',
+					data: (new POSTData()).append('action', 'toggle_push_settings').append('settings_group', 'sound').append('new_value', Number(!unt.settings.current.push.sound)).build(),
+					success: function (response) {
+						try {
+							response = JSON.parse(response);
+							if (response.error)
+								throw new Error();
+
+							unt.settings.current.push.sound = !unt.settings.current.push.sound;
+
+							return resolve(true);
+						} catch (e) {
+							return reject(e);
+						}
+					},
+					error: function (e) {
+						return reject(e);
+					}
+				});
+			});
+		}
+	},
+	blacklist: {
+		current: null,
+		get: function () {
+			return new Promise(function (resolve, reject) {
+				if (Array.isArray(unt.settings.blacklist.current)) return resolve(unt.settings.blacklist.current);
+
+				return unt.tools.Request({
+					url: '/settings',
+					method: 'POST',
+					data: (new POSTData()).append('action', 'get_blacklisted').build(),
+					success: function (response) {
+						try {
+							response = JSON.parse(response);
+							if (response.error)
+								throw new Error();
+
+							return resolve(unt.settings.blacklist.current = response);
+						} catch (e) {
+							return reject(e);
+						}
+					},
+					error: function () {
+						return reject();
+					}
+				});
+			});
+		}
+	},
 	get: function () {
 		return new Promise(function (resolve, reject) {
 			if (unt.settings.current)
@@ -2213,6 +2349,7 @@ unt.settings = new Object({
 			if (!unt.tools.isMobile())
 				winForm.style.padding = '0px 15px';
 
+			let currentInput = null;
 			groups[privacyGroup].values.forEach(function (value) {
 				let p = document.createElement('p');
 				winForm.appendChild(p);
@@ -2226,19 +2363,33 @@ unt.settings = new Object({
 				input.classList.add('with-gap');
 				label.appendChild(input);
 
-				if (unt.settings.current.privacy[groups[privacyGroup].name] === value)
+				if (unt.settings.current.privacy[groups[privacyGroup].name] === value) {
+					currenInput = input;
 					input.checked = true;
+				}
 
 				input.addEventListener('input', function () {
+					winObject.setCloseAble(false);
+					winForm.getElementsByTagName('input').forEach(function (inp) {
+						inp.disabled = true;
+					});
+
 					return unt.tools.Request({
 						url: '/settings',
 						method: 'POST',
 						data: (new POSTData()).append('action', 'set_privacy_settings').append('group', Number(privacyGroup)).append('value', Number(value)).build(),
 						success: function (response) {
+							winObject.setCloseAble(true);
+							winForm.getElementsByTagName('input').forEach(function (inp) {
+								inp.disabled = false;
+							});
+
 							try {
 								response = JSON.parse(response);
-								if (response.error)
+								if (response.error) {
+									currentInput.checked = true;
 									return unt.toast({html: unt.settings.lang.getValue('upload_error')});
+								}
 
 								return unt.settings.current.privacy[groups[privacyGroup].name] = value;
 							} catch (e) {
@@ -2246,6 +2397,11 @@ unt.settings = new Object({
 							}
 						},
 						error: function () {
+							winObject.setCloseAble(true);
+							winForm.getElementsByTagName('input').forEach(function (inp) {
+								inp.disabled = false;
+							});
+
 							return unt.toast({html: unt.settings.lang.getValue('upload_error')});
 						}
 					});

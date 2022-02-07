@@ -20,14 +20,14 @@ class SecuritySettingsGroup extends SettingsGroup
 	{
 		$passwordHash = password_hash($newPassword, PASSWORD_DEFAULT);
 
-		$result = $this->currentConnection->prepare("UPDATE users.info SET password = ? WHERE id = ? LIMIT 1")->execute([
+		$result = $this->currentConnection->uncache('User_' . $this->currentEntity->getId())->prepare("UPDATE users.info SET password = ? WHERE id = ? LIMIT 1")->execute([
 			$passwordHash,
 			$this->currentEntity->getId()
 		]);
 
 		if ($result)
 		{
-			if ($this->currentConnection->prepare("UPDATE apps.tokens SET is_deleted = 1 WHERE user_id = ?")->execute([$this->currentEntity->getId()]))
+			if ($this->currentConnection->uncache('User_' . $this->currentEntity->getId())->prepare("UPDATE apps.tokens SET is_deleted = 1 WHERE user_id = ?")->execute([$this->currentEntity->getId()]))
 			{
 				$sessions = Session::getList();
 				foreach ($sessions as $index => $session) {

@@ -72,9 +72,9 @@ if (isset(Request::get()->data['action']))
 					die(json_encode(array('error' => 1)));
 
 				die(json_encode(array_map(function (Data $member) {
-					$object = $member->entity->valid() ? $member->entity->toArray() : ['is_deleted' => 1];
+					$object = $member->entity && $member->entity->valid() ? $member->entity->toArray() : ['is_deleted' => 1];
 
-					if (!$member->entity->valid())
+					if (!$member->entity || !$member->entity->valid())
 					{
 						if ($member->user_id > 0)
 							$object['user_id'] = $member->user_id;

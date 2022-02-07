@@ -33,7 +33,7 @@ class PushSettingsGroup extends SettingsGroup
 
 	public function setNotificationsEnabled (bool $enabled): PushSettingsGroup
 	{
-		if ($this->currentConnection->prepare("UPDATE users.info SET settings_push_notifications = ? WHERE id = ? LIMIT 1;")->execute([intval(boolval($enabled)), intval($_SESSION['user_id'])]))
+		if ($this->currentConnection->uncache('User_' . $this->currentEntity->getId())->prepare("UPDATE users.info SET settings_push_notifications = ? WHERE id = ? LIMIT 1;")->execute([intval(boolval($enabled)), intval($this->currentEntity->getId())]))
 		{
 			$this->notificationsEnabled = boolval($enabled);
 
@@ -58,7 +58,7 @@ class PushSettingsGroup extends SettingsGroup
 
 	public function setSoundEnabled (bool $enabled): PushSettingsGroup
 	{
-		if ($this->currentConnection->prepare("UPDATE users.info SET settings_push_sound = ? WHERE id = ? LIMIT 1;")->execute([intval(boolval($enabled)), intval($_SESSION['user_id'])]))
+		if ($this->currentConnection->uncache('User_' . $this->currentEntity->getId())->prepare("UPDATE users.info SET settings_push_sound = ? WHERE id = ? LIMIT 1;")->execute([intval(boolval($enabled)), intval($this->currentEntity->getId())]))
 		{
 			$this->soundEnabled = boolval($enabled);
 

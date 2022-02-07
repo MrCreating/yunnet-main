@@ -55,7 +55,7 @@ class PrivacySettingsGroup extends SettingsGroup
 
 		if (!in_array($newValue, $currentValues)) return $this;
 
-		if ($this->currentConnection->prepare("UPDATE users.info SET settings_privacy_".$currentGroup['name']." = ? WHERE id = ? LIMIT 1;")->execute([intval($newValue), intval($_SESSION['user_id'])]))
+		if ($this->currentConnection->uncache('User_' . $this->currentEntity->getId())->prepare("UPDATE users.info SET settings_privacy_".$currentGroup['name']." = ? WHERE id = ? LIMIT 1;")->execute([intval($newValue), intval($_SESSION['user_id'])]))
 		{
 			$this->privacyValues[$currentGroup['name']] = intval($newValue);
 

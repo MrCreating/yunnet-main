@@ -152,9 +152,44 @@ class Notification extends EventEmitter
 	}
 
 	//////////////////////////////////////
-	public static function create (Entity $entityForCreation, string $type, ?array $additionalData = NULL): ?Notification
+	public static function create (int $tp_id, string $type, ?array $additionalData = NULL): ?Notification
 	{
 		$connection = DataBaseManager::getConnection();
+		$entity = Entity::findById($to_id);
+
+		if (!$entity || $entity->getType() === 'bot') return NULL;
+
+		$res = $connection->prepare("SELECT DISTINCT local_id FROM users.notes WHERE owner_id = ? ORDER BY local_id DESC LIMIT 1");
+
+		if ($res->execute([$to_id]))
+		{
+			$new_local_id = intval($res->fetch(PDO::FETCH_ASSOC)["local_id"]) + 1;
+
+			$res = $connection->prepare("INSERT INTO users.notes (owner_id, local_id, type, data, is_read) VALUES (:owner_id, :local_id, :type, :data, 0)");
+
+			$res->bindParam(":owner_id", $to_id,        PDO::PARAM_INT);
+			$res->bindParam(":local_id", $new_local_id, PDO::PARAM_INT);
+			$res->bindParam(":type",     $type,         PDO::PARAM_STR);
+
+			$res->bindParam(":data", $additionalData ? json_encode($additionalData) : json_encode([]), PDO::PARAM_STR);
+
+			if ($res->execute())
+			{
+				$result = new Notification($to_id, $new_local_id);
+				if ($result->valid())
+				{
+					if ($entity->getSettings()->getSettingsGroup('push')->isNotificationsEnabled())
+					{
+						$result->sendEvent([$to_id], [0], [
+							'event'        => 'new_notification',
+							'notification' => $result->toArray()
+						]);
+					}
+				}
+
+				return $result;
+			}
+		}
 
 		return NULL;
 	}

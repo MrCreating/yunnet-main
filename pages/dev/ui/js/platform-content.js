@@ -378,6 +378,35 @@ unt.pages = new Object({
 			return this.banned(internalData);
 
 		document.title = unt.settings.lang.getValue('friends');
+
+		let menu = unt.components.menuElement;
+
+		let sections = ['main', 'online'];
+
+		let section = 'main';
+
+		let url = new URLParser();
+		if (sections.indexOf(url.getQueryValue('section').toLowerCase()) !== -1) {
+			section = url.getQueryValue('section').toLowerCase();
+		}
+
+		menu.appendChild(unt.components.tabs([
+			{
+				title: unt.settings.lang.getValue('friends'),
+				link: '/friends',
+				active: section === 'main',
+				internalData: internalData
+			}, 
+			{
+				title: unt.settings.lang.getValue('friends_online'),
+				link: '/friends?section=online',
+				active: section === 'online',
+				internalData: internalData
+			}
+		]));
+
+		let sectionContainer = document.createElement('div');
+		menu.appendChild(sectionContainer);
 	},
 	groups: function (internalData) {
 		if (unt.settings.users.current.is_banned)

@@ -6,13 +6,33 @@ unt.modules.settings = {
 		document.title = unt.settings.lang.getValue('notifications');
 
 		let pushGroup = unt.components.switchCardButtonsGroup()
-						   .addCardButton(unt.icons.notifications, unt.settings.lang.getValue('notifications'), new Function())
-						   .addCardButton(unt.icons.sound, unt.settings.lang.getValue('sound'), new Function())
+						   .addCardButton(unt.icons.notifications, unt.settings.lang.getValue('notifications'), function (event, inp, checked) {
+						   		inp.disable();
+
+						   		return unt.settings.notifications.toggle().then(function () {
+						   			inp.enable();
+						   		}).catch(function () {
+						   			inp.enable();
+						   			inp.setChecked(unt.settings.current.push.notifications);
+						   			return unt.toast({html: unt.settings.lang.getValue('upload_error')});
+						   		});
+						   })
+						   .addCardButton(unt.icons.sound, unt.settings.lang.getValue('sound'), function (event, inp, checked) {
+						   		inp.disable();
+
+						   		return unt.settings.sound.toggle().then(function () {
+						   			inp.enable();
+						   		}).catch(function () {
+						   			inp.enable();
+						   			inp.setChecked(unt.settings.current.push.sound);
+						   			return unt.toast({html: unt.settings.lang.getValue('upload_error')});
+						   		});
+						   })
 
 		pushGroup.getSwitchCardButton(0).setChecked(unt.settings.current.push.notifications);
 		pushGroup.getSwitchCardButton(1).setChecked(unt.settings.current.push.sound);
 
-		//menu.appendChild(pushGroup);
+		menu.appendChild(pushGroup);
 	},
 	privacy: function (menu) {
 		document.title = unt.settings.lang.getValue('privacy');
@@ -60,6 +80,50 @@ unt.modules.settings = {
 	},
 	blacklist: function (menu) {
 		document.title = unt.settings.lang.getValue('blacklist');
+
+		let loader = unt.components.loaderElement();
+		let errorDiv = unt.components.alertBanner(unt.icons.failed, unt.settings.lang.getValue('upload_error'), unt.settings.lang.getValue('unknown_error'));
+		let emptyDiv = unt.components.alertBanner(unt.icons.list, unt.settings.lang.getValue('blacklist_empty'), unt.settings.lang.getValue('blacklist_empty_text'));
+		let usersInfoDiv = document.createElement('div');
+
+		loader.classList.add('center');
+		loader.style.marginTop = '15px';
+
+		errorDiv.hide();
+		emptyDiv.hide();
+		usersInfoDiv.hide();
+		loader.hide();
+
+		menu.appendChild(usersInfoDiv);
+		menu.appendChild(loader);
+		menu.appendChild(emptyDiv);
+		menu.appendChild(errorDiv);
+
+		function load (page = 1) {
+			loader.show();
+
+			return unt.settings.blacklist.get().then(function (list) {
+				loader.hide();
+
+				if (list.length <= 0 && page === 1)
+					return emptyDiv.show();
+
+				list.forEach(function (user) {
+					usersInfoDiv.appendChild(unt.components.user(user));
+				});
+
+				errorDiv.hide();
+				emptyDiv.hide();
+				usersInfoDiv.show();
+			}).catch(function () {
+				loader.hide();
+				errorDiv.show();
+				usersInfoDiv.hide();
+				emptyDiv.hide();
+			});
+		}
+
+		load();
 	},
 	accounts: function (menu) {
 		document.title = unt.settings.lang.getValue('accounts');

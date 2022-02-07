@@ -5596,7 +5596,7 @@ input[type=checkbox]:not(:disabled).tabbed:focus~.lever::before {
 
 .switch input[type=checkbox][disabled]+.lever {
     cursor: default;
-    background-color: rgba(0, 0, 0, .12)
+    background-color: rgba(0, 0, 0, .12) !important;
 }
 
 .switch label input[type=checkbox][disabled]+.lever:after,

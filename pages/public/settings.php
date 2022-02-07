@@ -1,7 +1,6 @@
 <?php
 
 require_once __DIR__ . '/../../bin/functions/users.php';
-require_once __DIR__ . '/../../bin/functions/auth.php';
 require_once __DIR__ . '/../../bin/functions/accounts.php';
 
 /**
@@ -12,26 +11,26 @@ if (isset(Request::get()->data["action"]))
 {
 	$action = strtolower(Request::get()->data['action']);
 
-	if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
+	if (!Context::get()->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
 	switch ($action) {
 		case 'logout':
 			header('Access-Control-Allow-Origin: '.get_page_origin());
 			header('Access-Control-Allow-Credentials: true');
 
-			$context->Logout();
+			Context::get()->Logout();
 
 			die(json_encode(array('success' => 1)));
 		break;
 		
 		case 'change_language':
-			$accountSettings = $context->getCurrentUser()->getSettings()->getSettingsGroup('account');
+			$accountSettings = Context::get()->getCurrentUser()->getSettings()->getSettingsGroup('account');
 
 			die(json_encode(array('success' => intval($accountSettings->setLanguageId(Request::get()->data['lang'])->getLanguageId() === strtolower(Request::get()->data['lang'])))));
 		break;
 
 		case 'set_privacy_settings':
-			$privacySettings = $context->getCurrentUser()->getSettings()->getSettingsGroup('privacy');
+			$privacySettings = Context::get()->getCurrentUser()->getSettings()->getSettingsGroup('privacy');
 
 			$groups = [
 				1 => 'can_write_messages',
@@ -51,7 +50,7 @@ if (isset(Request::get()->data["action"]))
 		break;
 
 		case 'toggle_profile_state':
-			$accountSettings = $context->getCurrentUser()->getSettings()->getSettingsGroup('account');
+			$accountSettings = Context::get()->getCurrentUser()->getSettings()->getSettingsGroup('account');
 
 			die(json_encode(array('success' => intval($accountSettings->setProfileClosed(!$accountSettings->isProfileClosed())->isProfileClosed()))));
 		break;
@@ -78,10 +77,10 @@ if (isset(Request::get()->data["action"]))
 		break;
 
 		case 'get_blacklisted':
-			$users  = get_blacklist($connection, $context->getCurrentUser()->getId(), intval(Request::get()->data['count']), intval(Request::get()->data['offset']));
+			$users  = Context::get()->getCurrentUser()->getBlacklist();//get_blacklist($connection, $context->getCurrentUser()->getId(), intval(Request::get()->data['count']), intval(Request::get()->data['offset']));
 			$result = [];
 
-			foreach ($users as $key => $value) {
+			foreach ($users as $value) {
 				$result[] = $value->toArray();
 			}
 
@@ -124,7 +123,7 @@ if (isset(Request::get()->data["action"]))
 		case 'update_menu_items':
 			$items  = explode(',', strval(Request::get()->data['items']));
 
-			$themingSettings = $context->getCurrentUser()->getSettings()->getSettingsGroup('theming');
+			$themingSettings = Context::get()->getCurrentUser()->getSettings()->getSettingsGroup('theming');
 			$success         = $themingSettings->setMenuItemIds($items);
 
 			if (!$success)
@@ -134,7 +133,7 @@ if (isset(Request::get()->data["action"]))
 		break;
 
 		case 'toggle_js_state':
-			$themingSettings = $context->getCurrentUser()->getSettings()->getSettingsGroup('theming');
+			$themingSettings = Context::get()->getCurrentUser()->getSettings()->getSettingsGroup('theming');
 
 			$result = intval($themingSettings->setJSAllowance(!$themingSettings->isJSAllowed())->isJSAllowed());
 
@@ -172,7 +171,7 @@ if (isset(Request::get()->data["action"]))
 		break;
 
 		case 'toggle_new_design':
-			$themingSettings = $context->getCurrentUser()->getSettings()->getSettingsGroup('theming');
+			$themingSettings = Context::get()->getCurrentUser()->getSettings()->getSettingsGroup('theming');
 
 			$result = intval($themingSettings->useNewDesign(!$themingSettings->isNewDesignUsed())->isNewDesignUsed());
 

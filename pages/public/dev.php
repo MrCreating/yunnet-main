@@ -92,7 +92,7 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 
 					if ($user->getFirstName() !== Request::get()->data["first_name"] && isset(Request::get()->data['first_name']))
 					{
-						$changed = update_user_data($connection, $user_id, "first_name", Request::get()->data["first_name"]);
+						$changed = $user->edit()->setFirstName(Request::get()->data["first_name"]);
 						if ($changed !== false && $changed !== true)
 						{
 							switch ($changed)
@@ -113,7 +113,7 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 					}
 					if ($user->getLastName() !== Request::get()->data["last_name"] && isset(Request::get()->data['last_name']))
 					{
-						$changed = update_user_data($connection, $user_id, "last_name", Request::get()->data["last_name"]);
+						$changed = $user->edit()->setLastName(Request::get()->data["last_name"]);
 						if ($changed !== false && $changed !== true)
 						{
 							switch ($changed)

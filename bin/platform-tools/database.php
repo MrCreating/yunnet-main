@@ -56,7 +56,7 @@ class DataBaseManager
 		return $this;
 	}
 
-	public function uncache (string $key): DataBaseManager
+	public function uncache (string $key = ''): DataBaseManager
 	{
 		$this->cacheKey  = NULL;
 		$this->cacheTime = NULL;

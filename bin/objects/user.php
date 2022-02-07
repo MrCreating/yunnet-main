@@ -3,6 +3,7 @@
 require_once __DIR__ . '/entity.php';
 require_once __DIR__ . '/settings.php';
 require_once __DIR__ . '/userInfoEditor.php';
+require_once __DIR__ . '/dialog.php';
 require_once __DIR__ . '/../functions/notifications.php';
 require_once __DIR__ . '/../platform-tools/name_worker.php';
 
@@ -145,27 +146,52 @@ class User extends Entity
 		return false;
 	}
 
+	public function getBlacklist (int $offset = 0, int $count = 30): array
+	{
+		if ($count <= 0) $count = 1;
+		if ($count >= 100) $count = 100;
+		if ($offset < 0) $offset = 0;
+
+		$res = $this->currentConnection->uncache()->prepare("SELECT DISTINCT added_id FROM users.blacklist WHERE state = -1 AND user_id = ? LIMIT ".intval($offset).", ".intval($count).";");
+
+		$result = [];
+
+		if ($res->execute([$this->getId()]))
+		{
+			$data = $res->fetchAll(PDO::FETCH_ASSOC);
+
+			foreach ($data as $info) {
+				$user_id = intval($info['added_id']);
+
+				$entity = Entity::findById($user_id);
+				if ($entity)
+					$result[] = $entity;
+			}
+		}
+
+		return $result;
+	}
+
 	public function block (int $user_id): bool
 	{
 		if ($this->getId() === $user_id) return false;
 
-		$res = $this->currentConnection->prepare("SELECT state FROM users.blacklist WHERE user_id = ? AND added_id = ? LIMIT 1;");
+		$res = $this->currentConnection->uncache()->prepare("SELECT state FROM users.blacklist WHERE user_id = ? AND added_id = ? LIMIT 1;");
 		if ($res->execute([$this->getId(), $user_id]))
 		{
 			$state = (int) $res->fetch(PDO::FETCH_ASSOC)["state"];
 			if ($state === NULL)
 			{
-				return $this->currentConnection->prepare("INSERT INTO users.blacklist (user_id, added_id, state) VALUES (?, ?, -1);")->execute([$this->getId(), $user_id]);
+				return $this->currentConnection->uncache()->prepare("INSERT INTO users.blacklist (user_id, added_id, state) VALUES (?, ?, -1);")->execute([$this->getId(), $user_id]);
 			}
 			if (intval($state) === -1)
 			{
-				return $this->currentConnection->prepare("UPDATE users.blacklist SET state = 0 WHERE user_id = ? AND added_id = ? LIMIT 1;")->execute([$this->getId(), $user_id]);
+				return $this->currentConnection->uncache()->prepare("UPDATE users.blacklist SET state = 0 WHERE user_id = ? AND added_id = ? LIMIT 1;")->execute([$this->getId(), $user_id]);
 			} else
 			{
 				if (
-					$this->currentConnection->prepare("UPDATE users.relationships SET state = 0 WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ? LIMIT 1;")->execute([$this->getId(), $user_id, $user_id, $this->getId()]) &&
-					$this->currentConnection->prepare("UPDATE users.relationships SET is_hidden = 0 WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ? LIMIT 1;")->execute([$this->getId(), $user_id, $user_id, $this->getId()]) &&
-					$this->currentConnection->prepare("UPDATE users.blacklist SET state = -1 WHERE user_id = ? AND added_id = ? LIMIT 1;")->execute([$this->getId(), $user_id])
+					$this->currentConnection->uncache()->prepare("UPDATE users.relationships SET state = 0, is_hidden = 0 WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ? LIMIT 1;")->execute([$this->getId(), $user_id, $user_id, $this->getId()]) &&
+					$this->currentConnection->uncache()->prepare("UPDATE users.blacklist SET state = -1 WHERE user_id = ? AND added_id = ? LIMIT 1;")->execute([$this->getId(), $user_id])
 				)
 				{
 					return true;
@@ -293,20 +319,14 @@ class User extends Entity
 
 			if (in_array("can_access_closed", $resultedFields)) 
 			{
-				if (!function_exists('can_access_closed')) require __DIR__ . '/../functions/users.php';
-
 				$result['can_access_closed'] = $this->canAccessClosed();
 			}
 			if (in_array("is_me_blacklisted", $resultedFields))
 			{
-				if (!function_exists('in_blacklist')) require __DIR__ . '/../functions/users.php';
-
 				$result['is_me_blacklisted'] = $this->inBlacklist();
 			}
 			if (in_array("is_blacklisted", $resultedFields))
 			{
-				if (!function_exists('in_blacklist')) require __DIR__ . '/../functions/users.php';
-
 				$result['is_blacklisted'] = $this->isBlocked();
 			}
 			if (in_array("friend_state", $resultedFields))
@@ -317,14 +337,9 @@ class User extends Entity
 			}
 			if (in_array("can_write_messages", $resultedFields)) 
 			{
-				if (!function_exists('get_uid_by_lid')) require __DIR__ . '/../functions/messages.php';
+				$dialog = new Dialog($this->getId());
 
-				$uid = intval(get_uid_by_lid($this->currentConnection, $this->getId(), $this->getType() === "bot", intval($_SESSION['user_id'])));
-
-				$result['can_write_messages'] = can_write_to_chat($this->currentConnection, $uid, intval($_SESSION['user_id']), [
-					"chat_id" => $this->getId(),
-					"is_bot"  => $this->getType() === "bot"
-				]);
+				$result['can_write_messages'] = $dialog->canWrite();
 			}
 			if (in_array("can_write_on_wall", $resultedFields))
 			{

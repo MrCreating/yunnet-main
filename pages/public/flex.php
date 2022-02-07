@@ -4,7 +4,9 @@ require_once __DIR__ . '/../../bin/functions/management.php';
 require_once __DIR__ . '/../../bin/functions/wall.php';
 require_once __DIR__ . '/../../bin/functions/messages.php';
 require_once __DIR__ . '/../../bin/functions/users.php';
-require_once __DIR__ . '/../../bin/objects/chats.php';
+require_once __DIR__ . '/../../bin/objects/chat.php';
+require_once __DIR__ . '/../../bin/objects/dialog.php';
+require_once __DIR__ . '/../../bin/objects/conversation.php';
 require_once __DIR__ . '/../../bin/objects/post.php';
 
 if (isset(Request::get()->data['action']))
@@ -133,65 +135,31 @@ if (isset(Request::get()->data['action']))
 		break;
 
 		case 'get_chat_by_peer':
-			$sel = strval(Request::get()->data['peer_id']);
-			$chat_data = parse_id_from_string($sel);
-
-			// if format is invalid
-			if (!$chat_data) die(json_encode(array('error' => 1)));
-
-			$uid = intval(get_uid_by_lid($context->getConnection(), $chat_data['chat_id'], $chat_data['is_bot'], $context->getCurrentUser()->getId()));
-			$dialog = get_chat_data_by_uid($context->getConnection(), $uid, $context->getCurrentUser()->getId(), $chat_data);
+			$dialog = Chat::findById(Request::get()->data['peer_id']);
 
 			if (!$dialog) die(json_encode(array('error' => 1)));
 
-			die(json_encode($dialog));
+			die(json_encode($dialog->toArray()));
 		break;
 
 		case 'get_chat_permissions':
 			if (Context::get()->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
 
-			$chat_data = parse_id_from_string(Request::get()->data['peer_id']);
-			if (!$chat_data)
+			$chat = new Conversation(Request::get()->data['peer_id']);
+
+			if (!$chat->valid() || $chat->isKicked())
 				die(json_encode(array('error' => 1)));
 
-			$sel    = intval($chat_data["chat_id"]);
-			$is_bot = boolval($chat_data["is_bot"]);
-			$uid    = get_uid_by_lid($connection, $sel, $is_bot, $context->getCurrentUser()->getId());
-			if (!$uid)
-				die(json_encode(array('error' => 1)));
-
-			$chat = new Chat($connection, $uid);
-			if (!$chat->isValid)
-				die(json_encode(array('error' => 1)));
-
-			$members = $chat->getMembers(true);
-			$me = $members["users"]["user_".$context->getCurrentUser()->getId()];
-			if (!$me || $me['flags']['is_kicked']) die(json_encode(array('error' => 1)));
-
-			$permissions = $chat->getPermissions();
-			die(json_encode($permissions->getAll()));
+			die(json_encode($chat->getPermissions()->toArray()));
 		break;
 
 		case 'get_my_permissions_level':
-			$chat_data = parse_id_from_string(Request::get()->data['peer_id']);
-			if (!$chat_data)
+			$chat = new Conversation(Request::get()->data['peer_id']);
+
+			if (!$chat->valid() || $chat->isKicked())
 				die(json_encode(array('error' => 1)));
 
-			$sel    = intval($chat_data["chat_id"]);
-			$is_bot = boolval($chat_data["is_bot"]);
-			$uid    = get_uid_by_lid($connection, $sel, $is_bot, $context->getCurrentUser()->getId());
-			if (!$uid)
-				die(json_encode(array('error' => 1)));
-
-			$chat = new Chat($connection, $uid);
-			if (!$chat->isValid)
-				die(json_encode(array('error' => 1)));
-
-			$members = $chat->getMembers(true);
-			$me = $members["users"]["user_".$context->getCurrentUser()->getId()];
-			if (!$me || $me['flags']['is_kicked']) die(json_encode(array('error'=>1)));
-
-			die(json_encode(array('level' => intval($me["flags"]["level"]))));
+			die(json_encode(array('level' => $chat->getAccessLevel())));
 		break;
 
 		case 'get_friends':
