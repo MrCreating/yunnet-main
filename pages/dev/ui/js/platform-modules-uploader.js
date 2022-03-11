@@ -75,9 +75,10 @@ unt.modules.uploads = {
 
 			return resolve({
 				setPreviewAttachment: function (attachment) {
-					if (attachment.type === 'photo' && attchment.photo) {
+					if (attachment.type === 'photo' && attachment.photo) {
 						let img = document.createElement('img');
 						attachmentPreviewDiv.appendChild(img);
+						img.src = attachment.photo.url.main;
 
 						console.log(attachment);
 					}
@@ -92,17 +93,71 @@ unt.modules.uploads = {
 					win.finish = callback;
 					return this;
 				},
-				upload: function (files) {
-					return new Promise(function (resolve) {
+				upload: function (file, type = 'image') {
+					return new Promise(function (resolve, reject) {
 						continueButton.classList.add('disabled');
 						buttonTextDib.hide();
 						uploadProgressBar.show();
 						win.setCloseAble(false);
 						inputFile.setAttribute('disabled', 'true');
 
-						let x = _xmlHttpGet();
+						function close (result) {
+							continueButton.classList.remove('disabled');
+							buttonTextDib.show();
+							uploadProgressBar.hide();
+							win.setCloseAble(true);
+							inputFile.removeAttribute('disabled');
+							result();
+						}
 
-						let i = 0;
+						return unt.tools.Request({
+							url: '/upload?action=get&type=' + type,
+							method: 'POST',
+							success: function (response) {
+								try {
+									response = JSON.parse(response);
+									if (response.error) return close(reject);
+
+									let url = response.url;
+									let x = _xmlHttpGet();
+
+									let data = new POSTData();
+									data.append('attachment', file);
+
+									x.onreadystatechange = function () {
+										if (x.readyState !== 4) return;
+
+										let response = x.responseText;
+										try {
+											response = JSON.parse(response);
+											if (response.error) return close(reject);
+
+											return close(function () {
+												resolve(response);
+											});
+										} catch (e) {
+											return close(reject);
+										}
+									}
+
+									x.upload.onprogress = function () {
+										let done = parseInt((event.loaded / event.total) * 100);
+
+										uploadProgressBar.setProgress(done);
+									}
+
+									x.open('POST', url);
+									return x.send(data.build());
+								} catch (e) {
+									return close(reject);
+								}
+							},
+							error: function () {
+								return close(reject);
+							}
+						});
+
+						/*let i = 0;
 						let t = setInterval(function () {
 							if (i >= 10) {
 								continueButton.classList.remove('disabled');
@@ -116,7 +171,7 @@ unt.modules.uploads = {
 
 							uploadProgressBar.setProgress(i * 10);
 							i++;
-						}, 2000)
+						}, 2000)*/
 					});
 				}
 			});

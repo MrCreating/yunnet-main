@@ -381,32 +381,125 @@ unt.pages = new Object({
 
 		let menu = unt.components.menuElement;
 
-		let sections = ['main', 'online'];
+		let url = new URLParser();
+		let user_id = parseInt(Number(url.getQueryValue('id'))) || 0;
 
+		let sections = ['main', 'subscribers'];
 		let section = 'main';
 
-		let url = new URLParser();
-		if (sections.indexOf(url.getQueryValue('section').toLowerCase()) !== -1) {
+		if (user_id === 0) {
+			sections.push('outcoming');
+		}
+
+		let index = sections.indexOf(url.getQueryValue('section').toLowerCase());
+		if (index !== -1) {
 			section = url.getQueryValue('section').toLowerCase();
 		}
 
-		menu.appendChild(unt.components.tabs([
+		let params = [
 			{
 				title: unt.settings.lang.getValue('friends'),
-				link: '/friends',
-				active: section === 'main',
-				internalData: internalData
-			}, 
-			{
-				title: unt.settings.lang.getValue('friends_online'),
-				link: '/friends?section=online',
-				active: section === 'online',
-				internalData: internalData
+				onclick: function () {
+					return unt.actions.linkWorker.go('/friends' + (user_id ? ('?id=' + user_id) : ''), false, internalData);
+				}
+			}, {
+				title: unt.settings.lang.getValue('subs'),
+				onclick: function () {
+					return unt.actions.linkWorker.go('/friends?section=subscribers' + (user_id ? ('&id=' + user_id) : ''), false, internalData);
+				}
 			}
-		]));
+		];
+
+		if (user_id === 0) {
+			params.push({
+				title: unt.settings.lang.getValue('outcoming_requests'),
+				onclick: function () {
+					return unt.actions.linkWorker.go('/friends?section=outcoming', false, internalData);
+				}
+			});
+		}
+
+		let cont = unt.components.navPanel.setContextMenu(params);
+
+		cont.select(index == -1 ? 0 : index);
+		if (section === 'main') {
+			menu.appendChild(unt.components.tabs([
+				{
+					title: unt.settings.lang.getValue('friends'),
+					link: window.location.href,
+					active: !internalData || (internalData && internalData.mode !== 'online'),
+					internalData: {mode: 'all', internalData: internalData}
+				}, 
+				{
+					title: unt.settings.lang.getValue('friends_online'),
+					link: window.location.href,
+					active: internalData && internalData.mode === 'online',
+					internalData: {mode: 'online', internalData: internalData}
+				}
+			]));
+		}
 
 		let sectionContainer = document.createElement('div');
-		menu.appendChild(sectionContainer);
+		menu.appendChild(sectionContainer)
+
+		let errorDiv = unt.components.alertBanner(unt.icons.failed, unt.settings.lang.getValue('upload_error'), unt.settings.lang.getValue('unknown_error'));
+		let emptyDiv = unt.components.alertBanner(unt.icons.list, unt.settings.lang.getValue('no_friends'), unt.settings.lang.getValue('no_friends_text'));
+
+		errorDiv.hide();
+		emptyDiv.hide();
+
+		menu.appendChild(emptyDiv);
+		menu.appendChild(errorDiv);
+
+		let loader = unt.components.loaderElement();
+		sectionContainer.appendChild(loader);
+		loader.classList.add('center');
+		loader.style.marginTop = '15px';
+
+		function workResult (res, err) {
+			loader.hide();
+			errorDiv.hide();
+			emptyDiv.hide();
+			sectionContainer.hide();
+			sectionContainer.innerHTML = '';
+
+			if (res) {
+				if (res.length <= 0) 
+					return emptyDiv.show();
+
+				res.forEach(function (friend) {
+					sectionContainer.appendChild(unt.components.user(friend));
+				});
+
+				return sectionContainer.show();
+			}
+
+			return errorDiv.show();
+		}
+
+		if (section === 'main') {
+			return unt.actions.friends.get(user_id || unt.settings.users.current.user_id).then(function (res) {
+				return workResult(res, null);
+			}).catch(function (err) {
+				return workResult(null, err);
+			});
+		}
+		if (section === 'subscribers') {
+			return unt.actions.friends.getSubscribers(user_id || unt.settings.users.current.user_id).then(function (res) {
+				return workResult(res, null);
+			}).catch(function (err) {
+				return workResult(null, err);
+			});
+		}
+		if (section === 'outcoming') {
+			return unt.actions.friends.get().then(function (res) {
+				return workResult(res, null);
+			}).catch(function (err) {
+				return workResult(null, err);
+			});
+		}
+
+		return window.location.href = '/friends';
 	},
 	groups: function (internalData) {
 		if (unt.settings.users.current.is_banned)
@@ -573,6 +666,20 @@ unt.pages = new Object({
 
 		document.title = unt.settings.lang.getValue('edit');
 
+		let cont = unt.components.navPanel.setContextMenu([
+		    {
+		        title: unt.settings.lang.getValue('main'),
+		        onclick: function () {
+		        	return unt.actions.linkWorker.go('/edit', false, internalData);
+		        }
+		    }, {
+		        title:  unt.settings.lang.getValue('profile'),
+		        onclick: function () {
+		        	return unt.actions.linkWorker.go('/edit?section=contacts', false, internalData);
+		        }
+		    }
+		])
+
 		let menu = unt.components.menuElement;
 
 		let sections = ['main', 'contacts'];
@@ -580,24 +687,13 @@ unt.pages = new Object({
 		let section = 'main';
 
 		let url = new URLParser();
-		if (sections.indexOf(url.getQueryValue('section').toLowerCase()) !== -1) {
+
+		let index = sections.indexOf(url.getQueryValue('section').toLowerCase());
+		if (index !== -1) {
 			section = url.getQueryValue('section').toLowerCase();
 		}
 
-		menu.appendChild(unt.components.tabs([
-			{
-				title: unt.settings.lang.getValue('main'),
-				link: '/edit',
-				active: section === 'main',
-				internalData: internalData
-			}, 
-			{
-				title: unt.settings.lang.getValue('profile'),
-				link: '/edit?section=contacts',
-				active: section === 'contacts',
-				internalData: internalData
-			}
-		]));
+		cont.select(index === -1 ? 0 : index);
 
 		let sectionContainer = document.createElement('div');
 		menu.appendChild(sectionContainer);

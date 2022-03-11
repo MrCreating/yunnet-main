@@ -1,5 +1,7 @@
 unt.modules = {};
 unt.actions.linkWorker.go = function (url = window.location.href, writeToLocalHistory = true, internalData = null) {
+	window.stop();
+
 	let splittedUrl = String(url).split(window.location.host)
 	let resultedUrl = (splittedUrl[1] ? splittedUrl[1] : (splittedUrl[0] ? splittedUrl[0] : '/'));
 
@@ -7,6 +9,15 @@ unt.actions.linkWorker.go = function (url = window.location.href, writeToLocalHi
 		return (window.location.href = url);
 
 	unt.components.menuElement ? unt.components.menuElement.innerHTML = '' : '';
+
+	let newMenuElement = document.createElement('div');
+	if (!unt.tools.isMobile()) {
+		newMenuElement.classList = ['col s9'];
+		newMenuElement.style = 'padding: 0px 7px; height: 100%;';
+	}
+	unt.components.menuElement.replaceWith(newMenuElement);
+	unt.components.menuElement = newMenuElement;
+
 	unt.actions.wall.currentId = null;
 	if (writeToLocalHistory) {
 		let pageInfoObject = {id: this.history.length, url: url};
@@ -20,6 +31,8 @@ unt.actions.linkWorker.go = function (url = window.location.href, writeToLocalHi
 
 	unt.components.navPanel.getDefaultHeader().show();
 	unt.components.navPanel.getAdditionalHeader().hide();
+
+	unt.components.navPanel ? unt.components.navPanel.resetContextPanel() : null;
 
 	let resultedUrlWithOutParams = resultedUrl.split('?')[0];
 	switch (resultedUrlWithOutParams) {

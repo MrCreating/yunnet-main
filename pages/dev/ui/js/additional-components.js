@@ -1688,6 +1688,38 @@ unt.components = new Object({
 			titleDiv.classList.add('unselectable');
 			a.appendChild(titleDiv);
 
+			let contextMenuDiv = document.createElement('div');
+			contextMenuDiv.classList.add('unselectable');
+			a.appendChild(contextMenuDiv);
+			contextMenuDiv.hide();
+
+			let contextMenuDivContainer = document.createElement('a');
+			contextMenuDivContainer.style.padding = 0;
+			contextMenuDivContainer.classList.add('dropdown-trigger');
+			contextMenuDivContainer.style.cursor = 'pointer';
+			contextMenuDivContainer.classList.add('unselectable');
+			contextMenuDivContainer.classList.add('valign-wrapper');
+			contextMenuDivContainer.style.width = '100%';
+			contextMenuDiv.appendChild(contextMenuDivContainer);
+
+			let mainTitleText = document.createElement('div');
+			mainTitleText.style.fontSize = '90%';
+			mainTitleText.innerText = '';
+			contextMenuDivContainer.appendChild(mainTitleText);
+
+			let arrowButton = document.createElement('i');
+			contextMenuDivContainer.appendChild(arrowButton);
+			arrowButton.innerHTML = unt.icons.downArrow;
+			arrowButton.style.marginLeft = arrowButton.style.marginRight = '10px';
+			arrowButton.getElementsByTagName('svg')[0].style.fill = 'white';
+			arrowButton.getElementsByTagName('svg')[0].style.marginTop = '13px';
+
+			let ulDropdownContent = document.createElement('ul');
+			ulDropdownContent.classList.add('dropdown-content');
+			ulDropdownContent.id = 'foldCOntextMenu';
+			contextMenuDivContainer.setAttribute('data-target', ulDropdownContent.id);
+			contextMenuDiv.appendChild(ulDropdownContent);
+
 			let additionalDiv = document.createElement('div');
 			additionalDiv.classList.add('unselectable');
 			a.appendChild(additionalDiv);
@@ -1696,6 +1728,11 @@ unt.components = new Object({
 				titleDiv.innerText = title;
 
 				return navFixed;
+			}
+
+			navFixed.resetContextPanel = function () {
+				contextMenuDiv.hide();
+				titleDiv.show();
 			}
 
 			navFixed.getAdditionalHeader = function () {
@@ -1711,6 +1748,47 @@ unt.components = new Object({
 
 			navFixed.getMenuButton = function () {
 				return document.getElementById('nav_burger_icon');
+			}
+
+			navFixed.setContextMenu = function (params) {
+				titleDiv.hide();
+				contextMenuDiv.show();
+				ulDropdownContent.innerHTML = '';
+
+				let titles = [];
+
+				params.forEach(function (elementInfo, i) {
+					titles.push(elementInfo.title);
+
+					let infoContent = document.createElement('li');
+					ulDropdownContent.appendChild(infoContent);
+
+					let currentPointDiv = document.createElement('a');
+					infoContent.appendChild(currentPointDiv);
+					currentPointDiv.innerText = elementInfo.title;
+
+					infoContent.addEventListener('click', function (event) {
+						mainTitleText.innerText = elementInfo.title;
+						elementInfo.onclick(event);
+					});
+
+					if (i == 0) {
+						mainTitleText.innerText = elementInfo.title;
+					}
+				});
+
+				contextMenuDiv.show();
+
+				return {
+					select: function (index) {
+						let el = titles[index];
+
+						if (el)
+							mainTitleText.innerText = el;
+
+						return this;
+					}
+				};
 			}
 		} else {
 			let navContainer = document.createElement('div');
@@ -1768,6 +1846,41 @@ unt.components = new Object({
 			currentPage.style.fontSize = '90%';
 			currentPage.classList.add('current-title');
 			currentPage.classList.add('unselectable');
+
+			let contextMenuDiv = document.createElement('div');
+			contextMenuDiv.classList.add('unselectable');
+			contextMenuDiv.style.width = '100%';
+			contextMenuDiv.style.fontSize = '90%';
+			contextMenuDiv.style.padding = 0;
+			currentPageTitleValign.appendChild(contextMenuDiv);
+			contextMenuDiv.hide();
+
+			let contextMenuDivContainer = document.createElement('a');
+			contextMenuDivContainer.style.padding = 0;
+			contextMenuDivContainer.classList.add('dropdown-trigger');
+			contextMenuDivContainer.style.cursor = 'pointer';
+			contextMenuDivContainer.classList.add('unselectable');
+			contextMenuDivContainer.classList.add('valign-wrapper');
+			contextMenuDivContainer.style.width = '100%';
+			contextMenuDiv.appendChild(contextMenuDivContainer);
+
+			let mainTitleText = document.createElement('div');
+			mainTitleText.style.fontSize = '90%';
+			mainTitleText.innerText = '';
+			contextMenuDivContainer.appendChild(mainTitleText);
+
+			let arrowButton = document.createElement('i');
+			contextMenuDivContainer.appendChild(arrowButton);
+			arrowButton.innerHTML = unt.icons.downArrow;
+			arrowButton.style.marginLeft = arrowButton.style.marginRight = '10px';
+			arrowButton.getElementsByTagName('svg')[0].style.fill = 'white';
+			arrowButton.getElementsByTagName('svg')[0].style.marginTop = '13px';
+
+			let ulDropdownContent = document.createElement('ul');
+			ulDropdownContent.classList.add('dropdown-content');
+			ulDropdownContent.id = 'foldCOntextMenu';
+			contextMenuDivContainer.setAttribute('data-target', ulDropdownContent.id);
+			contextMenuDiv.appendChild(ulDropdownContent);
 
 			let additionalPage = document.createElement('div');
 			currentPageTitleValign.appendChild(additionalPage);
@@ -1889,6 +2002,11 @@ unt.components = new Object({
 				return navFixed;
 			}
 
+			navFixed.resetContextPanel = function () {
+				contextMenuDiv.hide();
+				currentPage.show();
+			}
+
 			navFixed.getAdditionalHeader = function () {
 				return additionalPage;
 			}
@@ -1902,6 +2020,47 @@ unt.components = new Object({
 
 			navFixed.getBackButton = function () {
 				return currentPageBack;
+			}
+
+			navFixed.setContextMenu = function (params) {
+				currentPage.hide();
+				contextMenuDiv.show();
+				ulDropdownContent.innerHTML = '';
+
+				let titles = [];
+
+				params.forEach(function (elementInfo, i) {
+					titles.push(elementInfo.title);
+
+					let infoContent = document.createElement('li');
+					ulDropdownContent.appendChild(infoContent);
+
+					let currentPointDiv = document.createElement('a');
+					infoContent.appendChild(currentPointDiv);
+					currentPointDiv.innerText = elementInfo.title;
+
+					infoContent.addEventListener('click', function (event) {
+						mainTitleText.innerText = elementInfo.title;
+						elementInfo.onclick(event);
+					});
+
+					if (i == 0) {
+						mainTitleText.innerText = elementInfo.title;
+					}
+				});
+
+				contextMenuDiv.show();
+
+				return {
+					select: function (index) {
+						let el = titles[index];
+
+						if (el)
+							mainTitleText.innerText = el;
+
+						return this;
+					}
+				};
 			}
 		}
 

@@ -69,3 +69,75 @@ unt.actions.wall = new Object({
 		});
 	}
 });
+
+unt.actions.friends = new Object({
+	get: function (user_id) {
+		return new Promise(function (resolve, reject) {
+			return unt.tools.Request({
+				url: '/flex',
+				method: 'POST',
+				data: (new POSTData()).append('action', 'get_friends').append('section', 'friends').append('user_id', user_id).build(),
+				success: function (response) {
+					try {
+						response = JSON.parse(response);
+						if (response.error)
+							throw new Error();
+
+						return resolve(response);
+					} catch (e) {
+						reject(e);
+					}
+				},
+				error: function () {
+					reject();
+				}
+			});
+		});
+	},
+	getSubscribers: function (user_id) {
+		return new Promise(function (resolve, reject) {
+			return unt.tools.Request({
+				url: '/flex',
+				method: 'POST',
+				data: (new POSTData()).append('action', 'get_friends').append('section', 'subscribers').append('user_id', user_id).build(),
+				success: function (response) {
+					try {
+						response = JSON.parse(response);
+						if (response.error)
+							throw new Error();
+
+						return resolve(response);
+					} catch (e) {
+						reject(e);
+					}
+				},
+				error: function () {
+					reject();
+				}
+			});
+		});
+	},
+	getOutcoming: function () {
+		return new Promise(function (resolve, reject) {
+			return unt.tools.Request({
+				url: '/flex',
+				method: 'POST',
+				data: (new POSTData()).append('action', 'get_friends').append('section', 'outcoming').append('user_id', unt.settings.users.current.user_id).build(),
+				success: function (response) {
+					try {
+						response = JSON.parse(response);
+						if (response.error)
+							throw new Error();
+
+						return resolve(response);
+					} catch (e) {
+						reject(e);
+					}
+				},
+				error: function () {
+					reject();
+				}
+			});
+		});
+	}
+});
