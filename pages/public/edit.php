@@ -1,7 +1,5 @@
 <?php
 
-require_once __DIR__ . "/../../bin/functions/users.php";
-
 /**
  * Profile editing page and actions.
 */

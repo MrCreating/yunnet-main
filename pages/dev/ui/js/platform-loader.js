@@ -1,7 +1,5 @@
 unt.modules = {};
 unt.actions.linkWorker.go = function (url = window.location.href, writeToLocalHistory = true, internalData = null) {
-	window.stop();
-
 	let splittedUrl = String(url).split(window.location.host)
 	let resultedUrl = (splittedUrl[1] ? splittedUrl[1] : (splittedUrl[0] ? splittedUrl[0] : '/'));
 

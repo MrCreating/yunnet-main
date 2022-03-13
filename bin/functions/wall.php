@@ -49,6 +49,8 @@ function get_news ($connection, $user_id)
 */
 function can_write_posts ($connection, $user_id, $check_id)
 {
+	if (!Context::get()->isLogged()) return false;
+	
 	// current user always can write to itself
 	if (intval($user_id) === intval($check_id)) return true;
 

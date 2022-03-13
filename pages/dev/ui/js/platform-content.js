@@ -492,7 +492,7 @@ unt.pages = new Object({
 			});
 		}
 		if (section === 'outcoming') {
-			return unt.actions.friends.get().then(function (res) {
+			return unt.actions.friends.getOutcoming().then(function (res) {
 				return workResult(res, null);
 			}).catch(function (err) {
 				return workResult(null, err);
@@ -898,6 +898,11 @@ unt.pages = new Object({
 			if (!unt.settings.users.current)
 				fastAction = null;
 
+			if (unt.settings.users.current && user.can_access_closed)
+				actionsMenu.addOption(unt.settings.lang.getValue('show_friends'), function () {
+					return unt.actions.linkWorker.go('/friends?id=' + user.user_id);
+				});
+
 			if (user.permissions_type === 0) {
 				if (unt.settings.users.current && !user.is_banned && user.account_type === 'user' && !user.is_me_blacklisted && !user.is_blacklisted && user.friend_state && user.friend_state.state === 0) {
 					actionsMenu.addOption(unt.settings.lang.getValue('add_to_the_friends'), new Function());
@@ -981,6 +986,7 @@ unt.pages = new Object({
 			actionsDiv.appendChild(actionsMenu);
 			unt.AutoInit();
 		}).catch(function (err) {
+			console.log(err);
 			profileLoadCard.hide();
 
 			let notFoundCard = document.createElement('div');

@@ -586,6 +586,8 @@ class Conversation extends Chat
 
 	public function canWrite (): int
 	{
+		if (!Context::get()->isLogged()) return 0;
+
 		if (!$this->valid())   return 0;
 		if ($this->isKicked()) return 0;
 		if ($this->isMuted())  return -1;

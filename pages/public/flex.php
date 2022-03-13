@@ -43,27 +43,27 @@ if (isset(Request::get()->data['action']))
 			if ($entity_id === 0) 
 				$entity_id = intval($context->getCurrentUser() === NULL ? 0 : $context->getCurrentUser()->getId());
 
-			if ($context->getCurrentUser() && $context->getCurrentUser()->isBanned()) 
+			if (Context::get()->getCurrentUser() && Context::get()->getCurrentUser()->isBanned()) 
 				$entity_id = intval($context->getCurrentUser()->getId());
 
-			$user = $entity_id > 0 ? new User($entity_id) : new Bot($entity_id*-1);
+			$user = Entity::findById($entity_id);
 
-			if (!$user->valid()) die(json_encode(array("error" => 1)));
+			if (!$user) die(json_encode(array("error" => 1)));
 
 			die(json_encode(array("response" => $user->toArray($fields))));
 		break;
 
 		case 'get_user_data_by_link':
-			$screen_name = strtolower(Request::get()->data["screen_name"]);
-			if ($context->getCurrentUser() && $context->getCurrentUser()->isBanned())
+			$screen_name = substr(strtolower(Request::get()->data["screen_name"]), 1);
+			if (Context::get()->getCurrentUser() && Context::get()->getCurrentUser()->isBanned()) 
 				$screen_name = 'id' . $context->getCurrentUser()->getId();
 
 			if (is_empty($screen_name)) die(json_encode(array("error"=>1)));
 
-			$result = resolve_id_by_name(get_database_connection(), $screen_name);
+			$result = Entity::findByScreenName($screen_name);
 			if (!$result) die(json_encode(array("error"=>1)));
 
-			die(json_encode(array("id"=>intval($result["id"]))));
+			die(json_encode(array("id"=>intval($result->getId() > 0 ? $result->getId() : ($result->getId() * -1)))));
 		break;
 
 		case 'get_attachment_info':

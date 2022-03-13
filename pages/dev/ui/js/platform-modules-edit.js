@@ -30,7 +30,7 @@ unt.modules.edit = {
 							uploader.setPreviewAttachment(attachment);
 						});
 					}).finish(function (attachment) {
-						
+						console.log('edit!');
 					});
 				});
 			});

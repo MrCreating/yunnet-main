@@ -69,6 +69,7 @@ unt.modules.uploads = {
 			uploadProgressBar.setArea(20);
 			uploadProgressBar.setColor('white');
 			uploadProgressBar.hide();
+			attachmentPreviewDiv.hide();
 			continueButton.appendChild(uploadProgressBar);
 
 			win.show();
@@ -76,11 +77,14 @@ unt.modules.uploads = {
 			return resolve({
 				setPreviewAttachment: function (attachment) {
 					if (attachment.type === 'photo' && attachment.photo) {
+						attachmentPreviewDiv.innerHTML = '';
 						let img = document.createElement('img');
 						attachmentPreviewDiv.appendChild(img);
 						img.src = attachment.photo.url.main;
-
-						console.log(attachment);
+						attachmentPreviewDiv.style,padding = '20px 0';
+						img.style.height = '60%';
+						img.style.width = '100%';
+						attachmentPreviewDiv.show();
 					}
 
 					return this;
@@ -94,7 +98,7 @@ unt.modules.uploads = {
 					return this;
 				},
 				upload: function (file, type = 'image') {
-					return new Promise(function (resolve, reject) {
+					let p = new Promise(function (resolve, reject) {
 						continueButton.classList.add('disabled');
 						buttonTextDib.hide();
 						uploadProgressBar.show();
@@ -133,6 +137,9 @@ unt.modules.uploads = {
 											if (response.error) return close(reject);
 
 											return close(function () {
+												continueButton.addEventListener('click', function () {
+													win.finish(response);
+												});
 												resolve(response);
 											});
 										} catch (e) {
@@ -156,23 +163,9 @@ unt.modules.uploads = {
 								return close(reject);
 							}
 						});
-
-						/*let i = 0;
-						let t = setInterval(function () {
-							if (i >= 10) {
-								continueButton.classList.remove('disabled');
-								buttonTextDib.show();
-								uploadProgressBar.hide();
-								win.setCloseAble(true);
-								inputFile.removeAttribute('disabled');
-
-								return clearInterval(t);
-							}
-
-							uploadProgressBar.setProgress(i * 10);
-							i++;
-						}, 2000)*/
 					});
+					p.finish = this.finish;
+					return p;
 				}
 			});
 		});

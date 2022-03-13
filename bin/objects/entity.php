@@ -100,9 +100,7 @@ abstract class Entity
 
 		if ($entity_id === 0)
 		{
-			$connection = $_SERVER['dbConnection'];
-			if (!$connection)
-				$connection = get_database_connection();
+			$connection = DataBaseManager::getConnection();
 
 			$res = $connection->prepare('SELECT id FROM users.info WHERE screen_name = ? UNION SELECT IF(id != "", id * -1, NULL) FROM bots.info WHERE screen_name = ? LIMIT 1');
 

@@ -114,8 +114,6 @@ class UserInfoEditor extends InfoEditor
 			if (Project::isLinkUsed($screenName)) return -1;
 
 			$this->screenName = $screenName;
-
-			$this->boundedEntity->unload();
 		}
 
 		$res = $this->currentConnection->uncache('User_' . $this->getBoundEntity()->getId())->prepare("UPDATE users.info SET screen_name = " . ($this->screenName ? "?" : "NULL") . " WHERE id = ? AND is_deleted = 0 AND is_banned = 0 LIMIT 1;");

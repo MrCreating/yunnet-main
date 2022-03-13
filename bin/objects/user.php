@@ -90,6 +90,7 @@ class User extends Entity
 		$user_id = intval($_SESSION['user_id']);
 
 		if ($this->getId() === $user_id) return false;
+		if (!Context::get()->isLogged()) return false;
 
 		$res = $this->currentConnection->cache('User_relations_' . $user_id . '_' . $this->getId())->prepare("SELECT state FROM users.relationships WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ?;");
 		if ($res->execute([strval($this->getId()), strval($user_id), strval($user_id), strval($this->getId())]))
@@ -110,7 +111,9 @@ class User extends Entity
 	public function isBlocked (): bool
 	{
 		$user_id = intval($_SESSION['user_id']);
-		if ($user_id < 0) return false;
+		if ($user_id <= 0) return false;
+
+		if (!Context::get()->isLogged()) return false;
 
 		if ($this->getId() === $user_id) return false;
 		if ($this->getId() === 0 || $user_id === 0) return false;
@@ -129,6 +132,8 @@ class User extends Entity
 	public function inBlacklist (): bool
 	{
 		$user_id = intval($_SESSION['user_id']);
+
+		if (!Context::get()->isLogged()) return false;
 
 		if ($this->getId() === $user_id) return false;
 		if ($this->getId() === 0 || $user_id === 0) return false;
@@ -174,6 +179,7 @@ class User extends Entity
 
 	public function block (int $user_id): bool
 	{
+		if (!Context::get()->isLogged()) return false;
 		if ($this->getId() === $user_id) return false;
 
 		$res = $this->currentConnection->uncache()->prepare("SELECT state FROM users.blacklist WHERE user_id = ? AND added_id = ? LIMIT 1;");
@@ -213,6 +219,8 @@ class User extends Entity
 
 		if ($this->getSettings()->getSettingsGroup('account')->isProfileClosed())
 		{
+			if (!Context::get()->isLogged()) return false;
+
 			if ($user_id !== 0 && $this->isFriends()) return true;
 
 			return false;
@@ -233,6 +241,8 @@ class User extends Entity
 
 	public function canInviteToChat (): bool
 	{
+		if (!Context::get()->isLogged()) return false;
+		
 		if (!$this->valid()) return false;
 		if ($this->getId() === intval($_SESSION['user_id'])) return true;
 
