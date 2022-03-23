@@ -249,9 +249,24 @@ unt.pages = new Object({
 		}
 
 		if (unt.tools.isMobile()) {
-			actionsDiv.appendChild(unt.components.floatingActionButton(unt.icons.edit, unt.settings.lang.getValue('write_a_post'), true));
+			let fab = unt.components.floatingActionButton(unt.icons.edit, unt.settings.lang.getValue('write_a_post'), true);
+			fab.addEventListener('click', function (event) {
+				return unt.actions.wall.createManager().then(function () {
+
+				}).catch(function () {
+
+				});
+			});
+
+			actionsDiv.appendChild(fab);
 		} else {
-			actionsDiv.appendChild(unt.components.cardButton(unt.icons.edit, unt.settings.lang.getValue('write_a_post'), new Function()));
+			actionsDiv.appendChild(unt.components.cardButton(unt.icons.edit, unt.settings.lang.getValue('write_a_post'), function () {
+				return unt.actions.wall.createManager().then(function () {
+
+				}).catch(function () {
+
+				});
+			}));
 		}
 
 		let newsLoadCard = document.createElement('div');
@@ -357,6 +372,8 @@ unt.pages = new Object({
 
 				chatInfoDiv.appendChild(dialogInf);
 				chatInfoDiv.appendChild(dialogState);
+
+				return unt.modules.messenger.pages.chat(chatObject);
 			}
 
 			if (internalData)
@@ -807,6 +824,10 @@ unt.pages = new Object({
 
 			if (user.can_write_on_wall) {
 				let writeButton = unt.components.floatingActionButton(unt.icons.edit, unt.settings.lang.getValue('write_a_post'), true);
+				writeButton.addEventListener('click', function (event) {
+					return unt.actions.wall.createManager().then().catch();
+				});
+
 				mainData.appendChild(writeButton);
 			}
 

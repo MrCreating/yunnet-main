@@ -573,5 +573,6 @@
   "work_account_info": "This is the special account. Not the user.",
   "voted": "Voted by",
   "people": "People",
-  "vote_first": "Vote first!"
+  "vote_first": "Vote first!",
+  "preview_post": "Preview a post"
 }

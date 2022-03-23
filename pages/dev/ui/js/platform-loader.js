@@ -16,6 +16,9 @@ unt.actions.linkWorker.go = function (url = window.location.href, writeToLocalHi
 	unt.components.menuElement.replaceWith(newMenuElement);
 	unt.components.menuElement = newMenuElement;
 
+	if (unt.tools.isMobile())
+		newMenuElement.style.height = 'calc(100% - 51px)';
+
 	unt.actions.wall.currentId = null;
 	if (writeToLocalHistory) {
 		let pageInfoObject = {id: this.history.length, url: url};

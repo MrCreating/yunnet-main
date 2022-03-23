@@ -63,6 +63,26 @@ unt.modules.messenger = {
 		dialog: function (url, internalData) {
 			document.title = unt.settings.lang.getValue('message');
 		},
+		chat: function (chatObject) {
+			let menu = unt.components.menuElement;
+
+			document.title = unt.settings.lang.getValue('message') + ' | ' + (chatObject.chat_info.is_multi_chat ? chatObject.chat_info.data.title : (chatObject.chat_info.data.name || (chatObject.chat_info.data.first_name + ' ' + chatObject.chat_info.data.last_name)));
+		
+			let dialogContainer = document.createElement('div');
+			menu.appendChild(dialogContainer);
+
+			dialogContainer.style.display = 'flex';
+			dialogContainer.style.flexDirection = 'column';
+			dialogContainer.style.width = dialogContainer.style.height = '100%';
+
+			let messagesContainer = document.createElement('div');
+			messagesContainer.style.height = '100%';
+			dialogContainer.appendChild(messagesContainer);
+
+			let chatInputField = unt.components.cardInputArea(unt.settings.lang.getValue('write_a_message'));
+			dialogContainer.appendChild(chatInputField);
+			unt.textareaAutoResize(chatInputField.getInput());
+		},
 		functions: {
 			loadChats: function (resultDiv, messagesDiv, loaderDiv, page = 1) {
 				loaderDiv.show();

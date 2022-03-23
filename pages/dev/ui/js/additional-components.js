@@ -504,6 +504,9 @@ unt.parsers = new Object({
 });
 
 unt.icons = new Object({
+	picture: '<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>',
+	settings: '<svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24" viewBox="0 0 24 24" width="24"><g><path d="M0,0h24v24H0V0z" fill="none"/><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></g></svg>',
+	attachment: '<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>',
 	done: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none"/><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>',
 	close: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none"/><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>',
 	profileStatus: '<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-5h2v5zm4 0h-2v-3h2v3zm0-5h-2v-2h2v2zm4 5h-2V7h2v10z"/></svg>',
@@ -530,10 +533,57 @@ unt.icons = new Object({
 	messagesOk: '<svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><g><rect fill="none" height="24" width="24" x="0"/><path d="M17.34,20l-3.54-3.54l1.41-1.41l2.12,2.12l4.24-4.24L23,14.34L17.34,20z M12,17c0-3.87,3.13-7,7-7c1.08,0,2.09,0.25,3,0.68 V4c0-1.1-0.9-2-2-2H4C2.9,2,2,2.9,2,4v18l4-4h6v0c0-0.17,0.01-0.33,0.03-0.5C12.01,17.34,12,17.17,12,17z"/></g></svg>',
 	wallPost: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none"/><path d="M4 4h7V2H4c-1.1 0-2 .9-2 2v7h2V4zm6 9l-4 5h12l-3-4-2.03 2.71L10 13zm7-4.5c0-.83-.67-1.5-1.5-1.5S14 7.67 14 8.5s.67 1.5 1.5 1.5S17 9.33 17 8.5zM20 2h-7v2h7v7h2V4c0-1.1-.9-2-2-2zm0 18h-7v2h7c1.1 0 2-.9 2-2v-7h-2v7zM4 13H2v7c0 1.1.9 2 2 2h7v-2H4v-7z"/></svg>',
 	comments: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none"/><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg>',
-	backArrow: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none"/><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>'
+	backArrow: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none"/><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>',
+	send: '<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"></path><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>'
 });
 
 unt.components = new Object({
+	cardInputArea: function (placeholder) {
+		let element = document.createElement('div');
+		element.classList.add('card');
+		element.style.width = '100%';
+		element.style.padding = '5px 10px 0px';
+		element.style.paddingTop = 0;
+		element.style.marginBottom = 0;
+
+		let mainContainer = document.createElement('div');
+		mainContainer.classList.add('valign-wrapper');
+		element.appendChild(mainContainer);
+		mainContainer.style.width = '100%';
+
+		let inputClass = document.createElement('div');
+		mainContainer.appendChild(inputClass);
+		inputClass.classList = ['input-field col s12'];
+		inputClass.style.width = '100%'
+		inputClass.style.margin = 0;
+		inputClass.style.padding = 0;
+
+		let textarea = document.createElement('textarea');
+		textarea.style.margin = 0;
+		textarea.placeholder = placeholder;
+		textarea.style.marginBottom = '-5px';
+		inputClass.appendChild(textarea);
+		textarea.classList.add('materialize-textarea');
+		textarea.classList.add('commentsField');
+
+		let actionsDiv = document.createElement('div');
+		actionsDiv.style.alignSelf = 'flex-end';
+		actionsDiv.style.marginLeft = '10px';
+		mainContainer.appendChild(actionsDiv);
+
+		let sendAction = document.createElement('div');
+		actionsDiv.appendChild(sendAction);
+		sendAction.style.display = 'grid';
+		sendAction.style.marginBottom = unt.tools.isMobile() ? '9px' : '9px';
+		sendAction.style.cursor = 'pointer';
+		sendAction.innerHTML = unt.icons.send;
+
+		element.getInput = function () {
+			return textarea;
+		}
+
+		return element;
+	},
 	button: function (text, onclick) {
 		let element = document.createElement('a');
 		element.classList = ['btn waves-effect waves-light'];
@@ -635,7 +685,7 @@ unt.components = new Object({
 		return element;
 	},
 	wall: new Object({
-		post: function (wallPostObject, isFullWindow = false) {
+		post: function (wallPostObject, isFullWindow = false, preview = false) {
 			let element = document.createElement('div');
 			element.classList.add('card');
 			element.classList.add('waves-effect');
@@ -678,7 +728,9 @@ unt.components = new Object({
 				userImage.src = entity.photo_url;
 				usernameDiv.innerText = entity.account_type === 'bot' ? entity.name : (entity.first_name + ' ' + entity.last_name);
 				usernameDiv.setAttribute('target', '_blank');
-				usernameDiv.href = '/' + (entity.screen_name ? entity.screen_name : (entity.account_type === 'user' ? ("id" + entity.user_id) : ("bot" + entity.bot_id)));
+
+				if (!preview)
+					usernameDiv.href = '/' + (entity.screen_name ? entity.screen_name : (entity.account_type === 'user' ? ("id" + entity.user_id) : ("bot" + entity.bot_id)));
 			}).catch(function (err) {
 				usernameDiv.innerText = unt.settings.lang.getValue('deleted_account');
 				photoDiv.hide();
@@ -692,7 +744,7 @@ unt.components = new Object({
 				postTextDiv.innerHTML = nl2br(htmlspecialchars(wallPostObject.text ? wallPostObject.text : '').linkify());
 				element.appendChild(postTextDiv);
 
-				if (!isFullWindow) {
+				if (!isFullWindow && !preview) {
 					postTextDiv.addEventListener('click', function (event) {
 						if (unt.tools.isMobile()) {
 							return unt.actions.linkWorker.go('/wall' + wallPostObject.owner_id + '_' + wallPostObject.id, true, wallPostObject);
@@ -2076,6 +2128,11 @@ unt.components = new Object({
 		let mainDiv = document.createElement('div');
 		mainDiv.classList.add('main-menu');
 		document.body.appendChild(mainDiv);
+		mainDiv.style.height = (document.body.clientHeight - 60 + (unt.tools.isMobile() ? 60 : 0)) + 'px';
+
+		window.addEventListener('resize', function () {
+			mainDiv.style.height = (document.body.clientHeight - 60 + (unt.tools.isMobile() ? 60 : 0)) + 'px';
+		});
 
 		unt.components.mainBlock = mainDiv;
 

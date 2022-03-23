@@ -4615,6 +4615,22 @@ textarea.materialize-textarea {
     transition: box-shadow .3s, border .3s, -webkit-box-shadow .3s
 }
 
+.commentsField {
+    -webkit-box-shadow: none !important;
+    -moz-box-shadow: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    outline: none !important;
+}
+
+.commentsField:focus {
+    -webkit-box-shadow: none !important;
+    -moz-box-shadow: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    outline: none !important;
+}
+
 input:not([type]):disabled,
 input:not([type])[readonly="readonly"],
 input[type=text]:not(.browser-default):disabled,
