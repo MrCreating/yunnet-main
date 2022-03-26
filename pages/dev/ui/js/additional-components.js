@@ -391,8 +391,8 @@ unt.parsers = new Object({
 	},
 	chatStateString: function (chatObject) {
 		if (chatObject.metadata.permissions) {
-			if (chatObject.metadata.permissions.is_leaved) return unt.settings.lang.getValue('you_leaved');
 			if (chatObject.metadata.permissions.is_kicked) return unt.settings.lang.getValue('you_kicked');
+			if (chatObject.metadata.permissions.is_leaved) return unt.settings.lang.getValue('you_leaved');
 		}
 
 		if (chatObject.chat_info.data.members_count) {
@@ -403,82 +403,127 @@ unt.parsers = new Object({
 
 		return unt.settings.lang.getValue('chat');
 	},
-	attachments: function (attachmentsArray) {
-		let resultElement = document.createElement('div');
+	attachments: function (attachments = [], new_id = false) {
+		let element = document.createElement('div');
+		if (new_id)
+			element.id = 'out_atts';
 
-		if (!Array.isArray(attachmentsArray))
-			return resultElement;
+		element.classList.add('attachments');
+		element.style.maxWidth = '340px';
 
-		let doneAttachmentsArray = [];
-		for (let i = 0; i < attachmentsArray.length; i++) {
-			if (attachmentsArray[i].type !== 'photo')
-				doneAttachmentsArray.push(attachmentsArray[i]);
+		let doneObjects = [];
+		
+		let pollElement = null;
+		for (let i = 0; i < attachments.length; i++) {
+			if (attachments[i].type === 'poll') {
+				pollElement = attachments[i];
+			} else {
+				doneObjects.push(attachments[i]);
+			}
 		}
-		for (let i = 0; i < attachmentsArray.length; i++) {
-			if (attachmentsArray[i].type === 'photo')
-				doneAttachmentsArray.push(attachmentsArray[i]);
-		}
 
-		let arrayWithoutNoPhotoAttachments = doneAttachmentsArray.filter(function (attachment) {
-			return attachment.type === 'photo';
-		});
+		if (pollElement)
+			doneObjects.push(pollElement);
 
-		let firstAttachmentsDiv = document.createElement('div');
-		firstAttachmentsDiv.style.display = 'flex';
+		if (doneObjects.length > 0) {
+			let group_1_has = false;
+			let group_2_has = false;
+			let group_3_has = false;
 
-		let secondAttachmentsDiv = document.createElement('div');
-		let thirdAttachmentsDiv = document.createElement('div');
+			let currentGroup = 1;
+			let currentElement = null;
+			let width = 100;
 
-		arrayWithoutNoPhotoAttachments.forEach(function (attachment, index) {
-			if (arrayWithoutNoPhotoAttachments.length === 1) {
-				if (index === 0) {
-					resultElement.appendChild(firstAttachmentsDiv);
+			for (let i = 0; i < doneObjects.length; i++) {
+				if (i >= 10) break;
 
-					let image = document.createElement('img');
-					image.src = attachment.photo.url.main;
-					firstAttachmentsDiv.appendChild(image);
+				if (doneObjects[i].type === 'poll') {
+					let poll = unt.components.attachments.poll(doneObjects[i]);
 
-					image.style.maxWidth = '100%';
-					image.style.maxHeight = parseInt(attachment.photo.meta.height / 2) + 'px';
+					element.appendChild(poll);
+				}
+				if (doneObjects[i].type === 'photo') {
+					if (i >= 0 && i <= 1 && !group_1_has) {
+						let attachmentsGroupItem = document.createElement('div');
+						attachmentsGroupItem.classList.add('attachments_line_1');
+
+						group_1_has = true;
+						currentGroup = 1;
+						width = 50;
+
+						let innerP = document.createElement('p');
+						attachmentsGroupItem.appendChild(innerP);
+						innerP.classList.add('valign-wrapper');
+						innerP.style.height = '150px';
+
+						currentElement = innerP;
+						element.appendChild(attachmentsGroupItem);
+					}
+					if (i >= 2 && i <= 4 && !group_2_has) {
+						let attachmentsGroupItem = document.createElement('div');
+						attachmentsGroupItem.classList.add('attachments_line_2');
+
+						group_2_has = true;
+						currentGroup = 2;
+						width = 33.3;
+
+						let innerP = document.createElement('p');
+						attachmentsGroupItem.appendChild(innerP);
+						innerP.classList.add('valign-wrapper');
+						innerP.style.height = '100px';
+
+						currentElement = innerP;
+						element.appendChild(attachmentsGroupItem);
+					}
+					if (i >= 5 && i <= 9 && !group_3_has) {
+						let attachmentsGroupItem = document.createElement('div');
+						attachmentsGroupItem.classList.add('attachments_line_3');
+
+						group_3_has = true;
+						currentGroup = 3;
+						width = 20;
+
+						let innerP = document.createElement('p');
+						attachmentsGroupItem.appendChild(innerP);
+						innerP.classList.add('valign-wrapper');
+						innerP.style.height = '50px';
+
+						currentElement = innerP;
+						element.appendChild(attachmentsGroupItem);
+					}
+
+					let imgDiv = document.createElement('div');
+					
+					imgDiv.style.height = '100%';
+					imgDiv.style.maxWidth = '100%';
+					imgDiv.style.margin = '2px';
+					currentElement.appendChild(imgDiv);
+
+					let img = new Image();
+					img.width = doneObjects[i].photo.meta.width;
+					img.height = doneObjects[i].photo.meta.height;
+
+					imgDiv.appendChild(img);
+					img.loading = 'lazy';
+
+					img.src = doneObjects[i].photo.url.main;
+					img.classList.add('attachment_tile');
+
+					img.style.minWidth = width;
+					img.style.maxWidth = '100%';
+					img.style.maxHeight = '100%';
+
+					img.setAttribute('attachment', 'photo' + doneObjects[i].photo.owner_id + '_' + doneObjects[i].photo.id + '_' + doneObjects[i].photo.access_key);
+					
+					img.boundAttachment = doneObjects[i];
+					img.onclick = function () {
+						return photos.show(this, doneObjects[i].photo);
+					}
 				}
 			}
-			if (arrayWithoutNoPhotoAttachments.length === 2) {
-				if (index === 0) {
-					resultElement.appendChild(firstAttachmentsDiv);
+		}
 
-					let image = document.createElement('img');
-					image.src = attachment.photo.url.main;
-					firstAttachmentsDiv.appendChild(image);
-
-					image.style.maxWidth = '50%';
-					image.style.marginRight = '5px';
-					//image.style.maxHeight = parseInt(attachment.photo.meta.height / 2) + 'px';
-				}
-				if (index === 1) {
-					let image = document.createElement('img');
-					image.src = attachment.photo.url.main;
-					firstAttachmentsDiv.appendChild(image);
-
-					image.style.maxWidth = '50%';
-					//image.style.maxHeight = parseInt(attachment.photo.meta.height / 2) + 'px';
-				}
-				console.log(attachment);
-			}
-			if (arrayWithoutNoPhotoAttachments.length === 3) {}
-			if (arrayWithoutNoPhotoAttachments.length === 4) {}
-			if (arrayWithoutNoPhotoAttachments.length === 5) {}
-			if (arrayWithoutNoPhotoAttachments.length === 6) {}
-			if (arrayWithoutNoPhotoAttachments.length === 7) {}
-			if (arrayWithoutNoPhotoAttachments.length === 8) {}
-			if (arrayWithoutNoPhotoAttachments.length === 9) {}
-			if (arrayWithoutNoPhotoAttachments.length >= 10) {}
-		});
-
-		let restAttachmentsArray = doneAttachmentsArray.filter(function (attachment) {
-			return attachment.type !== 'photo';
-		});
-
-		return resultElement;
+		return element;
 	},
 	time: function (timestamp, withOutDate = false, withOutHours = false) {
 		if (withOutHours && withOutDate) {
@@ -538,8 +583,442 @@ unt.icons = new Object({
 });
 
 unt.components = new Object({
+	attachments: {
+		poll: function (object) {
+			let pollContainer = document.createElement('div');
+
+			pollContainer.boundAttachment = object;
+			pollContainer.setAttribute('attachment', 'poll' + object.poll.owner_id + '_' + object.poll.id + '_' + object.poll.access_key);
+
+			pollContainer.classList.add('card');
+			pollContainer.classList.add('full_section');
+
+			pollContainer.style = 'background-color: #909090 !important; color: white';
+
+			let pollTitle = document.createElement('div');
+			pollTitle.style.textAlign = 'center';
+
+			let inB = document.createElement('b');
+			pollTitle.appendChild(inB);
+			inB.style.color = 'var(--unt-poll-title-color, white)';
+
+			pollContainer.appendChild(pollTitle);
+			inB.innerText = object.poll.data.title;
+
+			let pollInfo = document.createElement('div');
+			pollInfoText = document.createElement('small');
+
+			pollInfo.style.textAlign = 'center';
+			pollInfoText.style.color = 'var(--unt-poll-info-color, lightgrey)';
+			pollContainer.appendChild(pollInfo);
+			pollInfo.appendChild(pollInfoText);
+			pollInfoText.innerText = (object.poll.data.is_anonymous ? unt.settings.lang.getValue('poll_anonymous') : unt.settings.lang.getValue('poll_public')) + (' • ') + unt.parsers.time(object.poll.creation_time);
+
+			pollContainer.appendChild(document.createElement('br'));
+
+			let pollVariants = document.createElement('div');
+			pollVariants.style.display = 'grid';
+			pollVariants.style.width = '100%';
+			pollContainer.appendChild(pollVariants);
+
+			let pollVoting = false;
+			let pollVoted = false;
+
+			object.poll.variants_list.forEach(function (variant) {
+				pollVoted = object.poll.voted_by_me;
+
+				let answer = document.createElement('a');
+				answer.classList = ['card waves-effect waves-light valign-wrapper hidet-aone answer'];
+				answer.style = 'background-color: gray !important';
+				answer.boundVariant = variant;
+
+				let answerTextDiv = document.createElement('div');
+				answer.appendChild(answerTextDiv);
+
+				let answerText = document.createElement('div');
+				let answerStatsProgress = document.createElement('div');
+				answerStatsProgress.classList.add('progress-bar');
+				answerStatsProgress.style = 'margin-left: -10px !important; margin-top: -10px; border-radius: 2px; background-color: lightgray; position: absolute; width: 0%; height: 100%; opacity: 0.3; display: none';
+
+				answerTextDiv.appendChild(answerStatsProgress);
+				answerTextDiv.appendChild(answerText);
+
+				answerText.innerHTML = htmlspecialchars(variant.text) + (object.poll.voted_by_me ? (' <i color="aliceblue">(' +  (variant.count) + ')</i>') : '');
+
+				answer.style.cursor = 'pointer';
+				answer.style.display = 'flex';
+				answer.style.justifyContent = 'space-between';
+				answer.style.padding = '10px';
+				answer.style.margin = '3px';
+				answer.style.color = 'white';
+				answer.style.zIndex = 0;
+
+				let answerStates = document.createElement('div');
+				answer.appendChild(answerStates);
+				answerStates.classList.add('valign-wrapper');
+
+				let pollLoaderProgress = unt.components.loaderElement().setColor('white');
+				pollLoaderProgress.setArea(15);
+				pollLoaderProgress.style.display = 'none';
+				answerStates.appendChild(pollLoaderProgress);
+
+				let doneDiv = document.createElement('div');
+				doneDiv.innerHTML = unt.icons.done;
+				doneDiv.getElementsByTagName('svg')[0].style.fill = 'white';
+				answerStates.appendChild(doneDiv);
+				doneDiv.getElementsByTagName('svg')[0].height.baseVal.value = 15;
+				doneDiv.getElementsByTagName('svg')[0].width.baseVal.value = 15;
+				doneDiv.style.display = 'none';
+
+				let donePercent = document.createElement('div');
+				donePercent.classList.add('done-percent');
+				donePercent.boundVariant = variant;
+				answerStates.appendChild(donePercent);
+				donePercent.style.marginLeft = '10px';
+				donePercent.style.display = 'none';
+
+				if (object.poll.voted_by_me) {
+					donePercent.style.display = '';
+					let votedPercent = (variant.count && variant.count > 0) ? parseInt((variant.count ? variant.count : 0) / object.poll.data.voted * 100) : 0;
+					donePercent.innerText = votedPercent + '%';
+					answerStatsProgress.style.display = '';
+					answerStatsProgress.style.width = votedPercent + '%';
+				}
+
+				if (variant.selected)
+					doneDiv.style.display = 'flex';
+
+				answer.addEventListener('click', function (event) {
+					if (pollVoted && !object.poll.data.is_anonymous) {
+						let win = unt.components.windows.createWindow({
+							title: unt.settings.lang.getValue('poll')
+						});
+
+						win.getFooter().remove();
+						win.show();
+
+						let menuWin = win.getMenu();
+
+						let variantTitleDiv = document.createElement('div');
+						menuWin.appendChild(variantTitleDiv);
+						variantTitleDiv.style.paddingBottom = '15px';
+						variantTitleDiv.innerText = variant.text;
+						variantTitleDiv.classList.add('unselectable');
+
+						let loader = unt.components.loaderElement();
+						loader.classList.add('center');
+						menuWin.appendChild(loader);
+
+						let data = new FormData();
+
+						data.append('action', 'get_voted');
+						data.append('variant_id', variant.id);
+
+						return unt.tools.Request({
+							url: '/poll' + object.poll.owner_id + '_' + object.poll.id + '_' + object.poll.access_key,
+							method: 'POST',
+							data: data,
+							success: function (response) {
+								try {
+									response = JSON.parse(response);
+									if (response.error) {
+										win.close();
+										return unt.toast({html: unt.settings.lang.getValue('upload_error')});
+									}
+
+									let collectionsDiv = document.createElement('div');
+									collectionsDiv.classList.add('collection');
+									menuWin.appendChild(collectionsDiv);
+									loader.remove();
+
+									response.users.forEach(function (user) {
+										let userDiv = document.createElement('div');
+										userDiv.style.padding = 0;
+										userDiv.style.paddingBottom = '10px';
+										userDiv.classList.add('collection-item');
+										userDiv.classList.add('valign-wrapper');
+										collectionsDiv.appendChild(userDiv);
+										userDiv.style.cursor = 'pointer';
+										userDiv.addEventListener('click', function () {
+											window.open('/' + user.screen_name || (user.account_type === 'user' ? ('id' + user.user_id) : ('bot' + user.bot_id)));
+										});
+
+										let img = document.createElement('img');
+										img.classList.add('circle');
+										img.height = img.width = 32;
+										userDiv.appendChild(img);
+										img.src = user.photo_url;
+										img.style.marginRight = '15px';
+
+										let credentialsDiv = document.createElement('div');
+										userDiv.appendChild(credentialsDiv);
+										credentialsDiv.innerText = user.name || (user.first_name + ' ' + user.last_name);
+									});
+								} catch (e) {
+									unt.toast({html: unt.settings.lang.getValue('upload_error')});
+									win.close();
+								}
+							},
+							error: function () {
+								unt.toast({html: unt.settings.lang.getValue('upload_error')});
+								win.close();
+							}
+						});
+					}
+					if (pollVoting || pollVoted) return;
+
+					pollVoting = true;
+
+					let data = new FormData();
+
+					data.append('action', 'add_vote');
+					data.append('answer_id', variant.id);
+
+					pollLoaderProgress.style.display = '';
+					return unt.tools.Request({
+						url: '/poll' + object.poll.owner_id + '_' + object.poll.id + '_' + object.poll.access_key,
+						method: 'POST',
+						data: data,
+						success: function (response) {
+							pollVoting = false;
+							pollLoaderProgress.style.display = 'none';
+
+							try {
+								response = JSON.parse(response);
+								if (response.error) {
+									return unt.toast({html: unt.settings.lang.getValue('upload_error')});
+								}
+
+								let allVotedCount = 0;
+								for (let key in response.stats) {
+									allVotedCount += response.stats[key].count;
+								}
+
+								if (allVotedCount <= 0) {
+									votedStats.innerText = unt.settings.lang.getValue('vote_first').replace('%', ((unt.settings.users.current && unt.settings.users.current.gender === 1) ? 'ым' : 'ой'));
+								} else {
+									if (unt.settings.lang.getValue('id') === 'ru') {
+										votedStats.innerText = unt.settings.lang.getValue('voted');
+										if (allVotedCount > 1)
+											votedStats.innerText += 'и';
+										votedStats.innerText += ' ' + (allVotedCount) + ' ';
+										votedStats.innerText += ' ' + unt.parsers.form(allVotedCount, ["человек", "человека", "человек"]);
+									} else {
+										votedStats.innerText = unt.settings.lang.getValue('voted') + ' ' + (allVotedCount) + ' ' + unt.settings.lang.getValue('people');
+									}
+								}
+
+								let answers = pollVariants.querySelectorAll('.answer');
+								for (let k = 0; k < answers.length; k++) {
+									let variantInfo = answers[k].boundVariant;
+									let donePercent = answers[k].querySelectorAll('.done-percent')[0];
+									let answerStatsProgress = answers[k].querySelectorAll('.progress-bar')[0];
+
+									if (donePercent) {
+										let usersVoted = response.stats[variantInfo.id] ? response.stats[variantInfo.id].count : 0;
+
+										let percent = parseInt(usersVoted / allVotedCount * 100) || 0;
+										if (answerStatsProgress) {
+											answerStatsProgress.style.display = '';
+											answerStatsProgress.style.width = percent + '%';
+										}
+									
+										donePercent.style.display = '';
+										donePercent.innerText = percent + '%';
+									}
+								}
+
+								doneDiv.style.display = 'flex';
+								pollVoted = true;
+							} catch (e) {
+								return unt.toast({html: unt.settings.lang.getValue('upload_error')});
+							}
+						},
+						error: function () {
+							pollVoting = false;
+
+							pollLoaderProgress.style.display = 'none';
+							return unt.toast({html: unt.settings.lang.getValue('upload_error')});
+						}
+					});
+				});
+
+				return pollVariants.appendChild(answer);
+			});
+
+			let votedStats = document.createElement('div');
+			votedStats.style.marginTop = '10px';
+			pollContainer.appendChild(votedStats);
+			votedStats.classList.add('center');
+
+			if (object.poll.data.voted <= 0) {
+				votedStats.innerText = unt.settings.lang.getValue('vote_first').replace('%', ((unt.settings.users.current && unt.settings.users.current.gender === 1) ? 'ым' : 'ой'));
+			} else {
+				if (unt.settings.lang.getValue('id') === 'ru') {
+					votedStats.innerText = unt.settings.lang.getValue('voted');
+					if (object.poll.data.voted > 1)
+						votedStats.innerText += 'и';
+					votedStats.innerText += ' ' + (object.poll.data.voted) + ' ';
+					votedStats.innerText += unt.parsers.form(object.poll.data.voted, ["человек", "человека", "человек"]);
+				} else {
+					votedStats.innerText = unt.settings.lang.getValue('voted') + ' ' + (object.poll.data.voted) + ' ' + unt.settings.lang.getValue('people');
+				}
+			}
+
+			return pollContainer;
+		},
+		photo: function (object) {}
+	},
+	contextMenu: function (elements = []) {
+		if (unt.tools.isMobile()) {
+			let modalElement = document.createElement('div');
+
+			modalElement.classList = ['modal bottom-sheet'];
+
+			let modalContent = document.createElement('div');
+			modalElement.appendChild(modalContent);
+
+			let itemsCollection = document.createElement('div');
+			itemsCollection.classList.add('collection');
+
+			itemsCollection.style.backgroundColor = 'inherit';
+			modalContent.appendChild(itemsCollection);
+
+			elements.forEach(function (item) {
+				let a = document.createElement('a');
+				a.classList.add('unselectable');
+
+				a.style.backgroundColor = 'inherit';
+
+				let textItem = item[0];
+				let onclickFunction = item[1];
+
+				if (typeof textItem !== "string") throw new TypeError("Only strings as text allowed");
+				if (typeof onclickFunction !== "function") throw new TypeError("Only functions allowed to onclick handler")
+
+				a.innerText = textItem;
+				a.addEventListener('click', function (event) {
+					onclickFunction(event, a, modalElement);
+
+					return modalElement.close();
+				});
+
+				a.classList = ['collection-item alink-name'];
+
+				itemsCollection.appendChild(a);
+			});
+
+			modalElement.open = function () {
+				document.body.appendChild(this);
+
+				let instance = unt.Modal.init(this, {
+					onCloseEnd: function () {
+						return modalElement.remove();
+					}
+				});
+
+				return instance ? instance.open() : null;
+			}
+			modalElement.close = function () {
+				let instance = unt.Modal.getInstance(modalElement)
+
+				return instance ? instance.close() : null;
+			}
+
+			return modalElement;
+		} else {
+			let itemsElement = null;
+			if (!document.getElementById('tmp-dropdown')) {
+				itemsElement = document.createElement('ul');
+
+				itemsElement.classList.add('dropdown-content');
+			} else {
+				itemsElement = document.getElementById('tmp-dropdown');
+				itemsElement.innerHTML = '';
+			}
+
+			let aTrigger = null;
+			if (!document.getElementById('tmp-trigger')) {
+				aTrigger = document.createElement('a');
+				aTrigger.id = 'tmp-trigger';
+			} else {
+				aTrigger = document.getElementById('tmp-trigger');
+			}
+
+			elements.forEach(function (item) {
+				let innerli = document.createElement('li');
+				innerli.classList.add('unselectable');
+
+				let textItem = item[0];
+				let onclickFunction = item[1];
+
+				if (typeof textItem !== "string") throw new TypeError("Only strings as text allowed");
+				if (typeof onclickFunction !== "function") throw new TypeError("Only functions allowed to onclick handler")
+
+				let a = document.createElement('a');
+				innerli.appendChild(a);
+
+				a.innerText = textItem;
+				a.addEventListener('click', function (event) {
+					onclickFunction(event, a, itemsElement);
+
+					return itemsElement.close();
+				});
+
+				itemsElement.id = 'tmp-dropdown';
+				itemsElement.open = function (event, openUp = false) {
+					if (!event) return null;
+
+					let x = Number(event.pageX);
+					let y = Number(event.pageY);
+					
+					aTrigger.classList.add('dropdown-trigger');
+					aTrigger.setAttribute('data-target', itemsElement.id);
+
+					if (!document.getElementById(aTrigger.id)) document.body.appendChild(aTrigger);
+					if (!document.getElementById(itemsElement.id)) document.body.appendChild(itemsElement);
+
+					let instance = unt.Dropdown.init(aTrigger, {
+						onCloseEnd: function () {
+							aTrigger.remove();
+							itemsElement.remove();
+						}
+					});
+
+					instance.open();
+
+					this.style.position = 'absolute';
+					this.style.top = String(openUp ? (y - 100) : y) + 'px';
+					this.style.left = String(x) + 'px';
+					this.style.width = 'auto';
+					this.style.height = '';
+
+					return true;
+				}
+
+				itemsElement.close = function () {
+					let instance = unt.Dropdown.getInstance(aTrigger);
+
+					return instance ? instance.close() : null;
+				}
+
+				return itemsElement.appendChild(innerli);
+			});
+
+
+			return itemsElement;
+		}
+	},
 	cardInputArea: function (placeholder) {
 		let element = document.createElement('div');
+
+		let isClosed = false;
+
+		let errorContainer = document.createElement('div');
+		errorContainer.style.padding = '10px 0';
+		errorContainer.hide();
+		element.appendChild(errorContainer);
+
 		element.classList.add('card');
 		element.style.width = '100%';
 		element.style.padding = '5px 10px 0px';
@@ -559,6 +1038,8 @@ unt.components = new Object({
 		inputClass.style.padding = 0;
 
 		let textarea = document.createElement('textarea');
+		textarea.style.maxHeight = '250px';
+
 		textarea.style.margin = 0;
 		textarea.placeholder = placeholder;
 		textarea.style.marginBottom = '-5px';
@@ -569,17 +1050,44 @@ unt.components = new Object({
 		let actionsDiv = document.createElement('div');
 		actionsDiv.style.alignSelf = 'flex-end';
 		actionsDiv.style.marginLeft = '10px';
+		actionsDiv.classList.add('valign-wrapper');
 		mainContainer.appendChild(actionsDiv);
+
+		let fileAction = document.createElement('div');
+		actionsDiv.appendChild(fileAction);
+		fileAction.style.display = 'grid';
+		fileAction.style.marginBottom = unt.tools.isMobile() ? '9px' : '9px';
+		fileAction.style.cursor = 'pointer';
+		fileAction.innerHTML = unt.icons.attachment;
 
 		let sendAction = document.createElement('div');
 		actionsDiv.appendChild(sendAction);
 		sendAction.style.display = 'grid';
 		sendAction.style.marginBottom = unt.tools.isMobile() ? '9px' : '9px';
 		sendAction.style.cursor = 'pointer';
+		sendAction.style.marginLeft = '15px';
 		sendAction.innerHTML = unt.icons.send;
 
 		element.getInput = function () {
 			return textarea;
+		}
+
+		element.close = function (reason) {
+			isClosed = true;
+
+			mainContainer.hide();
+			errorContainer.show();
+			errorContainer.innerText = reason;
+
+			return element;
+		}
+
+		element.open = function () {
+			isClosed = false;
+			mainContainer.show();
+			errorContainer.hide();
+
+			return element;
 		}
 
 		return element;
@@ -693,6 +1201,43 @@ unt.components = new Object({
 			element.style.padding = '20px';
 			element.style.width = '100%';
 			element.style.marginBottom = 0;
+
+			if (!preview)
+				element.addEventListener('contextmenu', function (e) {
+					e.preventDefault();
+					let elements = [];
+
+					if (wallPostObject.owner_id === unt.settings.users.current.user_id) {
+						if (wallPostObject.user_id === unt.settings.users.current.user_id) {
+							if (wallPostObject.is_pinned) {
+								elements.push([unt.settings.lang.getValue('unpin'), new Function()]);
+							} else {
+								elements.push([unt.settings.lang.getValue('pin'), new Function()]);
+							}
+						}
+
+						if (!wallPostObject.event) {
+							elements.push([unt.settings.lang.getValue('edit'), new Function()]);
+						}
+
+						elements.push([unt.settings.lang.getValue('delete'), new Function()]);
+					} else {
+						elements.push([unt.settings.lang.getValue("report"), new Function()]);
+
+						if (wallPostObject.user_id === unt.settings.users.current.user_id) {
+							elements.push([unt.settings.lang.getValue('delete'), new Function()]);
+						}
+					}
+
+					elements.push([unt.settings.lang.getValue('copy_link'), function () {
+						if (('https://yunnet.ru/wall' + wallPostObject.user_id + '_' + wallPostObject.id).copy()) 
+							return unt.toast({html: unt.settings.lang.getValue('copied')});
+						else 
+							return unt.toast({html: unt.settings.getValue('upload_error')});
+					}]);
+
+					return unt.components.contextMenu(elements).open(e);
+				});
 
 			let ownerInfoDiv = document.createElement('div');
 			element.appendChild(ownerInfoDiv);

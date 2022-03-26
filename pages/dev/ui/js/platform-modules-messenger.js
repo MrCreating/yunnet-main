@@ -1,5 +1,10 @@
 unt.modules.messenger = {
 	components: {
+		message: function (chatObject) {
+			let element = document.createElement('div');
+
+			return element;
+		},
 		dialog: function (chatObject) {
 			let element = document.createElement('div');
 			element.addEventListener('click', function (event) {
@@ -82,6 +87,63 @@ unt.modules.messenger = {
 			let chatInputField = unt.components.cardInputArea(unt.settings.lang.getValue('write_a_message'));
 			dialogContainer.appendChild(chatInputField);
 			unt.textareaAutoResize(chatInputField.getInput());
+
+			if ((chatObject.chat_info.is_multi_chat && (chatObject.metadata.permissions.is_kicked || chatObject.metadata.permissions.is_muted)) || 
+				(!chatObject.chat_info.is_multi_chat && !chatObject.chat_info.data.can_write_messages)) {
+				chatInputField.close(unt.settings.lang.getValue('cant_chat'));
+			} else {
+				chatInputField.open();
+			}
+
+			let messagesLoader = unt.components.loaderElement();
+			messagesContainer.appendChild(messagesLoader);
+
+			messagesLoader.style.display = 'flex';
+			messagesLoader.style.justifyContent = 'center';
+			messagesLoader.style.height = '100%';
+			messagesLoader.style.alignItems = 'center';
+
+			let resultDiv = document.createElement('div');
+			messagesContainer.appendChild(resultDiv);
+			resultDiv.hide();
+
+			let resultTextDiv = document.createElement('b');
+			resultDiv.appendChild(resultTextDiv);
+			resultTextDiv.style.width = '60%';
+			resultTextDiv.style.textAlign = 'center';
+			resultTextDiv.style.display = 'flex';
+
+			resultDiv.style.justifyContent = 'center';
+			resultDiv.style.height = '100%';
+			resultDiv.style.alignItems = 'center';
+
+			let messageListContainer = document.createElement('div');
+			messagesContainer.appendChild(messageListContainer);
+			messageListContainer.hide();
+			messageListContainer.style.width = '100%';
+
+			return unt.modules.messenger.getMessages(chatObject.peer_id || ('b' + (chatObject.bot_peer_id * -1))).then(function (response) {
+				if (response.length <= 0) {
+					messagesLoader.hide();
+					resultDiv.style.display = 'flex';
+					
+					return resultTextDiv.innerText = unt.settings.lang.getValue('empty_dialog');
+				}
+
+				response.forEach(function (message) {
+					let messageElement = unt.modules.messenger.components.message(message);
+
+					messageListContainer.appendChild(messageElement);
+				});
+
+				messagesLoader.hide();
+				resultDiv.hide();
+				messageListContainer.style.display = 'flex';
+			}).catch(function (err) {
+				messagesLoader.hide();
+				resultDiv.style.display = 'flex';
+				resultTextDiv.innerText = unt.settings.lang.getValue('failed_to_load_chat');
+			});
 		},
 		functions: {
 			loadChats: function (resultDiv, messagesDiv, loaderDiv, page = 1) {
@@ -150,6 +212,36 @@ unt.modules.messenger = {
 	}),
 
 	dialogs: {},
+	messages: {},
+
+	getMessages: function (chatId, page) {
+		return new Promise(function (resolve, reject) {
+			if (unt.modules.messenger.messages[chatId] && unt.modules.messenger.messages[chatId][page]) return resolve(unt.modules.messenger.messages[chatId][page]);
+
+			return unt.tools.Request({
+				url: '/messages',
+				method: 'POST',
+				data: (new POSTData()).append('action', 'get_messages').append('peer_id', chatId).append('offset', Number(page - 1) * 100).append('count', Number(page) * 100).build(),
+				success: function (response) {
+					try {
+						response = JSON.parse(response);
+						if (response.error)
+							return reject(e);
+
+						if (!unt.modules.messenger.messages[chatId])
+							unt.modules.messenger.messages[chatId] = {};
+
+						return resolve(unt.modules.messenger.messages[chatId][page] = response.list);
+					} catch (e) {
+						return reject(e);
+					}
+				},
+				error: function (err) {
+					return reject(err);
+				}
+			});
+		});
+	},
 
 	getList: function (offset = 0, count = 30) {
 		return new Promise(function (resolve, reject) {

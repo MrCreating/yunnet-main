@@ -296,6 +296,7 @@ unt.pages = new Object({
 		}).catch(function (err) {
 			newsDiv.show();
 			newsLoadCard.hide();
+			console.log(err);
 
 			return newsDiv.appendChild(unt.components.alertBanner(unt.icons.failed, unt.settings.lang.getValue('upload_error'), unt.settings.lang.getValue('unknown_error')));
 		});
@@ -922,6 +923,14 @@ unt.pages = new Object({
 			if (unt.settings.users.current && user.can_access_closed)
 				actionsMenu.addOption(unt.settings.lang.getValue('show_friends'), function () {
 					return unt.actions.linkWorker.go('/friends?id=' + user.user_id);
+				});
+
+			if (unt.settings.users.current)
+				actionsMenu.addOption(unt.settings.lang.getValue('copy_link'), function () {
+					if (('https://yunnet.ru/' + (user.screen_name || (user.account_type === 'bot' ? ('bot' + user.bot_id) : ('id' + user.user_id)))).copy())
+						return unt.toast({html: unt.settings.lang.getValue('copied')});
+					else
+						return unt.toast({html: unt.settings.lang.getValue('upload_error')});
 				});
 
 			if (user.permissions_type === 0) {

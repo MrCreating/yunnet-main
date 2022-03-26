@@ -9,6 +9,14 @@ function _xmlHttpGet() { let e; try {e = new ActiveXObject("Msxml2.XMLHTTP")} ca
 String.prototype.capitalize = function () {
   return this.charAt(0).toUpperCase() + this.slice(1).toLowerCase();
 }
+String.prototype.copy = function () {
+  if ('navigator' in window) {
+    navigator.clipboard.writeText(this).catch(function (err) {});
+    return true;
+  } else {
+    return false;
+  }
+}
 
 String.prototype.isEmpty = function () {
   let e = this.split("\n").join("");
