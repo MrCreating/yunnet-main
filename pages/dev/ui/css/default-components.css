@@ -7627,47 +7627,7 @@ textarea {
     margin: 3px
 }
 
-.from_me {
-    max-width: 512px;
-    word-wrap: break-word;
-    margin-bottom: 12px;
-    line-height: 24px;
-    padding: 8px 13px;
-    border-radius: 10px 0px 10px 10px;
-    text-align: left;
-    display: inline-block;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-  transition: all 0.3s cubic-bezier(.25,.8,.25,1)
-}
-
-.from_another {
-    max-width: 512px;
-    word-wrap: break-word;
-    margin-bottom: 12px;
-    line-height: 24px;
-    position: sticky;
-    padding: 8px 13px;
-    border-radius: 0px 10px 10px 10px;
-    text-align: left;
-    display: inline-block;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-  transition: all 0.3s cubic-bezier(.25,.8,.25,1)
-}
-
-.from_another img {
-    border-radius: 10px 10px 10px 10px;
-}
-.from_me img {
-    border-radius: 10px 10px 10px 10px;
-}
-.from_another p {
-    margin: 0;
-}
-.from_me p {
-    margin: 0;
-}
-
-.from-me {
+/*.from-me {
     background: var(--from-me-messages-background, #cfd8dc) !important;
     color: var(--from-me-messages-text-color, black) !important;
 }
@@ -7675,40 +7635,12 @@ textarea {
 .from-them {
     background: var(--from-another-messages-background, #E5E5EA) !important;
     color: var(--from-another-messages-text-color, black) !important;
-}
+}*/
 
 .nothing_have {
     min-height: 50%;
     max-height: 90%;
     height: auto
-}
-
-subtext {
-    color: var(--unt-subtext-color, #e4d6d6) !important;
-    font-size: 85%;
-    display: block;
-    margin-top: -40px
-}
-
-subaddtext {
-    color: var(--unt-subtext-color, #e4d6d6) !important;
-    position: relative;
-    margin-top: -10%
-}
-
-subalert {
-    background-color: #323232;
-    word-wrap: break-word;
-    color: white;
-    display: block;
-    width: 100%;
-    box-shadow: 0 3px 4px #212121;
-    z-index: 990;
-    min-height: 30px;
-    max-height: 256px;
-    overflow: auto;
-    font-size: 15px;
-    position: fixed
 }
 
 .items {

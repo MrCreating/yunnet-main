@@ -1,7 +1,261 @@
 unt.modules.messenger = {
 	components: {
-		message: function (chatObject) {
+		fwd: function (msgFwdObject) {
+			let element = document.createElement('blockquote');
+
+			let messageAuthorAndTime = document.createElement('div');
+			messageAuthorAndTime.classList.add('valign-wrapper');
+			element.appendChild(messageAuthorAndTime);
+
+			let userImage = document.createElement('img');
+			userImage.width = userImage.height = 32;
+			userImage.style.marginRight = '10px';
+			userImage.classList.add('circle');
+			messageAuthorAndTime.appendChild(userImage);
+
+			let userData = document.createElement('div');
+			messageAuthorAndTime.appendChild(userData);
+			userData.classList.add('halign-wrapper');
+
+			let userCredenials = document.createElement('a');
+			userCredenials.setAttribute('target', '_blank');
+
+			let messageTime = document.createElement('div');
+
+			userData.appendChild(userCredenials);
+			userData.appendChild(messageTime);
+
+			messageTime.style.fontSize = '70%';
+			userCredenials.style.color = 'black';
+			userCredenials.style.fontWeight = 'bold';
+			messageTime.innerText = unt.parsers.time(msgFwdObject.time);
+			userCredenials.innerText = '...';
+
+			let messageTextDiv = document.createElement('div');
+			element.appendChild(messageTextDiv);
+			messageTextDiv.innerHTML = nl2br(htmlspecialchars(msgFwdObject.text)).linkify();
+
+			let attachmentsDiv = unt.parsers.attachments(msgFwdObject.attachments);
+			element.appendChild(attachmentsDiv);
+
+			unt.settings.users.get(msgFwdObject.from_id).then(function (user) {
+				userImage.src = user.photo_url;
+				userCredenials.innerText = user.name || (user.first_name + ' ' + user.last_name);
+				userCredenials.href = '/' + (user.screen_name || (user.account_type === 'bot' ? ('bot' + user.bot_id) : ('id' + user.user_id)));
+			}).catch(function (err) {
+				userImage.remove();
+				userCredenials.innerText = unt.settings.lang.getValue('deleted_accout');
+			});
+
+			if (msgFwdObject.fwd && msgFwdObject.fwd.length > 0) {
+				for (let i = 0; i < msgFwdObject.fwd.length; i++) {
+					element.appendChild(this.fwd(msgFwdObject.fwd[i]));
+				}
+			}
+
+			return element;
+		},
+		serviceMessageText: function (msgObject) {
+			let types = [
+				"mute_user", "unmute_user", "returned_to_chat",
+				"join_by_link", "leaved_chat", "updated_photo",
+				"deleted_photo", "kicked_user", "invited_user",
+				"change_title", "chat_create"
+			];
+
+			let event = msgObject.event ? msgObject.event.action : null;
+			if (!event) return 'Event not supported';
+
+			let resultedString = '';
+			if (event === 'mute_user') resultedString = unt.settings.lang.getValue('mute_user');
+			if (event === 'unmute_user') resultedString = unt.settings.lang.getValue('unmute_user');
+			if (event === 'returned_to_chat') resultedString = unt.settings.lang.getValue('returned_to_chat');
+			if (event === 'join_by_link') resultedString = unt.settings.lang.getValue('join_by_link');
+			if (event === 'leaved_chat') resultedString = unt.settings.lang.getValue('leaved_the_chat');
+			if (event === 'updated_photo') resultedString = unt.settings.lang.getValue('updated_photo');
+			if (event === 'deleted_photo') resultedString = unt.settings.lang.getValue('deleted_photo');
+			if (event === 'kicked_user') resultedString = unt.settings.lang.getValue('kicked_user');
+			if (event === 'invited_user') resultedString = unt.settings.lang.getValue('invited_user');
+			if (event === 'change_title') resultedString = unt.settings.lang.getValue('changed_title');
+			if (event === 'chat_create') resultedString = unt.settings.lang.getValue('chat_create');
+
+			return resultedString;
+		},
+		message: function (msgObject) {
+			console.log(msgObject);
+
 			let element = document.createElement('div');
+			element.classList.add('valign-wrapper');
+			element.style.display = 'flex';
+			element.style.cursor = 'pointer';
+			element.id = msgObject.id;
+
+			let messageContainer = document.createElement('div');
+			messageContainer.classList.add('card');
+			messageContainer.style.margin = 0;
+			element.style.marginTop = '10px';
+			element.style.marginBottom = '3px';
+			messageContainer.classList.add('message');
+			messageContainer.classList.add('waves-effect');
+
+			let messageTextBlock = document.createElement('div');
+			messageTextBlock.innerHTML = nl2br(htmlspecialchars(msgObject.text)).linkify();
+
+			let fwdDiv = document.createElement('div');
+			let attachmentsDiv = unt.parsers.attachments(msgObject.attachments);
+
+			let statesSection = document.createElement('div');
+			statesSection.style.paddingTop = '2px';
+			statesSection.style.textAlign = 'end';
+
+			let timeDiv = document.createElement('div');
+			timeDiv.classList.add('message-time');
+			statesSection.appendChild(timeDiv);
+			timeDiv.innerText = unt.parsers.time(msgObject.time, true);
+
+			if (msgObject.from_id === unt.settings.users.current.user_id) {
+				element.appendChild(messageContainer);
+				element.style.justifyContent = 'end';
+
+				messageContainer.classList.add('from-me');
+
+				messageContainer.appendChild(messageTextBlock);
+				messageContainer.appendChild(fwdDiv);
+				messageContainer.appendChild(attachmentsDiv);
+				messageContainer.appendChild(statesSection);
+			} else {
+				if (msgObject.type === 'message') {
+					element.style.justifyContent = 'start';
+
+					let userImage = document.createElement('img');
+					userImage.style.marginBottom = 'auto';
+					userImage.loading = 'lazy';
+
+					userImage.style.marginRight = '10px';
+					userImage.classList.add('circle');
+					userImage.width = userImage.height = 32;
+
+					element.appendChild(userImage);
+					element.appendChild(messageContainer);
+
+					messageContainer.classList.add('from-other');
+
+					let userNameSection = document.createElement('a');
+					userNameSection.setAttribute('target', '_blank');
+
+					userNameSection.style.fontSize = '70%';
+					messageContainer.appendChild(userNameSection);
+					userNameSection.innerText = '...';
+
+					messageContainer.appendChild(messageTextBlock);
+					messageContainer.appendChild(fwdDiv);
+					messageContainer.appendChild(attachmentsDiv);
+					messageContainer.appendChild(statesSection);
+
+					unt.settings.users.get(msgObject.from_id).then(function (user) {
+						userImage.src = user.photo_url;
+						userNameSection.innerText = user.name || (user.first_name + ' ' + user.last_name);
+						userNameSection.href = '/' + (user.screen_name || (user.account_type === 'bot' ? ('bot' + user.bot_id) : ('id' + user.user_id)));
+					}).catch(function (err) {
+						userImage.remove();
+						userNameSection.innerText = unt.settings.lang.getValue('deleted_accout');
+					});
+				}
+			}
+			if (msgObject.type === 'service_message') {
+				element.innerHTML = '';
+				element.style.justifyContent = 'center';
+
+				let forTextDiv = document.createElement('div');
+				forTextDiv.classList.add('waves-effect');
+				forTextDiv.classList.add('message');
+				forTextDiv.classList.add('card');
+				forTextDiv.style.padding = '10px';
+				forTextDiv.style.margin = 0;
+				forTextDiv.style.textAlign = 'center';
+				element.appendChild(forTextDiv);
+				//forTextDiv.innerHTML = unt.settings.lang.getValue('loading');
+
+				let loaderDiv = document.createElement('div');
+				loaderDiv.classList.add('valign-wrapper');
+				forTextDiv.appendChild(loaderDiv);
+
+				let loader = unt.components.loaderElement();
+				loader.setArea(20);
+				loader.style.display = 'grid';
+				loader.style.marginRight = '10px';
+				loaderDiv.appendChild(loader);
+
+				let loadText = document.createElement('div');
+				loaderDiv.appendChild(loadText);
+				loadText.innerText = unt.settings.lang.getValue('loading');
+
+				let msgStringElement = document.createElement('div');
+				msgStringElement.innerText = this.serviceMessageText(msgObject);
+				forTextDiv.appendChild(msgStringElement);
+				msgStringElement.hide();
+
+				if (msgStringElement.innerText.match('%who%')) {
+					unt.settings.users.get(msgObject.from_id).then(function (user) {
+						msgStringElement.innerHTML = msgStringElement.innerHTML.replace('(а)', (user.gender == 2 ? 'а' : ''));
+						msgStringElement.innerHTML = msgStringElement.innerHTML.replace('лся(-ась)', (user.gender == 2 ? 'лась' : 'лся'));
+
+						msgStringElement.innerHTML = msgStringElement.innerHTML.replace('%who%', '<b><a target="_blank" href="/' + (user.screen_name || (user.account_type === 'bot' ? ('bot' + user.bot_id) : ('id' + user.user_id))) + '" style="color: black">' + (
+							user.name || (user.first_name + ' ' + user.last_name)
+						) + '</a></b>');
+
+						loaderDiv.hide();
+						msgStringElement.show();
+					}).catch(function (err) {
+						msgStringElement.innerHTML = msgStringElement.innerHTML.replace('%who%', '<b>' + unt.settings.lang.getValue('deleted_accout') + '</b>');
+
+						loaderDiv.hide();
+						msgStringElement.show();
+					});
+				}
+				if (msgStringElement.innerText.match('%when%')) {
+					unt.settings.users.get(msgObject.event.to_id || 0).then(function (user) {
+						let change = 'acc';
+						if (msgObject.event.action === 'mute_user' || msgObject.event.action === 'unmute_user') change = 'dat';
+
+						msgStringElement.innerHTML = msgStringElement.innerHTML.replace('%when%', '<b><a target="_blank" href="/' + (user.screen_name || (user.account_type === 'bot' ? ('bot' + user.bot_id) : ('id' + user.user_id))) + '" style="color: black">' + (
+							user.name || (user.name_cases.first_name[change] + ' ' + user.name_cases.last_name[change])
+						) + '</a></b>');
+
+						loaderDiv.hide();
+						msgStringElement.show();
+					}).catch(function (err) {
+						msgStringElement.innerHTML = msgStringElement.innerHTML.replace('%when%', '<b>' + unt.settings.lang.getValue('deleted_accout') + '</b>');
+
+						loaderDiv.hide();
+						msgStringElement.show();
+					});
+				}
+				if (msgStringElement.innerText.match('%title%')) {
+					msgStringElement.innerHTML = msgStringElement.innerHTML.replace('%title%', '<b>' + htmlspecialchars(msgObject.event.new_title) + '</b>');
+				}
+			}
+
+			if (msgObject.fwd && msgObject.fwd.length > 0) {
+				for (let i = 0; i < msgObject.fwd.length; i++) {
+					fwdDiv.appendChild(this.fwd(msgObject.fwd[i]));
+				}
+			}
+
+			element.addEventListener('contextmenu', function (event) {
+				event.preventDefault();
+
+				let elements = [];
+
+				if (!msgObject.text.isEmpty())
+					elements.push([unt.settings.lang.getValue('copy_text'), function () {
+						if (msgObject.text.copy()) return unt.toast({html: unt.settings.lang.getValue('copied')});
+						else return unt.toast({html: unt.settings.lang.getValue('upload_error')});
+					}]);
+
+				if (elements.length > 0)
+					return unt.components.contextMenu(elements).open(event);
+			});
 
 			return element;
 		},
@@ -82,11 +336,12 @@ unt.modules.messenger = {
 
 			let messagesContainer = document.createElement('div');
 			messagesContainer.style.height = '100%';
+			messagesContainer.style.display = 'flex';
+			messagesContainer.style.flexDirection = 'column';
 			dialogContainer.appendChild(messagesContainer);
 
 			let chatInputField = unt.components.cardInputArea(unt.settings.lang.getValue('write_a_message'));
-			dialogContainer.appendChild(chatInputField);
-			unt.textareaAutoResize(chatInputField.getInput());
+			chatInputField.style.display = 'flex';
 
 			if ((chatObject.chat_info.is_multi_chat && (chatObject.metadata.permissions.is_kicked || chatObject.metadata.permissions.is_muted)) || 
 				(!chatObject.chat_info.is_multi_chat && !chatObject.chat_info.data.can_write_messages)) {
@@ -121,6 +376,15 @@ unt.modules.messenger = {
 			messagesContainer.appendChild(messageListContainer);
 			messageListContainer.hide();
 			messageListContainer.style.width = '100%';
+			messageListContainer.style.height = '100%';
+			messageListContainer.style.flexDirection = 'column';
+			messageListContainer.style.overflow = 'auto';
+
+			messageListContainer.classList.add('hidesc');
+			messageListContainer.classList.add('unselectable');
+
+			messagesContainer.appendChild(chatInputField);
+			unt.textareaAutoResize(chatInputField.getInput());
 
 			return unt.modules.messenger.getMessages(chatObject.peer_id || ('b' + (chatObject.bot_peer_id * -1))).then(function (response) {
 				if (response.length <= 0) {
@@ -139,6 +403,8 @@ unt.modules.messenger = {
 				messagesLoader.hide();
 				resultDiv.hide();
 				messageListContainer.style.display = 'flex';
+
+				messageListContainer.scrollTo(0, messageListContainer.scrollHeight);
 			}).catch(function (err) {
 				messagesLoader.hide();
 				resultDiv.style.display = 'flex';

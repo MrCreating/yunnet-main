@@ -16,3 +16,34 @@ body {
 .main-menu {
 	opacity: 1;
 }
+
+.message {
+	border-radius: 10px 10px 10px 10px;
+}
+
+.message .attachment_tile {
+	border-radius: 10px 10px 10px 10px !important;
+}
+
+.from-me {
+	padding: 3px 6px 6px 7px;
+	border-top-right-radius: 2px !important;
+	background: var(--from-me-messages-background, aliceblue) !important;
+	color: var(--from-me-messages-text-color, black) !important;
+	margin-right: 3px !important;
+}
+
+.from-other {
+	padding: 3px 11px 6px 11px;
+	border-top-left-radius: 2px !important;
+	background: var(--from-another-messages-background, white) !important;
+	color: var(--from-another-messages-text-color, black) !important;
+}
+
+.message-time {
+	font-size: var(--unt-0message-time-size, 60%) !important;
+}
+
+.service-message {
+
+}

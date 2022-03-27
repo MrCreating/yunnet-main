@@ -577,6 +577,7 @@
   "preview_post": "Preview a post",
   "copied": "Copied",
   "copy_link": "Copy link",
+  "copy_text": "Copy text",
   "empty_dialog": "There are no messages in this dialog. You can change it!",
   "failed_to_load_chat": "Failed to load dialog. You may have a weak connection or your account session has closed."
 }

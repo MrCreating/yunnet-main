@@ -541,8 +541,8 @@ unt.parsers = new Object({
 		let fullMinutes =  ((time.getMinutes()) < 10) ? ("0" + String(time.getMinutes())) : (String(time.getMinutes()));
 
 		let resultedString = '';
-		if (!withOutDate) resultedString += (fullDay + '.' + fullMonth + '.' + fullYear);
-		if (!withOutHours) resultedString += (', ' + fullHours + ':' + fullMinutes);
+		if (!withOutDate) resultedString += (fullDay + '.' + fullMonth + '.' + fullYear) + ' ';
+		if (!withOutHours) resultedString += (fullHours + ':' + fullMinutes);
 
 		return resultedString;
 	}
