@@ -19,19 +19,24 @@ module.exports = {
 
 			context.connections[user_id].sessions[key] = res;
 
-			req.on('timeout', function () {
-				current.removeSession(context, user_id, key);
-			});
 			res.on('timeout', function () {
 				current.removeSession(context, user_id, key);
 			});
-			req.on('close', function () {
+			res.on('close', function () {
+				current.removeSession(context, user_id, key);
+			});
+			res.on('error', function () {
 				current.removeSession(context, user_id, key);
 			});
 			req.on('error', function () {
 				current.removeSession(context, user_id, key);
 			});
+			req.on('close', function () {
+				console.log('remove session');
+			});
 
+			req.setTimeout(86400);
+			res.setTimeout(86400);
 			if (last_event_id > 0 && last_event_id < context.connections[user_id].last_event_id) {
 				let event = current.getEventById(context, user_id, key, Number(last_event_id) + 1);
 

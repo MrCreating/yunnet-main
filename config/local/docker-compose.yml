@@ -22,7 +22,7 @@ services:
         command: bash /home/unt/config/local/scripts/nginx.sh
     php:
         restart: unless-stopped
-        hostname: yunnet.ru
+        hostname: student
         tty: true
         build:
             context: $PWD/docker/context/php

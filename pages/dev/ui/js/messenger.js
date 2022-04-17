@@ -1,14 +1,20 @@
 const realtime = {
 	lastEventId: 0,
 	isOpen: false,
+	isConnecting: false,
+	connectNumber: 0,
 
 	reconnect: function () {
 		return realtime.connect(realtime.handler);
 	},
 	connect: function (eventHandler) {
+		if (realtime.isConnecting || realtime.isOpen) return false;
 		if (!eventHandler || (typeof eventHandler !== "function")) throw new TypeError('Callback handler must be provided');
+		console.log('[' + realtime.connectNumber++ + '] Starting a new LP session...');
 
 		realtime.handler = eventHandler;
+		realtime.isConnecting = true;
+
 		function startPolling (url, lastEventId, handler) {
 			realtime.isOpen = true;
 
@@ -17,24 +23,19 @@ const realtime = {
 				if (x.readyState !== 4) return;
 
 				let event = JSON.parse(x.responseText);
+				realtime.isOpen = false;
+
 				if (event.event === 'timeout') {
-					realtime.isOpen = false;
-					
 					return startPolling(url, lastEventId, handler);
 				}
 
 				realtime.lastEventId = (event.last_event_id || 0) + 1;
 				if (event.error) {
-					realtime.isOpen = false;
-					return realtime.connect(handler);
+					return eventHandler({event: 'connection_failure'}, handler);
 				}
 
 				eventHandler(event, handler);
 				return startPolling(url, realtime.lastEventId, handler);
-			}
-			x.onerror = function () {
-				realtime.isOpen = false;
-				return eventHandler({event: 'connection_failure'}, handler);
 			}
 
 			x.open('GET', url + '&last_event_id=' + lastEventId);
@@ -50,8 +51,13 @@ const realtime = {
 			let response = JSON.parse(x.responseText);
 			if (!response.url) return eventHandler({event: 'connection_failure'});
 
-			eventHandler({event: 'connected'});
 			return startPolling(response.url, response.last_event_id, eventHandler);
+		}
+		x.onerror = 
+		x.onaboprt =
+		x.ontimeout = 
+		function () {
+			console.log('[!] Initial server is down.');
 		}
 
 		x.open('GET', ui.getUrl('lp') + '/?mode=get');
@@ -904,7 +910,7 @@ window.addEventListener('authCompleted', function () {
 		if (!settings.users.current)
 			clearInterval(realtime.checker);
 
-		if (!realtime.isOpen && settings.users.current) {
+		if (!realtime.isConnecting && settings.users.current) {
 			console.log('[!] Restoring LP connection...');
 
 			return realtime.reconnect();
@@ -920,10 +926,13 @@ window.addEventListener('authCompleted', function () {
 		if (eventName === "connection_failure") {
 			if (!settings.users.current) return;
 
+			if (realtime.isOpen) return console.log('[!] Already running a event waiting.');
+
 			console.log('[!] Reconnecting after 3 sec...');
 			setTimeout(function () {
 				console.log('[+] Connecting to LP...');
 
+				realtime.isConnecting = false;
 				realtime.connect(thisFunction);
 				console.log('[ok] Done.');
 			}, 3000);

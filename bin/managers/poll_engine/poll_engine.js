@@ -49,11 +49,6 @@ module.exports = {
 		try {
 			let data = await utils.parseQuery(req);
 
-			req.on('timeout', function () {});
-			res.on('timeout', function () {});
-			req.on('close', function () {});
-			req.on('error', function () {});
-
 			utils.isLogged.apply(utils, [req, data.key]).then(function (user_id) {
 				sessionManager.joinTo.apply(sessionManager, [context, user_id, data.key, data.state === 'sse' ? 'sse' : 'polling', Number(data.last_event_id), req, res]).then(function () {
 

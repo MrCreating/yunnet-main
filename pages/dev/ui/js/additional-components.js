@@ -2520,6 +2520,8 @@ unt.components = new Object({
 				let userCredentials = document.createElement('div');
 				userCredentials.style.marginLeft = '15px';
 				userCredentials.style.fontSize = '90%';
+				userCredentials.style.lineHeight = 'normal';
+				userCredentials.style.textAlign = 'center';
 				userCredentials.innerText = unt.settings.users.current.first_name + ' ' + unt.settings.users.current.last_name;
 				userInfoActionContainer.appendChild(userCredentials);
 

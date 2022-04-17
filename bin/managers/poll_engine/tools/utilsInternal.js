@@ -19,7 +19,7 @@ module.exports = {
 					let local_id = Number(data.local_ids[i]);
 					let uid = event.uid || 0;
 
-					if (!context.connections[String(user_id)] || !context.connections[String(user_id)].sessions || context.connections[String(user_id)].sessions.length <= 0) {
+					if (!context.connections[String(user_id)] || !context.connections[String(user_id)].sessions) {
 						if (i === (data.user_ids.length - 1)) finalize();
 
 						return;
