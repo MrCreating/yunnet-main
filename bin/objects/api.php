@@ -44,6 +44,11 @@ class API
 						$this->boundApp  = $app;
 						$this->owner     = $entity;
 						$this->isValid   = true;
+
+                        session_write_close();
+                        $_SESSION = [];
+                        $_SESSION['user_id'] = $this->owner->getId();
+                        $_SESSION['session_id'] = $this->accessKey->getToken();
 					}
 				}
 			}
@@ -59,10 +64,10 @@ class API
 
 	public function valid (): bool
 	{
-		return $this->isValid;
+        return $this->isValid;
 	}
 
-	public function getOwner (): Entity
+	public function getOwner (): ?Entity
 	{
 		return $this->owner;
 	}
@@ -87,9 +92,9 @@ class API
 		return $result;
 	}
 
-	public function callMethod (string $method, array $params, callable $callback): API
+	public function callMethod (AbstractAPIMethod $method, callable $callback): API
 	{
-		if (!$this->valid())
+        if (!$method->isPublicMethod() && !$this->valid())
 		{
 			$callback(null, new APIException('Authentication failed: invalid session', -1));
 
@@ -98,103 +103,27 @@ class API
 
 		if (!preg_match("/[^a-zA-Z.]/ui", $method))
 		{
-			$method_data = explode('.', $method, 2);
-			if (count($method_data) < 2)
-			{
-				$callback(null, new APIException('Method format is incorrect', -5));
+            $permissions = $method->isPublicMethod() ? [] : $this->getToken()->getPermissions();
+            if (!$method->isPublicMethod() && !in_array(intval($method->getPermissionsGroup()), $permissions) && $method->getPermissionsGroup() !== 0)
+            {
+                $callback(null, new APIException('Authentication failed: this access key does not required permissions level: ' . $method->getPermissionsGroup(), -15));
+                return $this;
+            }
 
-				return $this;
-			}
-			
-			$method_group = strtolower($method_data[0]);
-			$method_name  = strtolower($method_data[1]);
+            if ($method->error) {
+                $callback(null, $method->error);
+                return $this;
+            }
 
-			$method_path = __DIR__ . '/../../api/methods/' . $method_group . '/' . $method_name . '.php';
-			if (file_exists($method_path))
-			{
-				try 
-				{
-					require_once $method_path;
+            try {
+                $callback($method->run(), null);
+            } catch (Exception $e)
+            {
+                $callback(null, $e);
+            }
 
-					if (!isset($method_permissions_group) || !isset($method_params) || !function_exists('call') || !is_array($method_params))
-					{
-						$callback(null, new APIException('Method is invalid', 0));
-						return $this;
-					}
-
-					$permissions = $this->getToken()->getPermissions();
-					if (!in_array(intval($method_permissions_group), $permissions) && $method_permissions_group !== 0)
-					{
-						$callback(null, new APIException('Authentication failed: this access key does not required permissions level: ' . $method_permissions_group, -15));
-						return $this;
-					}
-
-					$params = $this->getRequestParams();
-					$resulted_params = [];
-
-					foreach ($method_params as $name => $param)
-					{
-						if (boolval(intval($param['required'])) && !isset($params[$name]))
-						{
-							$callback(null, new APIException('Some parameters was missing: ' . $name . ' is required', -4));
-							return $this;
-						}
-
-						if (!isset($params[$name])) continue;
-
-						switch ($param['type']) {
-							case 'integer':
-								$resulted_params[$name] = intval($params[$name]);
-							break;
-
-							case 'string':
-								$resulted_params[$name] = strval($params[$name]);
-							break;
-
-							case 'boolean':
-								$resulted_params[$name] = boolval(intval($params[$name]));
-							break;
-
-							case 'json':
-								$param_result = json_decode($params[$name]);
-								if (!$param_result)
-								{
-									$callback(null, new APIException('Some parameters was invalid: ' . $name . ' has invalid JSON syntax', -4));
-									return $this;
-								}
-
-								$resulted_params[$name] = json_decode($params[$name]);
-							break;
-							
-							default:
-								$resulted_params[$name] = strval($params[$name]);
-							break;
-						}
-					}
-
-					$method_result = call($this, $resulted_params);
-					if ($method_result instanceof APIResponse)
-					{
-						$callback($method_result, null);
-						return $this;
-					}
-					elseif ($method_result instanceof APIException)
-					{
-						$callback(null, $method_result);
-						return $this;
-					}
-
-					$callback(null, new APIException('Internal server error', -10));
-					return $this;
-				} catch (Exception $e)
-				{
-					$callback(null, new APIException('Internal server error', -10));
-					return $this;
-				}
-			} else
-			{
-				$callback(null, new APIException('Method not found', 0));
-			}
+            $callback(null, new APIException('Internal server error', -10));
+            return $this;
 		} else 
 		{
 			$callback(null, new APIException('Internal server error', -10));
@@ -203,7 +132,7 @@ class API
 		return $this;
 	}
 
-	public function getToken (): Token
+	public function getToken (): ?Token
 	{
 		return $this->accessKey;
 	}

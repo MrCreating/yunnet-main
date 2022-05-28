@@ -1,6 +1,29 @@
 <?php
 
-$method_permissions_group = 0;
+class APIMethod extends AbstractAPIMethod
+{
+    public function __construct(API $api, array $params = [])
+    {
+        $this->methodName = 'users.get';
+        $this->methodPermissionsGroup = 0;
+        $this->defaultParams = [
+            'user_id' => [
+                'type' => 'integer',
+                'required' => 0,
+                'default_value' => intval($_SESSION['user_id'])
+            ]
+        ];
+
+        parent::__construct($api, $params);
+    }
+
+    public function run()
+    {
+
+    }
+}
+
+/*$method_permissions_group = 0;
 
 $method_params = [
 	'user_id' => [
@@ -48,6 +71,6 @@ function call (API $api, array $params)
 	}
 
 	return new APIResponse(['items' => $result]);
-}
+}*/
 
 ?>
