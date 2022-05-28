@@ -6,7 +6,7 @@
 require_once __DIR__ . '/../bin/objects/api.php';
 require_once __DIR__ . '/../bin/objects/AbstractAPIMethod.php';
 
-$api = API::get();//->setContentType('application/json');
+$api = API::get()->setContentType('application/json');
 
 $method = AbstractAPIMethod::findMethod($api, $api->getRequestParams());
 if (!$method)
@@ -21,7 +21,10 @@ $api->callMethod($method, function (?APIResponse $result, ?APIException $error) 
     if ($error)
         $error->send();
 
-	die(var_dump($result));
+    if ($result)
+        $result->send();
+
+    die(json_encode(array('response' => 1)));
 });
 
 $api->sendError(-2, 'API is temporally unavailable');
