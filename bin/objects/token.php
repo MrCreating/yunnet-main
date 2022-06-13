@@ -21,11 +21,11 @@ class Token
 	function __construct (?App $bound_app, int $id)
 	{
 		$this->currentConnection = DataBaseManager::getConnection();
-		if ($ound_app && !$bound_app->valid()) return;
+		if ($bound_app && !$bound_app->valid()) return;
 
 		$this->bound_app = $bound_app;
 
-		$res = $this->currentConnection->cache('Token_' . $id . '_' . ($bound_app ? $bound_app->getId() : 0))->prepare("SELECT id, token, permissions, owner_id FROM apps.tokens WHERE id = :id AND app_id = :app_id AND is_deleted = 0 LIMIT 1;");
+		$res = $this->currentConnection->cache('Token_' . $id . '_' . ($bound_app ? $bound_app->getId() : 0))->prepare("SELECT id, token, permissions, owner_id FROM apps.tokens WHERE id = :id AND app_id = :app_id AND is_deleted = 0 LIMIT 1");
 
 		$token_id = intval($id);
 		$app_id   = $bound_app ? intval($bound_app->getId()) : 0;
@@ -36,6 +36,7 @@ class Token
 		if ($res->execute())
 		{
 			$data = $res->fetch(PDO::FETCH_ASSOC);
+
 			if ($data)
 			{
 				$this->isValid = true;
@@ -102,7 +103,7 @@ class Token
 
 	public function apply (): bool
 	{
-		$res = $this->currentConnection->uncache('Token_' . $this->getId() . '_' . $bound_app->getId())->prepare('UPDATE apps.tokens SET permissions = :new_permissions WHERE id = :id LIMIT 1');
+		$res = $this->currentConnection->uncache('Token_' . $this->getId() . '_' . $this->bound_app->getId())->prepare('UPDATE apps.tokens SET permissions = :new_permissions WHERE id = :id LIMIT 1');
 
 		$res->bindParam(":new_permissions", implode(',', $this->getPermissions()), PDO::PARAM_STR);
 		$res->bindParam(":id",              $this->getId(),                        PDO::PARAM_INT);

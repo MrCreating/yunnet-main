@@ -2,6 +2,9 @@
 
 class APIMethod extends AbstractAPIMethod
 {
+    // user ids limit count
+    private int $users_limit = 100;
+
     public function __construct(API $api, array $params = [])
     {
         $this->methodName = 'users.get';
@@ -9,68 +12,42 @@ class APIMethod extends AbstractAPIMethod
         $this->defaultParams = [
             'user_id' => [
                 'type' => 'integer',
-                'required' => 0,
-                'default_value' => intval($_SESSION['user_id'])
+                'required' => 0
+            ],
+            'user_ids' => [
+                'type' => 'string',
+                'required' => 0
+            ],
+            'fields' => [
+                'type' => 'string',
+                'required' => 0
             ]
         ];
 
         parent::__construct($api, $params);
     }
 
-    public function run()
+    public function run(): APIResponse
     {
+        $user_ids = isset($this->params['user_ids']) ? array_unique(array_map(function ($item) {
+            return intval($item);
+        }, explode(',', $this->params['user_ids'], $this->users_limit))) : (
+            isset($this->params['user_id']) ? [intval($this->params['user_id'])] : [intval($_SESSION['user_id'])]
+        );
 
+        $result = [];
+        foreach ($user_ids as $user_id)
+        {
+            $user = Entity::findById($user_id);
+
+            if ($user)
+            {
+                $result[] = $user->toArray(strval($this->params['fields']));
+            }
+        }
+
+        return new APIResponse($result);
     }
 }
-
-/*$method_permissions_group = 0;
-
-$method_params = [
-	'user_id' => [
-		'required' => 0,
-		'type'     => 'integer'
-	],
-	'user_ids' => [
-		'required' => 0,
-		'type'     => 'string'
-	],
-	'fields' => [
-		'required' => 0,
-		'type'     => 'string'
-	]
-];
-
-function call (API $api, array $params)
-{
-	$result = [];
-
-	if (isset($params['user_id']))
-	{
-		$entity = Entity::findById($params['user_id']);
-		if ($entity)
-		{
-			$result[] = $entity->toArray(strval($params['fields']));
-		}
-	} else 
-	if (isset($params['user_ids']))
-	{
-		$result = array_filter(array_map(function ($user_id) {
-			$entity = Entity::findById(intval($user_id));
-
-			return $entity ? $entity->toArray($params['fields']) : null;
-		}, array_slice(array_unique(explode(',', $params['user_ids'])), 0, 100)), function ($entity) {
-			return $entity != null;
-		});
-	} else
-	{
-		$entity = Entity::findById($_SESSION['user_id']);
-		if ($entity)
-		{
-			$result[] = $entity->toArray(strval($params['fields']));
-		}
-	}
-
-	return new APIResponse(['items' => $result]);
-}*/
 
 ?>

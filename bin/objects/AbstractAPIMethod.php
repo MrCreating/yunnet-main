@@ -35,6 +35,12 @@ class AbstractAPIMethod
         return $this->methodName;
     }
 
+    // all objects needed from /objects/ folder!
+    public function getNeededObjects (): array
+    {
+        return [];
+    }
+
     public function parseParams (array $params): array
     {
         $resulted_params = [];

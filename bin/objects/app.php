@@ -23,7 +23,7 @@ class App
 
 	function __construct (int $app_id)
 	{
-		$this->currentConnection = DataBaseManager::getConnection();;
+		$this->currentConnection = DataBaseManager::getConnection();
 
 		$res = $this->currentConnection->cache("App_" . $app_id)->prepare("SELECT id, title, owner_id, description, photo_path, direct_auth, creation_time FROM apps.info WHERE id = ? AND is_deleted != 1 LIMIT 1");
 		if ($res->execute([$app_id]))
@@ -111,17 +111,18 @@ class App
 		$res->bindParam(":app_id",      $this->getId(),       PDO::PARAM_INT);
 		$res->bindParam(":owner_id",    $_SESSION['user_id'], PDO::PARAM_INT);
 		$res->bindParam(":token",       $token,               PDO::PARAM_STR);
-		$res->bindParam(":permissions", '',                   PDO::PARAM_STR);
+		$res->bindParam(":permissions", implode('', $permissions), PDO::PARAM_STR);
 
 		if ($res->execute())
 		{
 			// if OK - resolves an id and return a token with id.
-			$res = $this->currentConnection->prepare("SELECT LAST_INSERT_ID()");
+			$res = $this->currentConnection->prepare("SELECT LAST_INSERT_ID() AS id");
 			if ($res->execute())
 			{
-				$token_id = intval($res->fetch(PDO::FETCH_ASSOC)["LAST_INSERT_ID()"]);
-				
+                $token_id = intval($res->fetch(PDO::FETCH_ASSOC)["id"]);
+
 				$token = new Token($this, $token_id);
+
 				if (!$token->valid()) return NULL;
 
 				if ($token->setPermissions($permissions)->apply()) return $token;

@@ -115,6 +115,13 @@ class API
                 return $this;
             }
 
+            $depends = $method->getNeededObjects();
+            foreach ($depends as $depend) {
+                $path = __DIR__ . '/' . basename($depend) . '.php';
+                if (file_exists($path))
+                    require_once $path;
+            }
+
             try {
                 $callback($method->run(), null);
             } catch (Exception $e)

@@ -25,7 +25,7 @@ class DataBaseStatemenet
 
 	public function execute (?array $params = NULL): bool
 	{
-		$cacheValue = unserialize($this->cacheClient->getItem($this->cacheKey));
+		$cacheValue = false;
 
 		if (!$cacheValue)
 		{
