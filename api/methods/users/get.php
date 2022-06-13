@@ -11,15 +11,15 @@ class APIMethod extends AbstractAPIMethod
         $this->methodPermissionsGroup = 0;
         $this->defaultParams = [
             'user_id' => [
-                'type' => 'integer',
+                'type' => AbstractAPIMethod::PARAM_TYPE_INTEGER,
                 'required' => 0
             ],
             'user_ids' => [
-                'type' => 'string',
+                'type' => AbstractAPIMethod::PARAM_TYPE_STRING,
                 'required' => 0
             ],
             'fields' => [
-                'type' => 'string',
+                'type' => AbstractAPIMethod::PARAM_TYPE_STRING,
                 'required' => 0
             ]
         ];

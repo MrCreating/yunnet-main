@@ -2,6 +2,11 @@
 
 class AbstractAPIMethod
 {
+    // constants
+    public const PARAM_TYPE_INTEGER = 'integer';
+    public const PARAM_TYPE_STRING  = 'string';
+    public const PARAM_TYPE_JSON    = 'json';
+
     protected string $methodName = '';
 
     protected int $methodPermissionsGroup = -1;

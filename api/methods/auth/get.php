@@ -9,15 +9,15 @@ class APIMethod extends AbstractAPIMethod
 
         $this->defaultParams = [
             'login' => [
-                'type' => 'string',
+                'type' => AbstractAPIMethod::PARAM_TYPE_STRING,
                 'required' => 1
             ],
             'password' => [
-                'type' => 'string',
+                'type' => AbstractAPIMethod::PARAM_TYPE_STRING,
                 'required' => 1
             ],
             'app_id' => [
-                'type' => 'integer',
+                'type' => AbstractAPIMethod::PARAM_TYPE_INTEGER,
                 'required' => 1
             ]
         ];
