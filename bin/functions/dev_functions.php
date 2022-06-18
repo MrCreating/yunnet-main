@@ -16,7 +16,7 @@ function get_registered_methods ()
 		'notifications' => ['get', 'getById', 'read'],
 		'realtime'      => ['connect'],
 		'uploads'       => ['getUploadQuery', 'uploadFile'],
-		'users'         => ['get', 'resolveScreenName', 'search'],
+		'users'         => ['get', 'resolveScreenName.php', 'search'],
 		'wall'          => ['get', 'getById', 'createPost', 'editPost', 'commentPost', 'editComment', 'deletePost', 'deleteComment']
 	];
 }
