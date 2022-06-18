@@ -18,20 +18,21 @@ class APIMethod extends AbstractAPIMethod
         parent::__construct($api, $params);
     }
 
+    /**
+     * @throws APIException
+     */
     public function run(): APIResponse
     {
-        $result = [];
-
         $screen_name = $this->params['screen_name'];
 
         $user = User::findByScreenName($screen_name);
-        if ($user) {
-            $result = [
-                'entity_id'    => $user->getId(),
-                'account_type' => $user->getType()
-            ];
+        if (!$user) {
+            throw new APIException('Entity not found', 301);
         }
 
-        return new APIResponse(['response' => $result]);
+        return new APIResponse(['response' => [
+            'entity_id'    => $user->getId(),
+            'account_type' => $user->getType()
+        ]]);
     }
 }

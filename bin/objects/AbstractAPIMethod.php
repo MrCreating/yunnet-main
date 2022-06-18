@@ -123,8 +123,8 @@ class AbstractAPIMethod
 
         if (count($method_data) < 2) return NULL;
 
-        $method_group = strtolower($method_data[0]);
-        $method_name  = strtolower($method_data[1]);
+        $method_group = basename($method_data[0]);
+        $method_name  = basename($method_data[1]);
 
         $method_path = __DIR__ . '/../../api/methods/' . $method_group . '/' . $method_name . '.php';
         if (file_exists($method_path))
