@@ -23,7 +23,7 @@ function default_page_template ($is_mobile, $lang = "en", $user)
 		';
 
 
-	if (!$user || ($user && $user->getSettings()->getSettingsGroup('theming')->isNewDesignUsed()) || ($devChecked || $authChecked || $testChecked))
+	if (!$user || ($user->getSettings()->getSettingsGroup('theming')->isNewDesignUsed()) || ($devChecked || $authChecked || $testChecked))
 	{
 		$scripts_list = '
 <script src="' . Project::getDevDomain() . '/js/platform-loader.js"></script>

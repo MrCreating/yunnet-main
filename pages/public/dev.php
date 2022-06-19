@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../bin/functions/management.php';
  * ADMIN PANEL!!
 */
 
+$context = Context::get();
 $current_user_level = $context->getCurrentUser()->getAccessLevel();
 
 if (!($current_user_level < 1 || !$context->allowToUseUnt()))
@@ -15,9 +16,11 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 		$action  = strtolower(strval(Request::get()->data['action']));
 		$user_id = intval(Request::get()->data['user_id']) === 0 ? intval($_SESSION['user_id']) : intval(Request::get()->data['user_id']);
 
-		$user = ($user_id > 0) ? (new User($user_id)) : (new Bot($user_id * -1));
+		$user = Entity::findById($user_id);
 		if (!$user->valid())
 			die(json_encode(array('error' => 1)));
+
+        $connection = DataBaseManager::getConnection();
 
 		switch ($action)
 		{
@@ -62,9 +65,9 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 			break;
 
 			case 'toggle_verification_state':
-				if ($current_user_level >= 1 && $user->getAccessLevel() <= $current_user_level)
+				if ($user->getAccessLevel() <= $current_user_level)
 				{
-					$result = intval($connection->prepare("UPDATE ".($user->type === "bot" ? "bots.info" : "users.info")." SET is_verified = ? WHERE id = ? LIMIT 1;")->execute([intval(!intval($user->isVerified())), intval($user->getId())]));
+					$result = intval($connection->prepare("UPDATE ".($user->getType() === "bot" ? "bots.info" : "users.info")." SET is_verified = ? WHERE id = ? LIMIT 1;")->execute([intval(!intval($user->isVerified())), intval($user->getId())]));
 
 					if ($result)
 						die(json_encode(array('state'=>!intval($user->isVerified()))));
@@ -74,7 +77,7 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 			case 'toggle_online_show_state':
 				if ($current_user_level >= 4 && $user->getAccessLevel() <= $current_user_level)
 				{
-					if ($user->type !== "bot")
+					if ($user->getType() !== "bot")
 					{
 						$result = intval($connection->prepare("UPDATE users.info SET online_hidden = ? WHERE id = ? LIMIT 1;")->execute([intval(!intval($user->getOnline()->isOnlineHidden)), intval($user->getId())]));
 
@@ -97,14 +100,12 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 						{
 							switch ($changed)
 							{
-								case -1:
-									die(json_encode(array('error'=>1, 'message'=>$context->lang['bad_data_fn'])));
+                                case -2:
+                                case -1:
+									die(json_encode(array('error'=>1, 'message'=>$context->getLanguage()->bad_data_fn)));
 								break;
-								case -2:
-									die(json_encode(array('error'=>1, 'message'=>$context->lang['bad_data_fn'])));
-								break;
-								case -3:
-									die(json_encode(array('error'=>1, 'message'=>$context->lang['need_all_data'])));
+                                case -3:
+									die(json_encode(array('error'=>1, 'message'=>$context->getLanguage()->need_all_data)));
 								break;
 							}
 						}
@@ -118,14 +119,12 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 						{
 							switch ($changed)
 							{
-								case -1:
-									die(json_encode(array('error'=>1, 'message'=>$context->lang['bad_data_ln'])));
+                                case -2:
+                                case -1:
+									die(json_encode(array('error'=>1, 'message'=>$context->getLanguage()->bad_data_ln)));
 								break;
-								case -2:
-									die(json_encode(array('error'=>1, 'message'=>$context->lang['bad_data_ln'])));
-								break;
-								case -3:
-									die(json_encode(array('error'=>1, 'message'=>$context->lang['need_all_data'])));
+                                case -3:
+									die(json_encode(array('error'=>1, 'message'=>$context->getLanguage()->need_all_data)));
 								break;
 							}
 						}
@@ -138,11 +137,11 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 						$result = $user->edit()->setScreenName(is_empty(Request::get()->data["screen_name"]) ? NULL : Request::get()->data["screen_name"]);
 						if ($result === 0)
 						{
-							die(json_encode(array('error'=>1, 'message'=>$context->lang["in_f_3"])));
+							die(json_encode(array('error'=>1, 'message'=>$context->getLanguage()->in_f_3)));
 						}
 						if ($result === -1)
 						{
-							die(json_encode(array('error'=>1, 'message'=>$context->lang["in_f_4"])));
+							die(json_encode(array('error'=>1, 'message'=>$context->getLanguage()->in_f_4)));
 						}
 
 						die(json_encode(array('response'=>1)));
@@ -153,18 +152,22 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 						$attachment_data = strval(Request::get()->data['photo']);
 						if (is_empty($attachment_data))
 						{
-							$result = delete_user_photo($connection, $user_id);
+							$result = $user->setPhoto()->apply();
 							if ($result) die(json_encode(array('response'=>1)));
 						} else
 						{
-							$result = update_user_photo($connection, $user_id, $attachment_data);
-							if ($result) die(json_encode($result->toArray()));
+                            $attachment = (new AttachmentsParser())->getObject($attachment_data);
+                            if ($attachment instanceof Photo) {
+                                $result = $user->setPhoto($attachment)->apply();
 
-							die(json_encode(array('error'=>1)));
+                                if ($result) die(json_encode($result->toArray()));
+                            }
+
+							die(json_encode(array('error' => 1)));
 						}
 					}
 
-					die(json_encode(array('error'=>1, 'message'=>$context->lang['in_f_2'])));
+					die(json_encode(array('error' => 1, 'message' => $context->getLanguage()->in_f_2)));
 				}
 			break;
 
@@ -203,7 +206,7 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 			break;
 		}
 
-		die(json_encode(array('error'=>1)));
+		die(json_encode(array('error' => 1)));
 	}
 }
 

@@ -7782,7 +7782,7 @@ const ui = {
       if (url === "/terms") pages.terms(internalData);
       if (url === "/archive") pages.archive(internalData);
       if (url === "/groups") pages.groups(internalData);
-      if (url === "/dev") try { management.show(internalData) } catch (e) { pages.news(internalData) };
+      if (url === "/dev") try { management.show(internalData) } catch (e) { pages.news(internalData) }
     } else {
       if (url.substr(1, 4) === "wall") pages.wall(internalData);
       else if (url.substr(1, 5) === "photo") pages.photo(internalData);

@@ -26,15 +26,17 @@ if (!file_exists($path) && !is_empty($folder_name))
 $file = file_get_contents($path);
 if ($file_name === 'management.js')
 {
-	if (intval($_SESSION['user_id']) <= 0)
-		$file = false;
+    if (getenv('UNT_PRODUCTION') == '1') {
+        if (intval($_SESSION['user_id']) <= 0)
+            $file = false;
 
-	if (!class_exists('Entity'))
-		require __DIR__ . '/../../bin/objects/entities.php';
+        if (!class_exists('Entity'))
+            require __DIR__ . '/../../bin/objects/entities.php';
 
-	$user = new User(intval($_SESSION['user_id']));
-	if (!$user->valid() || $user->getAccessLevel() < 1)
-		$file = false;
+        $user = new User(intval($_SESSION['user_id']));
+        if (!$user->valid() || $user->getAccessLevel() < 1)
+            $file = false;
+    }
 }
 
 if (!$file)
