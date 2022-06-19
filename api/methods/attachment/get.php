@@ -30,20 +30,20 @@ class APIMethod extends AbstractAPIMethod
         parent::__construct($api, $params);
     }
 
+    /**
+     * @throws APIException
+     */
     public function run(): APIResponse
     {
-        $result     = [];
-
         $type       = $this->params['type'];
         $id         = $this->params['id'];
         $owner_id   = $this->params['owner_id'];
         $access_key = $this->params['access_key'];
 
         $attachment = (new AttachmentsParser())->getObject($type.$owner_id.'_'.$id.'_'.$access_key);
-        if ($attachment)
-        {
-            $result = $attachment->toArray();
-        }
-        return new APIResponse(['response' => $result]);
+        if (!$attachment)
+            throw new APIException('Attachment not found', 115);
+
+        return new APIResponse(['response' => $attachment->toArray()]);
     }
 }
