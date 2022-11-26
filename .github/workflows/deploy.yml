@@ -14,4 +14,3 @@ jobs:
         with:
           dep: deploy
           private-key: ${{ secrets.PRIVATE_KEY }}
-          deployer-binary: "/home/unt/vendor/bin/dep"
