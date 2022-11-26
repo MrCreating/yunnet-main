@@ -20,4 +20,15 @@ jobs:
           ref: ${{ github.ref }}
       - name: Lint files
         run: |
-          for file in $(git diff --name-only --diff-filter=ACMR HEAD~1 | grep -E "(.php$|.html$)"); do php -l $file; done
+          for file in $(git diff --name-only --diff-filter=ACMR HEAD~1 | grep -E "(.php$|.html$)"); do php -l $file; done\
+  deploy:
+    name: Deploy
+    runs-on: self-hosted
+    needs: lint
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - name: Deploy
+        uses: deployphp/action@v1
+        with:
+          dep: deploy
+          private-key: ${{ secrets.PRIVATE_KEY }}
