@@ -24,6 +24,7 @@ if (isset($headers['X-Hub-Signature']))
 // user endpoint
 if ($endpoint_id === 0)
 {
+    die('test msg');
 	if (($user = Context::get()->getCurrentUser()) && isset($user) && ($user->getAccessLevel() >= 4))
 	{
 		die(require_once __DIR__ . '/users/index.php');
