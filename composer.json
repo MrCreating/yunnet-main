@@ -1,0 +1,17 @@
+{
+    "name": "unt/unt_1_main",
+    "type": "project",
+    "require": {
+        "deployer/deployer": "dev-master"
+    },
+    "require-dev": {
+        "deployer/deployer": "dev-master"
+    },
+    "license": "ISC",
+    "authors": [
+        {
+            "name": "MrCreating"
+        }
+    ],
+    "minimum-stability": "dev"
+}
