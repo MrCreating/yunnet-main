@@ -1,0 +1,23 @@
+name: lint
+
+# push all commits to all branches
+on:
+  push
+
+# lint uses only test server
+env:
+  UNT_PRODUCTION: 0
+
+jobs:
+  lint:
+    name: Project lint
+    runs-on: self-hosted
+    steps:
+      - name: Init project
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref }}
+      - name: Lint files
+        run: |
+          for file in $(git diff --name-only --diff-filter=ACMR HEAD~1 | grep -E "(.php$|.html$)"); do php -l $file; done
