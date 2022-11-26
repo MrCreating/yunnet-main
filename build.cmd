@@ -7,4 +7,4 @@ mkdir docker\context\nginx
 mkdir docker\context\poll_engine
 mkdir docker\context\text_engine
 
-docker-compose build --no-cache
+docker-compose build
