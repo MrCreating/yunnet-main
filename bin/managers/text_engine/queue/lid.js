@@ -59,14 +59,14 @@ let q = {
 					});
 				}
 
-				q.connection.query('SELECT local_chat_id FROM messages.chat_engine_1 WHERE uid = '+uid+' ORDER BY local_chat_id DESC LIMIT 1;', function (err, row, data) {
+				q.connection.query('SELECT IFNULL(MAX(local_chat_id), 0) AS local_chat_id FROM messages.main WHERE uid = ' + uid, function (err, row, data) {
 					let mid = row;
 					
 					try {
 						if (row[0] === undefined)
 							mid = 1;
 						else
-							mid = row[0].local_chat_id+1;
+							mid = row[0].local_chat_id + 1;
 					} catch (e) {
 						mid = 0;
 					}

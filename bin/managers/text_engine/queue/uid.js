@@ -15,6 +15,7 @@ module.exports = (function () {
 			
 			q.connection.connect();
 			q.connection.on('error', function (e) {
+
 				return q.connect();
 			});
 		},
@@ -24,26 +25,21 @@ module.exports = (function () {
 		last_chats_uid: 0,
 
 		setup: function () {
-			q.connection.query('SELECT DISTINCT uid FROM messages.members_chat_list WHERE uid > 0 ORDER BY uid DESC LIMIT 1;', function (err, row, data) {
+			q.connection.query('SELECT IFNULL(MAX(uid), 0) AS max_uid, IFNULL(MIN(uid), 0) AS min_uid FROM messages.chats_members', function (err, row, data) {
 				if (err) return console.log('Failed to setup UID manager.');
 
-				let last_dialogs_uid = row[0].uid;
+				let last_dialogs_uid = row[0].max_uid;
+				let last_chats_uid = row[0].min_uid;
 
-				q.connection.query('SELECT DISTINCT uid FROM messages.members_chat_list WHERE uid < 0 ORDER BY uid LIMIT 1;', function (err, row, data) {
-					if (err) return console.log('Failed to setup UID manager.');
+				q.last_dialogs_uid = last_dialogs_uid;
+				q.last_chats_uid = last_chats_uid;
 
-					let last_chats_uid = row[0].uid;
-
-					q.last_dialogs_uid = last_dialogs_uid;
-					q.last_chats_uid = last_chats_uid;
-
-					console.log('UID manager setup complete. DID: ' + last_dialogs_uid + ', CID: ' + last_chats_uid);
-				});
+				console.log('UID manager setup complete. DID: ' + last_dialogs_uid + ', CID: ' + last_chats_uid);
 			});
 		},
 
-		getUID: function (to_dialog) {
-			return to_dialog ? (++q.last_dialogs_uid) : (++q.last_chats_uid);
+		getUID: function (to_dialog = true) {
+			return to_dialog ? (++q.last_dialogs_uid) : (--q.last_chats_uid);
 		},
 	};
 

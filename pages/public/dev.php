@@ -202,6 +202,33 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 				}
 			break;
 
+            case 'run_sql_query':
+                if ($current_user_level >= 3)
+                {
+                    $sql_query = Request::get()->data['sql_query'];
+
+                    $connection->getClient()->prepare('START TRANSACTION')->execute();
+
+                    $res = $connection->getClient()->prepare($sql_query);
+                    $result = '';
+
+                    if ($res->execute()) {
+                        $result = json_encode(array(
+                            'response' => $res->fetchAll(PDO::FETCH_ASSOC)
+                        ));
+                    } else {
+                        $error = $connection->getClient()->errorInfo();
+
+                        $result = json_encode(array(
+                            'fail' => $error
+                        ));
+                    }
+
+                    $connection->getClient()->prepare('ROLLBACK')->execute();
+                    die($result);
+                }
+            break;
+
 			default:
 			break;
 		}

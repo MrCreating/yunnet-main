@@ -15,18 +15,19 @@ abstract class Chat extends EventEmitter
 	protected int $lastReadMsgId;
 
 	protected bool $isValid;
-	protected bool $is_read;
-
+    protected bool $is_read;
 	protected bool $notifications_enabled;
 
 	protected string $type;
 
-	protected $currentConnection;
+	protected DataBaseManager $currentConnection;
 
-	abstract public function canWrite (): int;
+    abstract public function canWrite (): int;
 
 	public function __construct (string $localId)
 	{
+        parent::__construct();
+
 		$this->isValid = false;
 		$this->currentConnection = DataBaseManager::getConnection();
 
@@ -41,36 +42,63 @@ abstract class Chat extends EventEmitter
 		if (substr($localId, 0, 1) === "b")
 		{
 			$is_bot_dialog = true;
-			$is_multi_chat = false;
 			$local_chat_id = intval(substr($localId, 1, strlen($localId))) * -1;
 		} else if (intval($localId) < 0)
 		{
-			$is_bot_dialog = false;
 			$is_multi_chat = true;
 			$local_chat_id = intval($localId);
 		} else if (intval($localId) > 0)
 		{
-			$is_bot_dialog = false;
-			$is_multi_chat = false;
 			$local_chat_id = intval($localId);
 		}
 
-		$res = $this->currentConnection->prepare($is_bot_dialog ? "SELECT is_read, last_read_message_id, uid FROM messages.members_chat_list WHERE lid = ? AND uid > 0 AND user_id = ? LIMIT 1" : "SELECT is_read, last_read_message_id, uid FROM messages.members_chat_list WHERE lid = ? AND user_id = ? LIMIT 1");
+        $this->uid = 0;
+		$res = $this->currentConnection->prepare($is_bot_dialog ?
+            "SELECT 
+                uid,
+                last_read_id,
+                notifications, 
+                show_pinned_message
+            FROM 
+                messages.chats 
+            WHERE 
+                lid = ? 
+              AND 
+                uid > 0 
+              AND 
+                user_id = ? 
+            LIMIT 1"
+            :
+            "SELECT 
+                uid,
+                last_read_id,
+                notifications, 
+                show_pinned_message 
+            FROM 
+                messages.chats 
+            WHERE 
+                lid = ? 
+              AND 
+                user_id = ? 
+            LIMIT 1"
+        );
 
 		if ($res->execute([$local_chat_id, $_SESSION['user_id']]))
 		{
 			$result = $res->fetch(PDO::FETCH_ASSOC);
 			if (isset($result['uid']))
 			{
-				$this->uid = intval($result['uid']);
+                $this->isValid = true;
+				$this->uid     = intval($result['uid']);
+
+                $this->peer_id               = intval($local_chat_id);
+                $this->is_read               = intval($result['is_read']);
+                $this->lastReadMsgId         = intval($result['last_read_id']);
+                $this->notifications_enabled = intval($result['notifications']);
 			} else
 			{
 				$this->uid = 0;
 			}
-
-			$this->peer_id       = intval($local_chat_id);
-			$this->is_read       = intval($result['is_read']);
-			$this->lastReadMsgId = intval($result['last_read_message_id']);
 		}
 	}
 
@@ -81,7 +109,7 @@ abstract class Chat extends EventEmitter
 
 	public function getUID (): int
 	{
-		return $this->uid ? $this->uid : 0;
+		return $this->uid ?: 0;
 	}
 
 	public function getLocalPeerId (): int
@@ -96,7 +124,7 @@ abstract class Chat extends EventEmitter
 
 	public function valid (): bool
 	{
-		return boolval($this->isValid);
+		return $this->isValid;
 	}
 
 	public function isNotificationsEnabled (): bool
@@ -108,7 +136,7 @@ abstract class Chat extends EventEmitter
 	{
 		$this->notifications_enabled = !$this->notifications_enabled;
 
-		return $this->currentConnection->prepare("UPDATE messages.members_chat_list SET notifications = ? WHERE uid = ? AND user_id = ? LIMIT 1")->execute([intval($this->notifications_enabled), $this->uid, intval($_SESSION['user_id'])]);
+		return $this->currentConnection->prepare("UPDATE messages.chats SET notifications = ? WHERE uid = ? AND user_id = ? LIMIT 1")->execute([intval($this->notifications_enabled), $this->uid, intval($_SESSION['user_id'])]);
 	}
 
 	public function clear (): bool
@@ -119,7 +147,7 @@ abstract class Chat extends EventEmitter
 			$last_message_id = $last_message->getId();
 			$this->read($last_message_id);
 
-			if ($this->currentConnection->prepare("UPDATE messages.members_chat_list SET hidden = 1, cleared_message_id = ? WHERE user_id = ? AND uid = ? LIMIT 1")->execute([$last_message_id, intval($_SESSION['user_id']), $this->uid]))
+			if ($this->currentConnection->prepare("UPDATE messages.members_chat_list SET last_clear_id = ? WHERE user_id = ? AND uid = ? LIMIT 1")->execute([$last_message_id, intval($_SESSION['user_id']), $this->uid]))
 			{
 				$event = [
 					'event' => 'cleared_chat'
@@ -147,12 +175,20 @@ abstract class Chat extends EventEmitter
 
 	public function read (int $messageId = 0): bool
 	{
-		$last_read_message_id = $messageId <= 0 ? $this->getLastReadMessageId() : $messageId;
+		$last_read_message_id = $messageId <= 0 ? $this->getLastMessage()->getId() : $messageId;
 
 		if (
-			$this->currentConnection->prepare("UPDATE messages.members_chat_list SET is_read = 1, last_read_message_id = ? WHERE user_id = ? AND uid = ? LIMIT 1000")->execute([$last_read_message_id, intval($_SESSION['user_id']), $this->uid]) &&
-			$this->currentConnection->prepare("UPDATE messages.members_chat_list SET hidden = 0 WHERE uid = ? AND user_id = ? AND is_leaved = 0 AND is_kicked = 0 LIMIT 1000")->execute([$this->uid, intval($_SESSION['user_id'])])
-		)
+			$this->currentConnection->prepare("
+                UPDATE 
+                    messages.chats 
+                SET 
+                    last_read_id = ? 
+                WHERE 
+                    user_id = ? 
+                AND 
+                    uid = ?
+                LIMIT 1000
+            ")->execute([$last_read_message_id, intval($_SESSION['user_id']), $this->uid]))
 		{
 			if (intval($_SESSION['user_id']) < 0)
 				return true;

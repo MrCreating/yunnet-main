@@ -17,7 +17,7 @@ if (isset(Request::get()->data['action']))
 		case 'test':
 			$result = is_project_closed();
 
-			if (!$context->isLogged() || $context->getCurrentUser()->getAccessLevel() === 4)
+			if (!Context::get()->isLogged() || Context::get()->getCurrentUser()->getAccessLevel() === 4)
 				$result = 0;
 
 			die(json_encode(array('blocked' => $result)));
@@ -25,10 +25,10 @@ if (isset(Request::get()->data['action']))
 
 		case 'get_language_value':
 			$value         = strtolower(Request::get()->data["value"]);
-			$languageValue = $context->getLanguage()->{$value};
+			$languageValue = Context::get()->getLanguage()->{$value};
 			if ($value === '*')
 			{
-				die(json_encode($context->getLanguage()));
+				die(json_encode(Context::get()->getLanguage()));
 			}
 
 			if (!$languageValue) die(json_encode(array('error' => 1)));
@@ -41,10 +41,10 @@ if (isset(Request::get()->data['action']))
 			$fields    = strval(Request::get()->data["fields"]);
 
 			if ($entity_id === 0) 
-				$entity_id = intval($context->getCurrentUser() === NULL ? 0 : $context->getCurrentUser()->getId());
+				$entity_id = Context::get()->getCurrentUser() === NULL ? 0 : $context->getCurrentUser()->getId();
 
 			if (Context::get()->getCurrentUser() && Context::get()->getCurrentUser()->isBanned()) 
-				$entity_id = intval($context->getCurrentUser()->getId());
+				$entity_id = Context::get()->getCurrentUser()->getId();
 
 			$user = Entity::findById($entity_id);
 
@@ -56,7 +56,7 @@ if (isset(Request::get()->data['action']))
 		case 'get_user_data_by_link':
 			$screen_name = substr(strtolower(Request::get()->data["screen_name"]), 1);
 			if (Context::get()->getCurrentUser() && Context::get()->getCurrentUser()->isBanned()) 
-				$screen_name = 'id' . $context->getCurrentUser()->getId();
+				$screen_name = 'id' . Context::get()->getCurrentUser()->getId();
 
 			if (is_empty($screen_name)) die(json_encode(array("error"=>1)));
 
@@ -67,7 +67,7 @@ if (isset(Request::get()->data['action']))
 		break;
 
 		case 'get_attachment_info':
-			$attachmentCredentials = strval(trim(Request::get()->data['credentials']));
+			$attachmentCredentials = trim(Request::get()->data['credentials']);
 
 			$resultedAttachment = (new AttachmentsParser())->getObject($attachmentCredentials);
 			if (!$resultedAttachment)
@@ -96,13 +96,13 @@ if (isset(Request::get()->data['action']))
 			$atts = strval(Request::get()->data['attachments']);
 			$wall = intval(Request::get()->data['wall_id']) !== 0 ? intval(Request::get()->data['wall_id']) : $context->getCurrentUser()->getId();
 
-			$result = create_post($connection, $context->getCurrentUser()->getId(), $wall, $text, $atts);
+			$result = create_post(DataBaseManager::getConnection()->getClient(), Context::get()->getCurrentUser()->getId(), $wall, $text, $atts);
 
 			// if not post created - show this.
 			if (!$result) die(json_encode(array('error'=>1)));
 
 			// fetching the new post data
-			$post = Post::findById(intval($wall), intval($result));
+			$post = Post::findById($wall, intval($result));
 
 			// if not post found - it not be created.
 			if (!$post->valid()) die(json_encode(array('error'=>1)));
@@ -119,7 +119,7 @@ if (isset(Request::get()->data['action']))
 			$wall = intval(Request::get()->data['wall_id']);
 			$post = intval(Request::get()->data['post_id']);
 
-			$result = update_post_data($context->getConnection(), $context->getCurrentUser()->getId(), $wall, $post, $text, $atts);
+			$result = update_post_data(Context::get()->getConnection(), Context::get()->getCurrentUser()->getId(), $wall, $post, $text, $atts);
 
 			// if not post updated - show this.
 			if (!$result) die(json_encode(array('error' => 1)));
@@ -167,7 +167,7 @@ if (isset(Request::get()->data['action']))
 
 			$user_id = intval(Request::get()->data['user_id']);
 
-			if (!user_exists($connection, $user_id) || !can_access_closed($connection, $context->getCurrentUser()->getId(), $user_id) || in_blacklist($connection, $user_id, $context->getCurrentUser()->getId()))
+			if (!user_exists(DataBaseManager::getConnection()->getClient(), $user_id) || !can_access_closed(DataBaseManager::getConnection()->getClient(), $context->getCurrentUser()->getId(), $user_id) || in_blacklist($connection, $user_id, $context->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
 			$section = strval(Request::get()->data['section']);
@@ -186,7 +186,7 @@ if (isset(Request::get()->data['action']))
 		case 'get_counters':
 			if (Context::get()->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
 
-			$result = get_counters($connection, $context->getCurrentUser()->getId());
+			$result = get_counters(DataBaseManager::getConnection()->getClient(), Context::get()->getCurrentUser()->getId());
 
 			die(json_encode($result));
 		break;
@@ -196,7 +196,7 @@ if (isset(Request::get()->data['action']))
 			
 			$requested_status = trim(strval(Request::get()->data['new_status']));
 			if (strlen($requested_status) > 128)
-				die(json_decode(array('error' => 1)));
+				die(json_encode(array('error' => 1)));
 
 			$result = Context::get()->getCurrentUser()->edit()->setStatus($requested_status);
 			if ($result)

@@ -21,13 +21,13 @@ class Project
 	public const CACHE_PORT = 11211;
 
 	// default DB username
-	public const DB_USERNAME = "root";
+	//public const DB_USERNAME = "root";
 
 	// default DB password
-	public const DB_PASSWORD = "default-prod-unt-user-iA22021981_";
+	//public const DB_PASSWORD = "default-prod-unt-user-iA22021981_";
 
 	// test DB password
-	public const DB_TEST_PASSWORD = "unt-user-test-pc2021_die";
+	//public const DB_TEST_PASSWORD = "unt-user-test-pc2021_die";
 
 	public static function getConnectionHead ()
 	{

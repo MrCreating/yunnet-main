@@ -1,7 +1,5 @@
 @echo off
 echo Init the project ...
-cd config\local
+cd unt_2
 set PWD=%cd%
-set UNT_PRODUCTION=0
-docker-compose down
-pause
+docker-compose down --remove-orphans

@@ -20,8 +20,8 @@ class Conversation extends Chat
 
 	private int $access_level;
 
-	private $permissions;
-	private $photo;
+	private Data $permissions;
+	private Attachment $photo;
 
 	public function __construct (string $localId)
 	{

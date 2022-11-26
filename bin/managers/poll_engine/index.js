@@ -15,8 +15,8 @@ console.log('Prepared all data.');
 
 if (process.env.UNT_PRODUCTION === '1') {
 	https.createServer({
-		key: fs.readFileSync('/home/unt/config/local/config/nginx/privkey.pem'),
-		cert: fs.readFileSync('/home/unt/config/local/config/nginx/fullchain.pem')
+		key: fs.readFileSync('/home/unt/unt_2/config/nginx/privkey.pem'),
+		cert: fs.readFileSync('/home/unt/unt_2/config/nginx/fullchain.pem')
 	}, function (req, res) {
 		req.setMaxListeners(0);
 		res.setMaxListeners(0);

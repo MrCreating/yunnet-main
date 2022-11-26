@@ -1,12 +1,14 @@
 version: '3'
 
 services:
+    # веб-сервер. Тут все по окружению
     nginx:
         build:
             context: $PWD/docker/context/nginx
-            dockerfile: $PWD/docker/nginx
-        restart: unless-stopped
-        hostname: yunnet.ru
+            dockerfile: $PWD/docker/build/nginx
+        restart: always
+
+        hostname: yunnet_nginx
         tty: true
         ports:
             - "80:80"
@@ -14,23 +16,24 @@ services:
         env_file:
             - $PWD/configs.env
         volumes:
-            - $PWD/../../:/home/unt
+            - $PWD/../:/home/unt
             - /var/log/nginx
             - $PWD/config/nginx/nginx.conf:/etc/nginx/nginx.conf
         links:
             - php
-        command: bash /home/unt/config/local/scripts/nginx.sh
+        command: bash /home/unt/unt_2/scripts/nginx.sh
+        networks:
+            - unt_1_database
+    # PHP 7.4
     php:
-        restart: unless-stopped
-        hostname: student
-        tty: true
         build:
             context: $PWD/docker/context/php
-            dockerfile: $PWD/docker/php
+            dockerfile: $PWD/docker/build/php
         env_file:
             - $PWD/configs.env
         volumes:
-            - $PWD/../../:/home/unt
+            - $PWD/../:/home/unt
+            # связь с внутренними файлами
             - $PWD/config/php/php$UNT_PRODUCTION.ini:/usr/local/etc/php/php.ini
             - $PWD/config/php/php-fpm.conf:/usr/local/etc/php-fpm.conf
             - $PWD/config/php/www.conf:/usr/local/etc/php-fpm.d/www.conf
@@ -38,59 +41,78 @@ services:
             - memcached
             - text_engine
             - mail
-        networks:
-            - default
-    memcached:
-        image: memcached:latest
-        container_name: memcached
-    mail:
-        restart: unless-stopped
-        hostname: yunnet.ru
+        hostname: yunnet_php
         tty: true
+        networks:
+            - unt_1_database
+
+    memcached:
         build:
-            dockerfile: $PWD/docker/postfix
+            context: $PWD/docker/context/memcached
+            dockerfile: $PWD/docker/build/memcached
+        env_file:
+            - $PWD/configs.env
+        volumes:
+            - $PWD/../:/home/unt
+        networks:
+            - unt_1_database
+        restart: unless-stopped
+        hostname: yunnet_memcached
+        tty: true
+
+    mail:
+        build:
+            dockerfile: $PWD/docker/build/postfix
             context: $PWD/docker/context/postfix
         volumes:
-            - $PWD/../../:/home/unt
+            - $PWD/../:/home/unt
             - $PWD/config/postfix/exim4.conf.template:/etc/exim4/exim4.conf.template
             - $PWD/config/postfix:/etc/postfix
             - $PWD/config/postfix/mail-addresses:/etc/mail-addresses
-        environment:
-            - "MAILNAME=yunnet.ru"
-            - "MAIN_FORCE_SENDER=yunnet.ru"
         env_file:
             - $PWD/configs.env
+        restart: unless-stopped
+        hostname: yunnet_mailer
+        networks:
+            - unt_1_database
+        tty: true
         ports:
             - "25:25"
+
     text_engine:
+        build:
+            context: $PWD/docker/context/text_engine
+            dockerfile: $PWD/docker/build/text_engine
+        volumes:
+            - $PWD/../:/home/unt
         restart: unless-stopped
-        hostname: yunnet.ru
+        hostname: yunnet_text_engine
         tty: true
         env_file:
             - $PWD/configs.env
-        build:
-            context: $PWD/docker/context/text_engine
-            dockerfile: $PWD/docker/text_engine
-        volumes:
-            - $PWD/../../:/home/unt
         links:
             - memcached
         networks:
-            - default
+            - unt_1_database
+
     poll_engine:
         restart: unless-stopped
-        hostname: yunnet.ru
+        hostname: yunnet_poll_engine
         tty: true
         env_file:
             - $PWD/configs.env
         volumes:
-            - $PWD/../../:/home/unt
+            - $PWD/../:/home/unt
         links:
             - memcached
         ports:
             - "8080:80"
-        networks:
-            - default
         build:
             context: $PWD/docker/context/poll_engine
-            dockerfile: $PWD/docker/poll_engine
+            dockerfile: $PWD/docker/build/poll_engine
+        networks:
+            - unt_1_database
+
+networks:
+    unt_1_database:
+        external: true

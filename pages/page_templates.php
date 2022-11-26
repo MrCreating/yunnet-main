@@ -17,7 +17,7 @@ function default_page_template ($is_mobile, $lang = "en", $user)
 
 	if (getenv('UNT_PRODUCTION') !== '1')
 		$test_div = '
-<div class="card waves-effect waves-light" style="padding: 15px; position: fixed !important; bottom: 20px; left: 25px;">
+<div class="card waves-effect waves-light" style="z-index: 1010; padding: 15px; position: fixed !important; bottom: 20px; left: 25px;">
 	<b>Режим разработки.</b>
 </div>
 		';
@@ -62,6 +62,19 @@ function default_page_template ($is_mobile, $lang = "en", $user)
 		';
 		}
 
+        $load_div = '<div id="load" style="position: fixed; right: 0; bottom: 0; left: 0; top: 0; background-color: white;z-index: 999;">
+			<div id="indicator" style="position: absolute; top: 50%; left: 50%; margin-right: -50%; transform: translate(-50%, -50%);">
+				<div style="text-align: -webkit-center">
+					<img src="/favicon.ico" class="circle" style="width: 150px;">
+				</div>
+				<div id="load_indicator" style="text-align: center; margin-top: 70%; display: none">
+					<svg width="40" height="40" viewBox="0 0 50 50"><path id="loader_ui_spin" transform="rotate(61.2513 25 25)" d="M25,5A20.14,20.14,0,0,1,45,22.88a2.51,2.51,0,0,0,2.49,2.26h0A2.52,2.52,0,0,0,50,22.33a25.14,25.14,0,0,0-50,0,2.52,2.52,0,0,0,2.5,2.81h0A2.51,2.51,0,0,0,5,22.88,20.14,20.14,0,0,1,25,5Z" style="fill: var(--unt-loader-color, #42a5f5);"><animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.4s" repeatCount="indefinite"></animateTransform></path></svg>
+					<br>
+					<div id="load_text_info" style="color: black;"></div>
+				</div>
+			</div>
+		</div>';
+
 		$result = '
 <!DOCTYPE html>
 <html>
@@ -89,18 +102,7 @@ function default_page_template ($is_mobile, $lang = "en", $user)
 		<script src="' . Project::getDevDomain() . '/js/platform-modules-realtime.js"></script>
 	</head>
 	<body>
-		<div id="load" style="position: fixed; right: 0; bottom: 0; left: 0; top: 0; background-color: white;z-index: 999;">
-			<div id="indicator" style="position: absolute; top: 50%; left: 50%; margin-right: -50%; transform: translate(-50%, -50%);">
-				<div style="text-align: -webkit-center">
-					<img src="/favicon.ico" class="circle" style="width: 150px;">
-				</div>
-				<div id="load_indicator" style="text-align: center; margin-top: 70%; display: none">
-					<svg width="40" height="40" viewBox="0 0 50 50"><path id="loader_ui_spin" transform="rotate(61.2513 25 25)" d="M25,5A20.14,20.14,0,0,1,45,22.88a2.51,2.51,0,0,0,2.49,2.26h0A2.52,2.52,0,0,0,50,22.33a25.14,25.14,0,0,0-50,0,2.52,2.52,0,0,0,2.5,2.81h0A2.51,2.51,0,0,0,5,22.88,20.14,20.14,0,0,1,25,5Z" style="fill: var(--unt-loader-color, #42a5f5);"><animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.4s" repeatCount="indefinite"></animateTransform></path></svg>
-					<br>
-					<div id="load_text_info" style="color: black;"></div>
-				</div>
-			</div>
-		</div>
+		'. $load_div .'
 
 		'. $test_div .'
 

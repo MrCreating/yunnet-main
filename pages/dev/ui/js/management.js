@@ -237,11 +237,20 @@ const management = {
 			});
 		}
 
+		let dbItem;
+		if (settings.users.current.user_level > 3) {
+			dbItem = rightMenu.addItem('SQL', function () {
+				return ui.go(ui.getUrl() + '/dev?section=db');
+			})
+		}
+
 		let section = (new URLParser(window.location.href)).parse().section || 'main';
-		let sections = ['main', 'files', 'bugs'];
+		let sections = ['main', 'files', 'bugs', 'db'];
 		if (sections.indexOf(section) === -1) section = 'main';
+		rightMenu.append();
 
 		if (section === sections[0]) {
+			mainItem.select();
 			menuBody.appendChild(pages.elements.createButton(unt.Icon.SETTINGS, settings.lang.getValue('your_access_level') + ': ' + '<b>' + settings.users.current.user_level + '</b>', new Function()));	
 
 			let userInputCard = document.createElement('div');
@@ -272,7 +281,7 @@ const management = {
 				continueButton.style.display = 'none';
 				loader.style.display = '';
 
-				return settings.users.resolveScreenName(doneId).then(function (user) {
+				return settings.users.resolveScreenName('/' + doneId).then(function (user) {
 					menuBody.innerHTML = '';
 
 					menuBody.appendChild(pages.elements.backArrowButton(settings.lang.getValue('back'), function () {
@@ -852,6 +861,113 @@ const management = {
 			menuBody.appendChild(tabsItem);
 		}
 
-		rightMenu.append();
+		if (section === sections[3]) {
+			dbItem.select();
+			let sqlRequestCard = document.createElement('div');
+			menuBody.appendChild(sqlRequestCard);
+
+			sqlRequestCard.classList.add('card');
+			sqlRequestCard.classList.add('full_section');
+
+			let sqlDataDiv = document.createElement('div');
+			sqlDataDiv.classList.add('valign-wrapper');
+			sqlRequestCard.appendChild(sqlDataDiv);
+
+			let sqlInput = pages.elements.createInputField('SQL DATA', false);
+			sqlInput.style.width = '100%';
+			sqlDataDiv.appendChild(sqlInput);
+
+			let continueButton = pages.elements.createFAB(unt.Icon.ARROW_FWD, function () {
+				continueButton.style.display = 'none';
+				loader.show();
+
+				let data = new FormData();
+				data.append('action', 'run_sql_query');
+				data.append('sql_query', sqlInput.getValue());
+
+				return ui.Request({
+					method: 'POST',
+					data: data,
+					url: '/dev',
+					success: function (response) {
+						continueButton.style.display = '';
+						loader.hide();
+
+						try {
+							response = JSON.parse(response);
+							if (response.error)
+								return unt.toast({html: settings.lang.getValue('upload_error')});
+
+							let result = response.response;
+							let error  = response.fail;
+
+							if (error) {
+								return pages.elements.alert('SQL ERROR: ' + error[0])
+							}
+							if (result) {
+								if (result.length > 0) {
+									let win = pages.elements.createWindow(true, true);
+									let content = win.getContent();
+
+									let resultData = document.createElement('table');
+									resultData.classList = ['responsive-table highlight striped'];
+									content.appendChild(resultData);
+
+									let head = document.createElement('thead');
+									resultData.appendChild(head);
+
+									let headTR = document.createElement('tr');
+									head.appendChild(headTR);
+
+									for (let key in result[0]) {
+										let th = document.createElement('th');
+										th.innerText = key;
+										headTR.appendChild(th);
+									}
+
+									let tbody = document.createElement('tbody');
+									resultData.appendChild(tbody);
+									result.forEach(function (item) {
+										let tr = document.createElement('tr');
+
+										for (let key in item) {
+											let td = document.createElement('td');
+											tr.appendChild(td);
+											td.innerText = item[key];
+										}
+
+										tbody.appendChild(tr);
+									});
+
+									return;
+								} else {
+									return pages.elements.alert('Request succeeded, but no data returned.');
+								}
+
+								return;
+							}
+
+							return unt.toast({html: settings.lang.getValue('upload_error')});
+						} catch (e) {
+							console.log(e);
+							return unt.toast({html: settings.lang.getValue('upload_error')});
+						}
+					},
+					error: function () {
+						continueButton.style.display = '';
+						loader.hide();
+						return unt.toast({html: settings.lang.getValue('upload_error')});
+					}
+				});
+			});
+			continueButton.classList.remove('fixed-action-btn');
+			continueButton.style.marginLeft = '20px';
+			sqlDataDiv.appendChild(continueButton);
+
+			let loader = pages.elements.getLoader();
+			loader.style.marginLeft = '20px';
+			sqlDataDiv.appendChild(loader);
+			loader.style.display = 'none';
+		}
 	}
 };

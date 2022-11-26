@@ -5160,11 +5160,11 @@ const pages = {
 
 			return element;
 		},
-		createWindow: function () {
+		createWindow: function (fullScreen = false, bottomSheet = false) {
 			let element = document.createElement('div');
 			element.classList.add('modal');
 
-			if (ui.isMobile())
+			if (ui.isMobile() || bottomSheet)
 				element.classList.add('bottom-sheet');
 
 			let modalContent = document.createElement('div');
@@ -5192,6 +5192,9 @@ const pages = {
 			});
 
 			instance.open();
+			if (fullScreen) {
+				element.style.width = element.style.height = '100%';
+			}
 			element.getInstance = function () {
 				return instance;
 			}
