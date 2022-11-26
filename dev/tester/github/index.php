@@ -1,63 +1,13 @@
 <?php
 
-require_once __DIR__ . '/../../../bin/objects/chat.php';
-require_once __DIR__ . '/../../../bin/objects/dialog.php';
-require_once __DIR__ . '/../../../bin/objects/conversation.php';
+$event = json_decode(file_get_contents('php://input'), true);
 
-$result = Entity::runAs(69, function (Context $context) {
-	$chat = Chat::findById("1");
+if ($event['ref'] !== "refs/heads/master")
+{
+    shell_exec('git pull && cd /home/unt/unt_2 && docker-compose restart php && cd /home/unt/');
 
-	$event_type = strtolower(getallheaders()['X-Github-Event']);
-	if ($event_type === 'push')
-	{
-		$event = json_decode(file_get_contents('php://input'), true);
+    die(json_encode(array('response' => 1)));
+}
 
-		$messageText = '
-***[GitHub PUSH]***
-
-========== INFO ===========
-Commit uploaded by: **' . $event['sender']['login'] . '**
-Commit uploaded at: **' . $event['head_commit']['timestamp'] . '**
-';
-
-		if ($event['ref'] !== "refs/heads/master")
-			$messageText .= '
-***NOT IN THE MASTER***
-';
-	
-		$files_list = array_merge($event['head_commit']['modified'], $event['head_commit']['added']);
-		if (count($files_list) > 0)
-		{
-			$messageText .= '
-**Changed files list:**';
-
-			foreach ($files_list as $index => $filename) 
-			{
-				$index += 1;
-
-				$messageText .= "
-*{$index}*. {$filename}";
-			}
-		}
-
-		$removed_files_list = $event['head_commit']['removed'];
-		if (count($removed_files_list) > 0)
-		{
-			$messageText .= '
-**Removed files list:**';
-
-			foreach ($removed_files_list as $index => $filename) 
-			{
-				$index += 1;
-
-				$messageText .= "
-*{$index}*. {$filename}";
-			}
-		}
-
-		$chat->sendMessage($messageText);
-	}
-});
-
-die(json_encode(array('response' => intval($result))));
+die(json_encode(array('response' => 0)));
 ?>
