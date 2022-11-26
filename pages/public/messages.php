@@ -4,9 +4,6 @@ require_once __DIR__ . '/../../bin/objects/chat.php';
 
 if (isset(Request::get()->data['action']))
 {
-    ini_set('display_errors', 1);
-    error_reporting(E_ALL);
-
 	$action = strtolower(Request::get()->data['action']);
 
 	switch ($action) {

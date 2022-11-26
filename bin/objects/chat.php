@@ -10,15 +10,15 @@ require_once __DIR__ . '/message.php';
 
 abstract class Chat extends EventEmitter
 {
-	protected int $uid;
-	protected int $peer_id;
-	protected int $lastReadMsgId;
+	protected int $uid           = 0;
+	protected int $peer_id       = 0;
+	protected int $lastReadMsgId = 0;
 
-	protected bool $isValid;
-    protected bool $is_read;
-	protected bool $notifications_enabled;
+	protected bool $isValid = false;
+    protected bool $is_read = false;
+	protected bool $notifications_enabled = true;
 
-	protected string $type;
+	protected string $type = 'chat';
 
 	protected DataBaseManager $currentConnection;
 
