@@ -5,10 +5,9 @@ module.exports = (function () {
 	let q = {
 		connect: function () {
 			q.connection = mysql.createConnection({
-				host: (process.env.UNT_PRODUCTION === '1' ? 'mysql_prod' : '212.109.219.153'),
-				port: (process.env.UNT_PRODUCTION === '1' ? 3306 : 59876),
-				user: 'root',
-				password: process.env.UNT_PRODUCTION === '1' ? 'default-prod-unt-user-iA22021981_' : 'unt-user-test-pc2021_die',
+				host: 'mysql',
+				user: process.env.MYSQL_ROOT_USER,
+				password: process.env.MYSQL_ROOT_PASSWORD,
 				database: 'users',
 				charset: 'LATIN1_SWEDISH_CI'
 			});
@@ -25,7 +24,7 @@ module.exports = (function () {
 		last_chats_uid: 0,
 
 		setup: function () {
-			q.connection.query('SELECT IFNULL(MAX(uid), 0) AS max_uid, IFNULL(MIN(uid), 0) AS min_uid FROM messages.chats_members', function (err, row, data) {
+			q.connection.query('SELECT IFNULL(MAX(uid), 0) AS max_uid, IFNULL(MIN(uid), 0) AS min_uid FROM messages.members_chat_list', function (err, row, data) {
 				if (err) return console.log('Failed to setup UID manager.');
 
 				let last_dialogs_uid = row[0].max_uid;

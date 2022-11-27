@@ -11,10 +11,9 @@ let q = {
 	cache: new cache('memcached:11211'),
 	connect: function () {
 		q.connection = mysql.createConnection({
-			host: (process.env.UNT_PRODUCTION === '1' ? 'mysql_prod' : '212.109.219.153'),
-			port: (process.env.UNT_PRODUCTION === '1' ? 3306 : 59876),
-			user: 'root',
-			password: process.env.UNT_PRODUCTION === '1' ? 'default-prod-unt-user-iA22021981_' : 'unt-user-test-pc2021_die',
+			host: 'mysql',
+			user: process.env.MYSQL_ROOT_USER,
+			password: process.env.MYSQL_ROOT_PASSWORD,
 			database: 'users',
 			charset: 'LATIN1_SWEDISH_CI'
 		});
@@ -59,7 +58,7 @@ let q = {
 					});
 				}
 
-				q.connection.query('SELECT IFNULL(MAX(local_chat_id), 0) AS local_chat_id FROM messages.main WHERE uid = ' + uid, function (err, row, data) {
+				q.connection.query('SELECT IFNULL(MAX(lid), 0) AS local_chat_id FROM messages.members_chat_list WHERE uid = ' + uid, function (err, row, data) {
 					let mid = row;
 					
 					try {
