@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/../bin/objects/project.php';
+require_once __DIR__ . '/../bin/objects/Project.php';
 require_once __DIR__ . '/../bin/base_functions.php';
 
 $user = User::findById(69);

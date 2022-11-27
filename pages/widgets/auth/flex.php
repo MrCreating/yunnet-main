@@ -6,7 +6,7 @@
 
 $dev = true;
 
-require_once __DIR__ . '/../../../bin/objects/app.php';
+require_once __DIR__ . '/../../../bin/objects/App.php';
 require_once __DIR__ . '/../../../bin/functions/auth.php';
 require_once __DIR__ . '/../../public/flex.php';
 
@@ -27,7 +27,7 @@ if ($action === 'get_app_by_id')
 }
 if ($action === 'resolve_auth')
 {
-	header('Access-Control-Allow-Origin: ' . get_page_origin());
+	header('Access-Control-Allow-Origin: ' . unt\functions\get_page_origin());
 	header('Access-Control-Allow-Credentials: true');
 
 	if (!Context::get()->allowToUseUnt())

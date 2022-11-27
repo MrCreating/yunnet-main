@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/chat.php';
+require_once __DIR__ . '/Chat.php';
 
 /**
  * Multi-dialog chat class
@@ -20,8 +20,8 @@ class Conversation extends Chat
 
 	private int $access_level;
 
-	private Data $permissions;
-	private Attachment $photo;
+	private ?Data $permissions  = NULL;
+	private ?Attachment $photo = NULL;
 
 	public function __construct (string $localId)
 	{
@@ -52,17 +52,19 @@ class Conversation extends Chat
 			$this->notifications_enabled = boolval(intval($data['notifications']));
 			$this->show_pinned_messages  = boolval(intval($data['show_pinned_messages']));
 
-			if (!is_empty($data['photo']))
+			if (!unt\functions\is_empty($data['photo']))
 			{
 				$attachment = (new AttachmentsParser())->resolveFromQuery($data['photo']);
 
 				if ($attachment && $attachment->valid())
 					$this->photo = $attachment;
+                else
+                    $this->photo = NULL;
 			}
 		}
 	}
 
-	public function getPermissions (): Data
+	public function getPermissions (): ?Data
 	{
 		return $this->permissions;
 	}
@@ -305,7 +307,7 @@ class Conversation extends Chat
 	{
 		if ($this->getAccessLevel() !== 9) return '';
 
-		return is_empty($this->link) ? '' : Project::getDefaultDomain() . '/chats?c=' . $this->link;
+		return unt\functions\is_empty($this->link) ? '' : Project::getDefaultDomain() . '/chats?c=' . $this->link;
 	}
 
 	public function updateInviteLink (): bool
@@ -398,7 +400,7 @@ class Conversation extends Chat
 		if ($this->isKicked() || $this->isLeaved()) return 0;
 		if ($this->getPermissions()->can_change_title > $this->getAccessLevel()) return -1;
 
-		if (is_empty(trim($newTitle)) || strlen(trim($newTitle)) > 64) return -2;
+		if (unt\functions\is_empty(trim($newTitle)) || strlen(trim($newTitle)) > 64) return -2;
 		
 		if ($this->currentConnection->prepare("UPDATE messages.members_engine_1 SET title = ? WHERE uid = ? LIMIT 1")->execute([trim($newTitle), $this->uid]))
 		{
@@ -454,7 +456,7 @@ class Conversation extends Chat
 		return $this->is_muted;
 	}
 
-	public function getPhoto (): ?photo
+	public function getPhoto (): ?Photo
 	{
 		return $this->photo;
 	}

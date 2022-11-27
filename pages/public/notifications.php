@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . "/../../bin/objects/notification.php";
+require_once __DIR__ . "/../../bin/objects/Notification.php";
 
 /**
  * Notifications actions will be here

@@ -173,7 +173,7 @@ class RussianNameWorker
 			return implode('-', $list);
 		}
 
-		if (preg_match("/^[А-ЯЁ]\.?$/i)", $word))
+		if (preg_match("/^[А-ЯЁ]\.?$/i", $word))
 			return $word;
 
 		$this->init();

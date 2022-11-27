@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../functions/messages.php';
-require_once __DIR__ . '/message.php';
+require_once __DIR__ . '/Message.php';
 
 /**
  * Base chat class.
@@ -10,97 +10,95 @@ require_once __DIR__ . '/message.php';
 
 abstract class Chat extends EventEmitter
 {
-	protected int $uid           = 0;
-	protected int $peer_id       = 0;
-	protected int $lastReadMsgId = 0;
+    protected int $uid = 0;
+    protected int $peer_id = 0;
+    protected int $lastReadMsgId = 0;
 
-	protected bool $isValid = false;
+    protected bool $isValid = false;
     protected bool $is_read = false;
-	protected bool $notifications_enabled = true;
+    protected bool $notifications_enabled = true;
 
-	protected string $type = 'chat';
+    protected string $type = 'chat';
 
-	protected DataBaseManager $currentConnection;
+    protected DataBaseManager $currentConnection;
 
-    abstract public function canWrite (): int;
+    abstract public function canWrite(): int;
 
-	public function __construct (string $localId)
-	{
+    public function __construct(string $localId)
+    {
         parent::__construct();
 
-		$this->isValid = false;
-		$this->currentConnection = DataBaseManager::getConnection();
+        $this->isValid = false;
+        $this->currentConnection = DataBaseManager::getConnection();
 
-		$this->notifications_enabled = true;
-		$this->is_read               = true;
-		$this->type                  = 'chat';
+        $this->notifications_enabled = true;
+        $this->is_read = true;
+        $this->type = 'chat';
 
-		$is_bot_dialog = false;
-		$is_multi_chat = false;
-		$local_chat_id = 0;
+        $is_bot_dialog = false;
+        $is_multi_chat = false;
+        $local_chat_id = 0;
 
-		if (substr($localId, 0, 1) === "b")
-		{
-			$is_bot_dialog = true;
-			$local_chat_id = intval(substr($localId, 1, strlen($localId))) * -1;
-		} else if (intval($localId) < 0)
-		{
-			$is_multi_chat = true;
-			$local_chat_id = intval($localId);
-		} else if (intval($localId) > 0)
-		{
-			$local_chat_id = intval($localId);
-		}
+        if (substr($localId, 0, 1) === "b") {
+            $is_bot_dialog = true;
+            $local_chat_id = intval(substr($localId, 1, strlen($localId))) * -1;
+        } else if (intval($localId) < 0) {
+            $is_multi_chat = true;
+            $local_chat_id = intval($localId);
+        } else if (intval($localId) > 0) {
+            $local_chat_id = intval($localId);
+        }
 
         $this->uid = 0;
-		$res = $this->currentConnection->prepare($is_bot_dialog ?
-            "SELECT 
-                uid,
-                last_read_id,
-                notifications, 
-                show_pinned_message
-            FROM 
-                messages.chats 
-            WHERE 
-                lid = ? 
-              AND 
-                uid > 0 
-              AND 
-                user_id = ? 
-            LIMIT 1"
+        $res = $this->currentConnection->prepare($is_bot_dialog ?
+            "SELECT uid, last_read_message_id, notifications, show_pinned_messages FROM messages.members_chat_list WHERE lid = ? AND uid > 0 AND user_id = ? LIMIT 1"
             :
-            "SELECT 
-                uid,
-                last_read_id,
-                notifications, 
-                show_pinned_message 
-            FROM 
-                messages.chats 
-            WHERE 
-                lid = ? 
-              AND 
-                user_id = ? 
-            LIMIT 1"
+            "SELECT uid, last_read_message_id, notifications, show_pinned_messages FROM messages.members_chat_list WHERE lid = ? AND user_id = ? LIMIT 1"
         );
 
-		if ($res->execute([$local_chat_id, $_SESSION['user_id']]))
-		{
-			$result = $res->fetch(PDO::FETCH_ASSOC);
-			if (isset($result['uid']))
-			{
-                $this->isValid = true;
-				$this->uid     = intval($result['uid']);
+        if ($res->execute([$local_chat_id, $_SESSION['user_id']])) {
+            $result = $res->fetch(PDO::FETCH_ASSOC);
 
-                $this->peer_id               = intval($local_chat_id);
-                $this->is_read               = intval($result['is_read']);
-                $this->lastReadMsgId         = intval($result['last_read_id']);
+            if (isset($result['uid'])) {
+                $this->isValid = true;
+                $this->uid = intval($result['uid']);
+
+                $this->peer_id = intval($local_chat_id);
+                $this->is_read = intval($result['is_read']);
+                $this->lastReadMsgId = intval($result['last_read_id']);
                 $this->notifications_enabled = intval($result['notifications']);
-			} else
-			{
-				$this->uid = 0;
-			}
-		}
-	}
+            } else {
+                $this->uid = 0;
+            }
+        }
+    }
+
+    public function getLocalChatId(int $uid): int
+    {
+        $text_engine_init = curl_init("text_engine");
+
+        $data = json_encode([
+            'operation' => 'get_lid',
+            'uid'       => $uid
+        ]);
+
+        $text_engine_init = curl_init("text_engine");
+
+        $data = json_encode([
+            'operation' => 'get_lid',
+            'uid'       => $uid
+        ]);
+
+        curl_setopt($text_engine_init, CURLOPT_POSTFIELDS,     $data);
+        curl_setopt($text_engine_init, CURLOPT_POST,           1);
+        curl_setopt($text_engine_init, CURLOPT_HTTPHEADER,     array('Content-Type: application/json'));
+        curl_setopt($text_engine_init, CURLOPT_RETURNTRANSFER, true);
+
+        $result = curl_exec($text_engine_init);
+        curl_close($text_engine_init);
+
+        return intval($result);
+    }
 
 	public function getLastReadMessageId (): int
 	{
@@ -224,11 +222,11 @@ abstract class Chat extends EventEmitter
 
 		$attachments_list = (new AttachmentsParser())->getObjects($attachments);
 
-		if (is_empty($text) && count($attachments_list) === 0) return -3;
+		if (unt\functions\is_empty($text) && count($attachments_list) === 0) return -3;
 
 		if (strlen($text) > 4096)
 		{
-			$text_list = explode_length($text, 4096);
+			$text_list = unt\functions\explode_length($text, 4096);
 			foreach ($text_list as $index => $text_part) {
 				if ($index >= 10) break;
 
@@ -265,7 +263,7 @@ abstract class Chat extends EventEmitter
 
 		$companion_id = $this->getType() === 'dialog' ? ($this->getCompanion()->getType() === 'bot' ? $this->getCompanion()->getId() * -1 : $this->getCompanion()->getId()) : 0;
 
-		$local_message_id = intval(get_local_chat_id($this->uid));
+		$local_message_id = intval($this->getLocalChatId($this->uid));
 		if (!$local_message_id) return -8;
 
 		$res = $this->currentConnection->prepare("INSERT INTO messages.chat_engine_1 (
@@ -303,7 +301,7 @@ abstract class Chat extends EventEmitter
 			'uid' => $this->uid
 		];
 
-		if (!is_empty($payload) && strlen($payload) < 1024)
+		if (!unt\functions\is_empty($payload) && strlen($payload) < 1024)
 			$event['payload'] = $payload;
 
 		$user_ids  = [];
@@ -380,7 +378,7 @@ abstract class Chat extends EventEmitter
 
 		$companion_id = $this->getType() === 'dialog' ? ($this->getCompanion()->getType() === 'bot' ? $this->getCompanion()->getId() * -1 : $this->getCompanion()->getId()) : 0;
 
-		$local_message_id = intval(get_local_chat_id($this->uid));
+		$local_message_id = intval($this->getLocalChatId($this->uid));
 		if (!$local_message_id) return -8;
 
 		$res = $this->currentConnection->prepare("INSERT INTO messages.chat_engine_1 (
@@ -474,7 +472,7 @@ abstract class Chat extends EventEmitter
 	{
 		$chat = [];
 
-		if ($this->getType() === 'dialog' && $this->getCompanion()->getType() === 'bot')
+		if ($this->getType() === 'dialog' &&  $this->getCompanion() !== NULL && $this->getCompanion()->getType() === 'bot')
 		{
 			$chat['bot_peer_id'] = $this->getCompanion()->getId() * -1;
 		} else
@@ -497,11 +495,11 @@ abstract class Chat extends EventEmitter
 
 		$chat['chat_info'] = [
 			'is_multi_chat' => intval($this->getType() === 'conversation'),
-			'is_bot_chat'   => intval($this->getType() === 'dialog' && $this->getCompanion()->getType() === 'bot'),
+			'is_bot_chat'   => intval($this->getType() === 'dialog' && $this->getCompanion() !== NULL && $this->getCompanion()->getType() === 'bot'),
 			'data'          => []
 		];
 
-		if ($this->getType() === 'dialog')
+		if ($this->getType() === 'dialog' && $this->getCompanion() !== NULL)
 		{
 			$chat['chat_info']['data'] = $this->getCompanion()->toArray('*');
 		}
@@ -588,7 +586,7 @@ abstract class Chat extends EventEmitter
 	public static function create (string $title, array $users_list, ?Photo $photo, ?array $permissions_list = []): int
 	{
 		$title = trim($title);
-		if (is_empty($title) || strlen($title) > 64) return -1;
+		if (unt\functions\is_empty($title) || strlen($title) > 64) return -1;
 
 		$creator_id = intval($_SESSION['user_id']);
 		if ($creator_id <= 0) return -3;
@@ -673,8 +671,8 @@ abstract class Chat extends EventEmitter
 
 	public static function findById (string $localId): ?Chat
 	{
-		require_once __DIR__ . '/conversation.php';
-		require_once __DIR__ . '/dialog.php';
+		require_once __DIR__ . '/Conversation.php';
+		require_once __DIR__ . '/Dialog.php';
 
 		$dialog = intval($localId) < 0 ? new Conversation($localId) : new Dialog($localId);
 

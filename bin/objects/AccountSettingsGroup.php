@@ -1,7 +1,7 @@
 <?php
 
-require_once __DIR__ . '/settingsGroup.php';
-require_once __DIR__ . '/cookieManager.php';
+require_once __DIR__ . '/SettingsGroup.php';
+require_once __DIR__ . '/CookieManager.php';
 
 /**
  * Class for Account settings

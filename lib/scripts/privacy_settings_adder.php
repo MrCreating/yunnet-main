@@ -1,6 +1,6 @@
 <?php
 require __DIR__ . "/bin/base_functions.php";
-$connection = get_database_connection();
+$connection = DataBaseManager::getConnection();
 
 $res = $connection->prepare("SELECT id, settings FROM users.info;");
 $res->execute();

@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/settingsGroup.php';
+require_once __DIR__ . '/SettingsGroup.php';
 
 /**
  * Class for Security settings
@@ -41,7 +41,7 @@ class SecuritySettingsGroup extends SettingsGroup
 
 	public function isPasswordCorrect (string $password): bool
 	{
-		if (is_empty($password) || strlen($password) < 6 || strlen($password) > 64) return false;
+		if (unt\functions\is_empty($password) || strlen($password) < 6 || strlen($password) > 64) return false;
 
 		$res = $this->currentConnection->prepare("SELECT password FROM users.info WHERE id = ? LIMIT 1");
 		if ($res->execute([$this->currentEntity->getId()]))

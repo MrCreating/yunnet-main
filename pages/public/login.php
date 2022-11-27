@@ -8,7 +8,7 @@ if (isset(Request::get()->data['action']))
 
 	if ($action === 'login')
 	{
-		header('Access-Control-Allow-Origin: '.get_page_origin());
+		header('Access-Control-Allow-Origin: '.unt\functions\get_page_origin());
 		header('Access-Control-Allow-Credentials: true');
 
 		// auth result. It is array which contains id field.

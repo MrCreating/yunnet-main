@@ -2,11 +2,11 @@
     "name": "unt/unt_1_main",
     "type": "project",
     "require": {
-        "deployer/deployer": "dev-master"
+      "ext-json": "*",
+        "ext-pdo": "*",
+        "ext-curl": "*"
     },
-    "require-dev": {
-        "deployer/deployer": "dev-master"
-    },
+    "require-dev": {},
     "license": "ISC",
     "authors": [
         {

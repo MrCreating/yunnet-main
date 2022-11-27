@@ -1,7 +1,7 @@
 <?php
 
 require 'bin/base_functions.php';
-$connection = get_database_connection();
+$connection = DataBaseManager::getConnection();
 
 $timezones = array(
     'Pacific/Midway'       => "(GMT-11:00) Midway Island",

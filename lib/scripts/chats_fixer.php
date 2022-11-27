@@ -5,7 +5,7 @@ error_reporting(0);
 require __DIR__ . '/bin/base_functions.php';
 require __DIR__ . '/bin/functions/messages.php';
 
-$connection = get_database_connection();
+$connection = DataBaseManager::getConnection();
 
 $res = $connection->prepare("SELECT id FROM users.info;");
 $res->execute();

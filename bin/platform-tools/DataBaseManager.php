@@ -1,7 +1,5 @@
 <?php
 
-require_once __DIR__ . '/database_query.php';
-
 /**
  * DataBase class. Represents PDO metbods for PHP.
 */
@@ -39,9 +37,9 @@ class DataBaseManager
 		return $this->dbClient;
 	}
 
-	public function prepare (string $query): DataBaseStatemenet
+	public function prepare (string $query): PDOStatement
 	{
-		return new DataBaseStatemenet($query, $this->dbClient, $this->cacheClient, $this->cacheKey, $this->cacheTime);
+		return $this->getClient()->prepare($query);
 	}
 
 	public function cache (string $key, int $time = 86400): DataBaseManager

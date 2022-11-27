@@ -6,7 +6,7 @@
 
 //die(http_response_code(404));
 
-header('Access-Control-Allow-Origin: ' . get_page_origin());
+header('Access-Control-Allow-Origin: ' . unt\functions\get_page_origin());
 
 $folder_name       = explode('/', strval(explode('?', $_SERVER['REQUEST_URI'])[0]))[1];
 $file_name         = explode('/', strval(explode('?', $_SERVER['REQUEST_URI'])[0]))[2];
@@ -16,7 +16,7 @@ $path = __DIR__ . '/ui/' .
 	$folder_name . '/' . 
 	$file_name;
 
-if (!file_exists($path) && !is_empty($folder_name))
+if (!file_exists($path) && !unt\functions\is_empty($folder_name))
 {
 	http_response_code(404);
 	die('[]');

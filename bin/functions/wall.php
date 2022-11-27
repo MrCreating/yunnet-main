@@ -4,9 +4,9 @@
  * functions with user's wall.
 */
 
-require_once __DIR__ . '/../objects/poll.php';
-require_once __DIR__ . '/../objects/post.php';
-require_once __DIR__ . '/../objects/comment.php';
+require_once __DIR__ . '/../objects/Poll.php';
+require_once __DIR__ . '/../objects/Post.php';
+require_once __DIR__ . '/../objects/Comment.php';
 require_once __DIR__ . "/notifications.php";
 require_once __DIR__ . '/users.php';
 
@@ -90,7 +90,7 @@ function can_write_posts ($connection, $user_id, $check_id)
 */
 function create_post ($connection, $owner_id, $wall_id, $text = '', $attachments = '', $event = '')
 {
-	if (!is_empty($event))
+	if (!unt\functions\is_empty($event))
 	{
 		$allowed_events = ['updated_photo'];
 
@@ -105,13 +105,13 @@ function create_post ($connection, $owner_id, $wall_id, $text = '', $attachments
 	}
 
 	// empty post is not allowed
-	if (is_empty($text) && count($attachments_string) <= 0) return false;
+	if (unt\functions\is_empty($text) && count($attachments_string) <= 0) return false;
 
 	// too long text is not allowed
 	if (strlen($text) > 128000) return false;
 
 	// checking the user existance.
-	if (!user_exists($connection, intval($wall_id))) return false;
+	if (!Entity::findById($wall_id) == NULL) return false;
 
 	// attachments
 	$attachments = implode(',', $attachments_string);
@@ -168,7 +168,7 @@ function update_post_data ($connection, $user_id, $wall_id, $post_id, $text = ''
 	}
 
 	// empty post is not allowed
-	if (is_empty($text) && count($attachments_list) <= 0) return false;
+	if (unt\functions\is_empty($text) && count($attachments_list) <= 0) return false;
 
 	// too long text is not allowed
 	if (strlen($text) > 128000) return false;

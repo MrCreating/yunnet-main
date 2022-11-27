@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/../../bin/parsers/attachments.php';
+require_once __DIR__ . '/../../bin/parsers/AttachmentsParser.php';
 
 $credentials = substr(REQUESTED_PAGE, 1);
 

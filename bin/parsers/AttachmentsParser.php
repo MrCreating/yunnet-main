@@ -1,10 +1,10 @@
 <?php
 
-require_once __DIR__ . '/credentials.php';
-require_once __DIR__ . '/../objects/photo.php';
-require_once __DIR__ . '/../objects/theme.php';
-require_once __DIR__ . '/../objects/poll.php';
-require_once __DIR__ . '/../objects/post.php';
+require_once __DIR__ . '/Credentials.php';
+require_once __DIR__ . '/../objects/Photo.php';
+require_once __DIR__ . '/../objects/Theme.php';
+require_once __DIR__ . '/../objects/Poll.php';
+require_once __DIR__ . '/../objects/Post.php';
 
 /**
  * Parse attachments from credentials
@@ -46,7 +46,7 @@ class AttachmentsParser
 
 	public function getObject (?string $credentials): ?Attachment
 	{
-		if ($credentials && !is_empty($credentials))
+		if ($credentials && !unt\functions\is_empty($credentials))
 		{
 			$resulted_data = $this->parseCredentials($credentials);
 
@@ -84,14 +84,14 @@ class AttachmentsParser
 
 	public function getObjects (?string $credentials): array
 	{
-		if (!$credentials || is_empty($credentials)) return [];
+		if (!$credentials || unt\functions\is_empty($credentials)) return [];
 
 		$attachments_list = explode(',', trim($credentials));
 		$objects_list     = [];
 
 		$attachments_list_parsed = [];
 		foreach ($attachments_list as $index => $item) {
-			if (is_empty($item)) continue;
+			if (unt\functions\is_empty($item)) continue;
 
 			$attachments_list_parsed[] = $item;
 		}
@@ -110,7 +110,7 @@ class AttachmentsParser
 
 	public function resolveFromQuery (?string $query): ?Attachment
 	{
-		if (!$query || is_empty($query)) return NULL;
+		if (!$query || unt\functions\is_empty($query)) return NULL;
 
 		$query = explode('__', substr($query, 0, strlen($query)))[0];
 

@@ -7,7 +7,7 @@ require __DIR__ . '/bin/base_functions.php';
 require __DIR__ . '/bin/functions/messages.php';
 
 $maxUserId = 50;
-$connection = get_database_connection();
+$connection = DataBaseManager::getConnection();
 
 for ($user_id = 1; $user_id <= $maxUserId; $user_id++)
 {

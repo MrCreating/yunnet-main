@@ -1,7 +1,7 @@
 <?php
 
 require __DIR__ . '/../bin/base_functions.php';
-require __DIR__ . '/../bin/objects/app.php';
+require __DIR__ . '/../bin/objects/App.php';
 
 $app = new App(11);
 

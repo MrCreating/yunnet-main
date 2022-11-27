@@ -1,6 +1,6 @@
 <?php
 
-require __DIR__ . '/../bin/objects/chat.php';
+require __DIR__ . '/../bin/objects/Chat.php';
 
 $chat = new Chat("-3");
 

@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../bin/functions/theming.php';
-require_once __DIR__ . '/../../bin/objects/theme.php';
+require_once __DIR__ . '/../../bin/objects/Theme.php';
 
 if (isset(Request::get()->data["action"]))
 {

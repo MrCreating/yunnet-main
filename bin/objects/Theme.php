@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/attachment.php';
+require_once __DIR__ . '/Attachment.php';
 
 /**
  * Theme class
@@ -291,10 +291,10 @@ class Theme extends Attachment
 		if ($theme_owner !== intval($_SESSION['user_id'])) return false;
 
 		// checking new title
-		if (is_empty($theme_title) || strlen($theme_title) > 32) return false;
+		if (unt\functions\is_empty($theme_title) || strlen($theme_title) > 32) return false;
 
 		// checking new descrption
-		if (is_empty($theme_descr) || strlen($theme_descr) > 512) return false;
+		if (unt\functions\is_empty($theme_descr) || strlen($theme_descr) > 512) return false;
 
 		$res_title = $this->currentConnection->prepare("UPDATE users.themes SET title = :new_title WHERE id = :theme_id AND owner_id = :owner_id LIMIT 1;");
 		$res_title->bindParam(":new_title", $theme_title, PDO::PARAM_STR);
@@ -366,12 +366,12 @@ class Theme extends Attachment
 		$is_private = intval($is_private);
 
 		// checking title and description for validity
-		if (is_empty($title) || strlen($title) > 32) return NULL;
-		if (is_empty($description) || strlen($description) > 128) return NULL;
+		if (unt\functions\is_empty($title) || strlen($title) > 32) return NULL;
+		if (unt\functions\is_empty($description) || strlen($description) > 128) return NULL;
 
 		$connection = $_SERVER['dbConnection'];
 		if (!$connection)
-			$connection = get_database_connection();
+			$connection = DataBaseManager::getConnection();
 
 		// creating new user folder if not created.
 		if (!file_exists(__DIR__ . '/../../attachments/themes/' . $owner_id)) 
@@ -526,7 +526,7 @@ console.log(`[OK] Theme is working! Fine :)`)
 
 		$connection = $_SERVER['dbConnection'];
 		if (!$connection)
-			$connection = get_database_connection();
+			$connection = DataBaseManager::getConnection();
 
 		$result = [];
 

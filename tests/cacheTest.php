@@ -1,6 +1,6 @@
 <?php
 
-require __DIR__ . '/../bin/platform-tools/cache.php';
+require __DIR__ . '/../bin/platform-tools/Cache.php';
 
 $cache = new Cache("test");
 

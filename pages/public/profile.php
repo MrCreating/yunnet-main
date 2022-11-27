@@ -1,13 +1,13 @@
 <?php
 
-$selected_user = resolve_id_by_name($connection, REQUESTED_PAGE);
+$selected_user = unt\functions\resolve_id_by_name($connection, REQUESTED_PAGE);
 $user = $selected_user['id'] > 0 ? new User($selected_user["id"]) : new Bot($selected_user['id']*-1);
 
 if ($user->getScreenName() && $went_by_id) {
 	die(header("Location: /".$user->getScreenName()));
 }
 
-require_once __DIR__ . "/../../bin/objects/post.php";
+require_once __DIR__ . "/../../bin/objects/Post.php";
 require_once __DIR__ . "/../../bin/functions/wall.php";
 require_once __DIR__ . "/../../bin/functions/messages.php";
 require_once __DIR__ . '/../../bin/functions/users.php';

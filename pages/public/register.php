@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-require_once __DIR__ . '/../../bin/objects/session.php';
+require_once __DIR__ . '/../../bin/objects/Session.php';
 require_once __DIR__ . '/../../bin/functions/management.php';
 
 /**
@@ -51,18 +51,18 @@ if (isset(Request::get()->data['action']))
 				$last_name  = Request::get()->data["last_name"];
 
 				// base checkout before saving
-				if (is_empty($first_name) || strlen($first_name) > 32 || preg_match("/[^a-zA-Zа-яА-ЯёЁ'-]/ui", $first_name))
+				if (unt\functions\is_empty($first_name) || strlen($first_name) > 32 || preg_match("/[^a-zA-Zа-яА-ЯёЁ'-]/ui", $first_name))
 					die(json_encode(array(
 						'error_code' => 0
 					)));
 
-				if (is_empty($last_name) || strlen($last_name) > 32 || preg_match("/[^a-zA-Zа-яА-ЯёЁ'-]/ui", $last_name))
+				if (unt\functions\is_empty($last_name) || strlen($last_name) > 32 || preg_match("/[^a-zA-Zа-яА-ЯёЁ'-]/ui", $last_name))
 					die(json_encode(array(
 						'error_code' => 1
 					)));
 
-				$_SESSION["first_name"]   = capitalize($first_name);
-				$_SESSION["last_name"]    = capitalize($last_name);
+				$_SESSION["first_name"]   = unt\functions\capitalize($first_name);
+				$_SESSION["last_name"]    = unt\functions\capitalize($last_name);
 
 				die(json_encode(array(
 					"stage" => ($_SESSION["stage"] = 1)
@@ -75,7 +75,7 @@ if (isset(Request::get()->data['action']))
 			if ($currentStage === 1)
 			{
 				$email = strval(trim(Request::get()->data["email"]));
-				if (is_empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 96)
+				if (unt\functions\is_empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 96)
 				{
 					die(json_encode(array(
 						'error_code' => 2
@@ -138,7 +138,7 @@ if (isset(Request::get()->data['action']))
 				$password        = strval(Request::get()->data["password"]);
 				$repeat_password = strval(Request::get()->data["repeat_password"]);
 
-				if (is_empty($password) || strlen($password) < 6 || strlen($password) > 64)
+				if (unt\functions\is_empty($password) || strlen($password) < 6 || strlen($password) > 64)
 					die(json_encode(array(
 						'error_code' => 5
 					)));

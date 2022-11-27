@@ -1,7 +1,7 @@
 <?php
 
-require_once __DIR__ . '/attachment.php';
-require_once __DIR__ . '/comment.php';
+require_once __DIR__ . '/Attachment.php';
+require_once __DIR__ . '/Comment.php';
 require_once __DIR__ . '/../functions/notifications.php';
 
 /**
@@ -60,7 +60,7 @@ class Post extends Attachment
 				$this->is_pinned     = boolval($data['is_pinned']);
 
 				$this->comments_count = intval($res->fetch(PDO::FETCH_ASSOC)["COUNT(DISTINCT local_id)"]);
-				if (!is_empty($data['event']))
+				if (!unt\functions\is_empty($data['event']))
 				{
 					$this->event = [];
 
@@ -172,15 +172,17 @@ class Post extends Attachment
 	}
 
 	public function like ()
-	{
+    {
 		if (!$this->valid()) return false;
 
 		$state = NULL;
 
 		$res = $this->currentConnection->prepare("SELECT is_liked FROM users.likes WHERE attachment = :attachment AND user_id = :user_id LIMIT 1");
 
-		$a = $res->bindParam(":attachment", $this->getCredentials(),      PDO::PARAM_STR);
-		$b = $res->bindParam(":user_id",    intval($_SESSION['user_id']), PDO::PARAM_INT);
+        $credentials1 = $this->getCredentials();
+        $a = $res->bindParam(":attachment", $credentials1,      PDO::PARAM_STR);
+        $user_id = intval($_SESSION['user_id']);
+        $b = $res->bindParam(":user_id", $user_id, PDO::PARAM_INT);
 
 		if ($res->execute())
 		{
@@ -188,13 +190,15 @@ class Post extends Attachment
 			if (!$data)
 			{
 				$res = $this->currentConnection->prepare("INSERT INTO users.likes (user_id, is_liked, attachment) VALUES (:user_id, 1, :attachment);");
-				$res->bindParam(":attachment", $this->getCredentials(),      PDO::PARAM_STR);
-				$res->bindParam(":user_id",    intval($_SESSION['user_id']), PDO::PARAM_INT);
+                $credentials = $this->getCredentials();
+
+                $res->bindParam(":attachment", $credentials,      PDO::PARAM_STR);
+				$res->bindParam(":user_id", $user_id, PDO::PARAM_INT);
 				if ($res->execute())
 				{
-					if ($this->getWallId() !== intval($_SESSION['user_id']))
-						create_notification($connection, $post_owner_id, "post_like", [
-							'user_id' => intval($_SESSION['user_id']),
+					if ($this->getWallId() !== $user_id)
+						create_notification($this->currentConnection, $this->getOwnerId(), "post_like", [
+							'user_id' => $user_id,
 							'data'    => [
 								'wall_id' => $this->getWallId(),
 								'post_id' => $this->getPostId()
@@ -209,8 +213,9 @@ class Post extends Attachment
 			if ($is_liked)
 			{
 				$res = $this->currentConnection->prepare("UPDATE users.likes SET is_liked = 0 WHERE attachment = :attachment AND user_id = :user_id LIMIT 1;");
-				$res->bindParam(":attachment", $this->getCredentials(),      PDO::PARAM_STR);
-				$res->bindParam(":user_id",    intval($_SESSION['user_id']), PDO::PARAM_INT);
+                $credentials2 = $this->getCredentials();
+                $res->bindParam(":attachment", $credentials2,      PDO::PARAM_STR);
+				$res->bindParam(":user_id", $user_id, PDO::PARAM_INT);
 				if ($res->execute())
 				{
 					$state = 0;
@@ -218,8 +223,9 @@ class Post extends Attachment
 			} else if (!$is_liked && $data)
 			{
 				$res = $this->currentConnection->prepare("UPDATE users.likes SET is_liked = 1 WHERE attachment = :attachment AND user_id = :user_id LIMIT 1;");
-				$res->bindParam(":attachment", $this->getCredentials(),      PDO::PARAM_STR);
-				$res->bindParam(":user_id",    intval($_SESSION['user_id']), PDO::PARAM_INT);
+                $credentials3 = $this->getCredentials();
+                $res->bindParam(":attachment", $credentials3,      PDO::PARAM_STR);
+				$res->bindParam(":user_id", $user_id, PDO::PARAM_INT);
 				if ($res->execute())
 				{
 					$state = 1;
@@ -230,7 +236,8 @@ class Post extends Attachment
 		if ($state !== NULL)
 		{
 			$res = $this->currentConnection->prepare("SELECT COUNT(DISTINCT user_id) FROM users.likes WHERE attachment = :attachment AND is_liked = 1;");
-			$res->bindParam(":attachment", $this->getCredentials(),      PDO::PARAM_STR);
+            $credentials4 = $this->getCredentials();
+            $res->bindParam(":attachment", $credentials4,      PDO::PARAM_STR);
 			if ($res->execute())
 			{
 				$likes_count = intval($res->fetch(PDO::FETCH_ASSOC)["COUNT(DISTINCT user_id)"]);
@@ -314,11 +321,14 @@ class Post extends Attachment
 
 	public function apply (): bool
 	{
-		$res = $this->currentConnection->uncache('Post_' . $this->getWallId() . '_' . $this->getPostId())->prepare("UPDATE wall.posts SET text = :text WHERE to_id = :to_id AND local_id = :local_id LIMIT 1;");
+        $wallId = $this->getWallId();
+        $res = $this->currentConnection->uncache('Post_' . $wallId . '_' . $this->getPostId())->prepare("UPDATE wall.posts SET text = :text WHERE to_id = :to_id AND local_id = :local_id LIMIT 1;");
 
-		$res->bindParam(":text",     $this->getText(),   PDO::PARAM_STR);
-		$res->bindParam(":to_id",    $this->getWallId(), PDO::PARAM_INT);
-		$res->bindParam(":local_id", $this->getPostId(), PDO::PARAM_INT);
+        $text = $this->getText();
+        $res->bindParam(":text", $text,   PDO::PARAM_STR);
+		$res->bindParam(":to_id", $wallId, PDO::PARAM_INT);
+        $postId = $this->getPostId();
+        $res->bindParam(":local_id", $postId, PDO::PARAM_INT);
 
 		if ($res->execute())
 		{
@@ -332,11 +342,12 @@ class Post extends Attachment
 					$attachments .= ',';
 			}
 
-			$res = $this->currentConnection->uncache('Post_' . $this->getWallId() . '_' . $this->getPostId())->prepare("UPDATE wall.posts SET attachments = :attachments WHERE to_id = :to_id AND local_id = :local_id LIMIT 1;");
+			$res = $this->currentConnection->uncache('Post_' . $wallId . '_' . $this->getPostId())->prepare("UPDATE wall.posts SET attachments = :attachments WHERE to_id = :to_id AND local_id = :local_id LIMIT 1;");
 
 			$res->bindParam(":attachments", $attachments,       PDO::PARAM_STR);
-			$res->bindParam(":to_id",       $this->getWallId(), PDO::PARAM_INT);
-			$res->bindParam(":local_id",    $this->getPostId(), PDO::PARAM_INT);
+			$res->bindParam(":to_id", $wallId, PDO::PARAM_INT);
+            $postId1 = $this->getPostId();
+            $res->bindParam(":local_id", $postId1, PDO::PARAM_INT);
 
 			return $res->execute();
 		}
@@ -439,7 +450,7 @@ class Post extends Attachment
 			$attachments_string[] = $attachment->getCredentials();
 		}
 
-		if (is_empty($text) && count($attachments_string) <= 0) return NULL;
+		if (unt\functions\is_empty($text) && count($attachments_string) <= 0) return NULL;
 		if (strlen($text) > 64000) return NULL;
 
 		$attachments  = implode(',', $attachments_string);
@@ -455,12 +466,13 @@ class Post extends Attachment
 
 			$res = $this->currentConnection->prepare("INSERT INTO wall.comments (owner_id, local_id, text, time, attachments, attachment) VALUES (:owner_id, :local_id, :text, :time, :attachments, :attachment);");
 
-			$res->bindParam(":owner_id",    intval($_SESSION['user_id']), PDO::PARAM_INT);
-			$res->bindParam(":local_id",    $new_local_id,                PDO::PARAM_INT);
-			$res->bindParam(":text",        $text,                        PDO::PARAM_STR);
-			$res->bindParam(":time",        $time,                        PDO::PARAM_INT);
-			$res->bindParam(":attachments", $attachments,                 PDO::PARAM_STR);
-			$res->bindParam(":attachment",  $dest_attachm,                PDO::PARAM_STR);
+            $user_id = intval($_SESSION['user_id']);
+            $res->bindParam(":owner_id",    $user_id,      PDO::PARAM_INT);
+			$res->bindParam(":local_id",    $new_local_id, PDO::PARAM_INT);
+			$res->bindParam(":text",        $text,         PDO::PARAM_STR);
+			$res->bindParam(":time",        $time,         PDO::PARAM_INT);
+			$res->bindParam(":attachments", $attachments,  PDO::PARAM_STR);
+			$res->bindParam(":attachment",  $dest_attachm, PDO::PARAM_STR);
 
 			if ($res->execute())
 			{

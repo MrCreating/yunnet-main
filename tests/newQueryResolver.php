@@ -1,6 +1,6 @@
 <?php
 
-require __DIR__ . '/../bin/objects/attachment.php';
+require __DIR__ . '/../bin/objects/Attachment.php';
 
 $parser = new AttachmentsParser();
 

@@ -134,7 +134,7 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 
 					if ($user->getScreenName() !== Request::get()->data["screen_name"] && isset(Request::get()->data['screen_name']))
 					{
-						$result = $user->edit()->setScreenName(is_empty(Request::get()->data["screen_name"]) ? NULL : Request::get()->data["screen_name"]);
+						$result = $user->edit()->setScreenName(unt\functions\is_empty(Request::get()->data["screen_name"]) ? NULL : Request::get()->data["screen_name"]);
 						if ($result === 0)
 						{
 							die(json_encode(array('error'=>1, 'message'=>$context->getLanguage()->in_f_3)));
@@ -150,7 +150,7 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 					if (isset(Request::get()->data['photo']))
 					{
 						$attachment_data = strval(Request::get()->data['photo']);
-						if (is_empty($attachment_data))
+						if (unt\functions\is_empty($attachment_data))
 						{
 							$result = $user->setPhoto()->apply();
 							if ($result) die(json_encode(array('response'=>1)));

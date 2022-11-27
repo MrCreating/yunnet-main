@@ -1,7 +1,7 @@
 <?php
 
 ini_set('display_errors', 0);
-error_reporting(E_ALL);
+error_reporting(0);
 
 /**
  * 
@@ -30,7 +30,7 @@ if (!in_array($to, $subdomains))
 // defines a page and loads the core context
 define('REQUESTED_PAGE', $requested_page);
 
-require_once __DIR__ . '/../bin/objects/project.php';
+require_once __DIR__ . '/../bin/objects/Project.php';
 require_once __DIR__ . '/../bin/base_functions.php';
 
 if (getenv('UNT_PRODUCTION') !== '1')

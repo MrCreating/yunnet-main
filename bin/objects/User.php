@@ -1,9 +1,9 @@
 <?php
 
-require_once __DIR__ . '/entity.php';
-require_once __DIR__ . '/settings.php';
-require_once __DIR__ . '/userInfoEditor.php';
-require_once __DIR__ . '/dialog.php';
+require_once __DIR__ . '/Entity.php';
+require_once __DIR__ . '/Settings.php';
+require_once __DIR__ . '/UserInfoEditor.php';
+require_once __DIR__ . '/Dialog.php';
 require_once __DIR__ . '/../functions/notifications.php';
 require_once __DIR__ . '/../platform-tools/name_worker.php';
 

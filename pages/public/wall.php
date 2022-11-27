@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . "/../../bin/objects/post.php";
+require_once __DIR__ . "/../../bin/objects/Post.php";
 require_once __DIR__ . "/../../bin/functions/wall.php";
 require_once __DIR__ . "/../../bin/functions/users.php";
 

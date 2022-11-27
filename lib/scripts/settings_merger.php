@@ -3,7 +3,7 @@ error_reporting(0);
 
 require __DIR__ . '/../../bin/base_functions.php';
 
-$connection = get_database_connection();
+$connection = DataBaseManager::getConnection();
 
 for ($i = 1; $i <= 100; $i++)
 {

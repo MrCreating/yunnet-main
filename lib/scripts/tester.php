@@ -1,7 +1,7 @@
 <?php
 
 require 'bin/base_functions.php';
-$connection = get_database_connection();
+$connection = DataBaseManager::getConnection();
 $connection->setAttribute(PDO::ATTR_EMULATE_PREPARES, 1);
 
 $i = 0;

@@ -4,10 +4,10 @@
 */
 
 if (!class_exists('Context'))
-	require __DIR__ . '/../../bin/context.php';
+	require __DIR__ . '/../../bin/Context.php';
 
 if (!class_exists('AttachmentsParser'))
-	require __DIR__ . '/../../bin/objects/attachment.php';
+	require __DIR__ . '/../../bin/objects/Attachment.php';
 
 if (!class_exists('Entity'))
 	require __DIR__ . '/../../bin/objects/entities.php';

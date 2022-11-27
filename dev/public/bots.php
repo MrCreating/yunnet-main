@@ -62,7 +62,7 @@ if (isset(Request::get()->data["action"]))
 			if (!function_exists('update_screen_name'))
 				require __DIR__ . '/../../bin/functions/alsettings.php';
 
-			$result = update_screen_name($connection, intval($bot->getId())*-1, (is_empty(Request::get()->data["new_screen_name"]) ? NULL : strval(Request::get()->data["new_screen_name"])));
+			$result = update_screen_name($connection, intval($bot->getId())*-1, (unt\functions\is_empty(Request::get()->data["new_screen_name"]) ? NULL : strval(Request::get()->data["new_screen_name"])));
 
 			if ($result === false)
 			{
@@ -73,12 +73,12 @@ if (isset(Request::get()->data["action"]))
 				die(json_encode(array('error'=>1, 'error_message'=>$context->lang["in_f_4"])));
 			}
 
-			die(json_encode(array('success'=>is_empty(Request::get()->data['new_screen_name']) ? 0 : 1)));
+			die(json_encode(array('success'=>unt\functions\is_empty(Request::get()->data['new_screen_name']) ? 0 : 1)));
 		break;
 
 		case 'set_photo':
 			if (!class_exists('AttachmentsParser'))
-				require __DIR__ . "/../../bin/objects/attachment.php";
+				require __DIR__ . "/../../bin/objects/Attachment.php";
 			if (!class_exists('Bot'))
 				require __DIR__ . '/../../bin/objects/entities.php';
 

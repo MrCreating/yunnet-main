@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/../../bin/objects/chat.php';
+require_once __DIR__ . '/../../bin/objects/Chat.php';
 
 if (isset(Request::get()->data['action']))
 {

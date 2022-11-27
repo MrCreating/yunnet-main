@@ -61,10 +61,11 @@ function create_friendship ($connection, $owner_id, $user_id)
 					'user_id' => intval($owner_id)
 				]);
 
-				emit_event([$owner_id], [0], [
-					'event'   => 'friendship_by_me_accepted',
-					'user_id' => intval($user_id)
-				]);
+                $emitter = new EventEmitter();
+                $emitter->sendEvent([$owner_id], [0], [
+                    'event'   => 'friendship_by_me_accepted',
+                    'user_id' => intval($user_id)
+                ]);
 
 				$connection->prepare("UPDATE users.relationships SET state = 2 WHERE id = ? LIMIT 1;")->execute([intval($friendship['id'])]);
 				$connection->prepare("UPDATE users.relationships SET is_hidden = 0 WHERE id = ? LIMIT 1;")->execute([intval($friendship['id'])]);
@@ -223,7 +224,7 @@ function search_users ($connection, $query, $additional_params = [
 {
 	$result = [];
 
-	$query = explode(' ', capitalize(trim($query)));
+	$query = explode(' ', unt\functions\capitalize(trim($query)));
 	if (count($query) > 20 || count($query) < 1)
 		return $result;
 
@@ -232,7 +233,7 @@ function search_users ($connection, $query, $additional_params = [
 		$query_call = "SELECT DISTINCT id FROM bots.info WHERE ";
 
 	foreach ($query as $index => $word) {
-		if (is_empty($word))
+		if (unt\functions\is_empty($word))
 			continue;
 
 		if (!$additional_params['only_bots'])
@@ -259,7 +260,7 @@ function search_users ($connection, $query, $additional_params = [
 	// preparing requests
 	$res = $connection->prepare($query_call);
 	foreach ($query as $index => $word) {
-		if (is_empty($word))
+		if (unt\functions\is_empty($word))
 			continue;
 
 		if (!$additional_params['only_bots'])
@@ -391,13 +392,11 @@ function can_invite_to_chat ($connection, $user_id, $check_profile)
 */
 function hide_friendship_request ($connection, $user_id, $hide_id)
 {
-	if (!function_exists('emit_event'))
-		require __DIR__ . '/../emitters.php';
-
-	emit_event([$user_id], [0], [
-		'event'   => 'request_hide',
-		'user_id' => intval($hide_id)
-	]);
+    $emitter = new EventEmitter();
+    $emitter->sendEvent([$user_id], [0], [
+        'event'   => 'request_hide',
+        'user_id' => intval($hide_id)
+    ]);
 
 	return $connection->prepare("UPDATE users.relationships SET is_hidden = 1 WHERE (user1 = ? AND user2 = ?) OR (user1 = ? AND user2 = ?) LIMIT 1;")->execute([intval($user_id), intval($hide_id), intval($hide_id), intval($user_id)]);
 }

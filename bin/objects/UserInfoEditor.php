@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/infoEditor.php';
+require_once __DIR__ . '/InfoEditor.php';
 
 /**
  * User profile info editor
@@ -29,7 +29,7 @@ class UserInfoEditor extends InfoEditor
 	{
 		if (!$this->getBoundEntity()->valid() || $this->getBoundEntity()->isBanned()) return false;
 
-		if (!$newStatus || is_empty($newStatus))
+		if (!$newStatus || unt\functions\is_empty($newStatus))
 		{
 			return $this->currentConnection->uncache('User_' . $this->getBoundEntity()->getId())->prepare("UPDATE users.info SET status = NULL WHERE id = ? AND is_deleted = 0 AND is_banned = 0 LIMIT 1")->execute([$this->getBoundEntity()->getId()]);
 		} else
@@ -76,11 +76,11 @@ class UserInfoEditor extends InfoEditor
 	{
 		if (!$this->getBoundEntity()->valid() || $this->getBoundEntity()->isBanned()) return false;
 
-		if (is_empty($firstName)) return -3;
+		if (unt\functions\is_empty($firstName)) return -3;
 		if (strlen($firstName) < 2 || strlen($firstName) > 32) return -2;
 		if (preg_match("/[^a-zA-Zа-яА-ЯёЁ'-]/ui", $firstName)) return -1;
 
-		$this->firstName = capitalize($firstName);
+		$this->firstName = unt\functions\capitalize($firstName);
 
 		return (int) $this->currentConnection->uncache('User_' . $this->getBoundEntity()->getId())->prepare("UPDATE users.info SET first_name = ? WHERE id = ? AND is_deleted = 0 AND is_banned = 0 LIMIT 1;")->execute([$this->firstName, $this->getBoundEntity()->getId()]);
 	}
@@ -89,11 +89,11 @@ class UserInfoEditor extends InfoEditor
 	{
 		if (!$this->getBoundEntity()->valid() || $this->getBoundEntity()->isBanned()) return false;
 
-		if (is_empty($lastName)) return -3;
+		if (unt\functions\is_empty($lastName)) return -3;
 		if (strlen($lastName) < 2 || strlen($lastName) > 32) return -2;
 		if (preg_match("/[^a-zA-Zа-яА-ЯёЁ'-]/ui", $lastName)) return -1;
 
-		$this->lastName = capitalize($lastName);
+		$this->lastName = unt\functions\capitalize($lastName);
 
 		return (int) $this->currentConnection->uncache('User_' . $this->getBoundEntity()->getId())->prepare("UPDATE users.info SET last_name = ? WHERE id = ? AND is_deleted = 0 AND is_banned = 0 LIMIT 1;")->execute([$this->lastName, $this->getBoundEntity()->getId()]);
 	}
@@ -107,7 +107,7 @@ class UserInfoEditor extends InfoEditor
 			$this->screenName = $screenName;
 		} else
 		{
-			if (is_empty($screenName) || strlen($screenName) < 6 || strlen($screenName) > 64) return 0;
+			if (unt\functions\is_empty($screenName) || strlen($screenName) < 6 || strlen($screenName) > 64) return 0;
 
 			if (!preg_match("/^[a-z]{1}[a-z_\d\s]*[a-z_\s\d]{1}$/i", $screenName)) return 0;
 

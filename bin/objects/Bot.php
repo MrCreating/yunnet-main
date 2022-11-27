@@ -1,8 +1,8 @@
 <?php
 
-require_once __DIR__ . '/entity.php';
-require_once __DIR__ . '/settings.php';
-require_once __DIR__ . '/dialog.php';
+require_once __DIR__ . '/Entity.php';
+require_once __DIR__ . '/Settings.php';
+require_once __DIR__ . '/Dialog.php';
 
 class Bot extends Entity 
 {
@@ -110,7 +110,7 @@ class Bot extends Entity
 	{
 		$new_name = trim($this->name);
 
-		if (is_empty($new_name) || strlen($new_name) > 64) return false;
+		if (unt\functions\is_empty($new_name) || strlen($new_name) > 64) return false;
 		if (preg_match("/[^a-zA-Zа-яА-ЯёЁ'-@$*#!%\d ]/ui", $new_name)) return false;
 
 		$res = $this->currentConnection->prepare("UPDATE bots.info SET name = :new_name WHERE id = :id AND is_deleted = 0 LIMIT 1");
@@ -276,7 +276,7 @@ class Bot extends Entity
 
 		$bot_name = trim($name);
 
-		if (is_empty($bot_name) || strlen($bot_name) > 64) return NULL;
+		if (unt\functions\is_empty($bot_name) || strlen($bot_name) > 64) return NULL;
 
 		// only allowed letters and digits, space, and some symbols.
 		if (preg_match("/[^a-zA-Zа-яА-ЯёЁ'-@$*#!%\d ]/ui", $bot_name)) return NULL;

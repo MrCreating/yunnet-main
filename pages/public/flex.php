@@ -4,10 +4,10 @@ require_once __DIR__ . '/../../bin/functions/management.php';
 require_once __DIR__ . '/../../bin/functions/wall.php';
 require_once __DIR__ . '/../../bin/functions/messages.php';
 require_once __DIR__ . '/../../bin/functions/users.php';
-require_once __DIR__ . '/../../bin/objects/chat.php';
-require_once __DIR__ . '/../../bin/objects/dialog.php';
-require_once __DIR__ . '/../../bin/objects/conversation.php';
-require_once __DIR__ . '/../../bin/objects/post.php';
+require_once __DIR__ . '/../../bin/objects/Chat.php';
+require_once __DIR__ . '/../../bin/objects/Dialog.php';
+require_once __DIR__ . '/../../bin/objects/Conversation.php';
+require_once __DIR__ . '/../../bin/objects/Post.php';
 
 if (isset(Request::get()->data['action']))
 {
@@ -58,7 +58,7 @@ if (isset(Request::get()->data['action']))
 			if (Context::get()->getCurrentUser() && Context::get()->getCurrentUser()->isBanned()) 
 				$screen_name = 'id' . Context::get()->getCurrentUser()->getId();
 
-			if (is_empty($screen_name)) die(json_encode(array("error"=>1)));
+			if (unt\functions\is_empty($screen_name)) die(json_encode(array("error"=>1)));
 
 			$result = Entity::findByScreenName($screen_name);
 			if (!$result) die(json_encode(array("error"=>1)));
@@ -167,7 +167,7 @@ if (isset(Request::get()->data['action']))
 
 			$user_id = intval(Request::get()->data['user_id']);
 
-			if (!user_exists(DataBaseManager::getConnection()->getClient(), $user_id) || !can_access_closed(DataBaseManager::getConnection()->getClient(), $context->getCurrentUser()->getId(), $user_id) || in_blacklist($connection, $user_id, $context->getCurrentUser()->getId()))
+			if (!Entity::findById($user_id) == NULL || !can_access_closed(DataBaseManager::getConnection()->getClient(), $context->getCurrentUser()->getId(), $user_id) || in_blacklist($connection, $user_id, $context->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
 			$section = strval(Request::get()->data['section']);

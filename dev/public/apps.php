@@ -7,7 +7,7 @@ if (!$context->isLogged())
 	die(header("Location: /"));
 
 if (!class_exists('App'))
-	require __DIR__ . '/../../bin/objects/app.php';
+	require __DIR__ . '/../../bin/objects/App.php';
 if (!class_exists('Entity'))
 	require __DIR__ . '/../../bin/objects/entities.php';
 
@@ -177,7 +177,7 @@ if (isset(Request::get()->data['action']))
 			$photo = strval(Request::get()->data["photo"]);
 
 			if (!class_exists('AttachmentsParser'))
-				require __DIR__ . "/../../bin/objects/attachment.php";
+				require __DIR__ . "/../../bin/objects/Attachment.php";
 			if (!class_exists('App'))
 				require __DIR__ . '/../../bin/objects/apps.php';
 

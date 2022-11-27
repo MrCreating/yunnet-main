@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/forwardedMessage.php';
+require_once __DIR__ . '/ForwardedMessage.php';
 
 /**
  * Message class
@@ -47,19 +47,19 @@ class Message
 					$this->boundChat = $chat;
 					$this->id        = $messageId;
 
-					if (!is_empty($data['event']))
+					if (!unt\functions\is_empty($data['event']))
 					{
 						$this->event     = strval($data['event']);
 						$this->isService = true;
 
 						$this->eventInfo = new Data([]);
-						if (!is_empty($data['new_title']) || !is_empty($data['new_src']))
+						if (!unt\functions\is_empty($data['new_title']) || !unt\functions\is_empty($data['new_src']))
 						{
-							if (!is_empty($data['new_title']))
+							if (!unt\functions\is_empty($data['new_title']))
 							{
 								$this->eventInfo->newTitle = strval($data['new_title']);
 							}
-							if (!is_empty($data['new_src']))
+							if (!unt\functions\is_empty($data['new_src']))
 							{
 								$this->eventInfo->newSrc = strval($data['new_src']);
 							}
@@ -132,7 +132,7 @@ class Message
 
 	public function setText (string $text): bool
 	{
-		if (is_empty($text) || strlen($text) > 4096) return false;
+		if (unt\functions\is_empty($text) || strlen($text) > 4096) return false;
 
 		$this->text = $text;
 		return true;
@@ -216,7 +216,7 @@ class Message
 		$attachments_list = $this->getAttachments();
 		$text             = $this->getText();
 
-		if (is_empty($text) && count($attachments_list) === 0) return -3;
+		if (unt\functions\is_empty($text) && count($attachments_list) === 0) return -3;
 		if (strlen($text) > 4096) return 0;
 		if (count($attachments_list) > 10) return -5;
 

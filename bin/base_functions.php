@@ -1,20 +1,22 @@
 <?php
 
+namespace unt\functions;
+
 /**
  * Initial and most used functions and operations
  */
 
 // connect the default modules
-require_once __DIR__ . '/objects/request.php';
-require_once __DIR__ . '/objects/context.php';
-require_once __DIR__ . '/objects/letter.php';
-require_once __DIR__ . '/platform-tools/cache.php';
-require_once __DIR__ . '/platform-tools/database.php';
-require_once __DIR__ . '/platform-tools/data.php';
+require_once __DIR__ . '/objects/Request.php';
+require_once __DIR__ . '/objects/Context.php';
+require_once __DIR__ . '/objects/Letter.php';
+require_once __DIR__ . '/platform-tools/Cache.php';
+require_once __DIR__ . '/platform-tools/DataBaseManager.php';
+require_once __DIR__ . '/platform-tools/Data.php';
 require_once __DIR__ . '/platform-tools/event_manager.php';
-require_once __DIR__ . '/objects/user.php';
-require_once __DIR__ . '/objects/bot.php';
-require_once __DIR__ . '/parsers/attachments.php';
+require_once __DIR__ . '/objects/User.php';
+require_once __DIR__ . '/objects/Bot.php';
+require_once __DIR__ . '/parsers/AttachmentsParser.php';
 
 // returns a page origin for CORS.
 function get_page_origin () 
@@ -24,7 +26,7 @@ function get_page_origin ()
 }
 
 // explode string by length
-function explode_length ($text, $length)
+function explode_length ($text, $length): array
 {
 	$result = [];
 
@@ -39,12 +41,6 @@ function explode_length ($text, $length)
 	}
 
 	return $result;
-}
-
-// get language function
-function get_language ($connection, $current_user = NULL)
-{
-	return Context::get()->getLanguage();
 }
 
 // get rules text
@@ -112,12 +108,6 @@ function get_dev_language ($connection)
 	return $lang;
 }
 
-// get DB connection class
-function get_database_connection ()
-{
-	return DataBaseManager::getConnection();
-}
-
 // returns user or bot id by screen name
 function resolve_id_by_name ($connection, $name)
 {
@@ -144,13 +134,13 @@ function resolve_id_by_name ($connection, $name)
 		$res = $connection->prepare("SELECT id FROM users.info WHERE screen_name = ? LIMIT 1;");
 		$res->execute([$name]);
 
-		$id = intval($res->fetch(PDO::FETCH_ASSOC)['id']);
+		$id = intval($res->fetch(\PDO::FETCH_ASSOC)['id']);
 		if ($id === 0)
 		{
 			$res = $connection->prepare("SELECT id FROM bots.info WHERE screen_name = ? LIMIT 1;");
 			$res->execute([$name]);
 
-			$id = intval($res->fetch(PDO::FETCH_ASSOC)['id'])*-1;
+			$id = intval($res->fetch(\PDO::FETCH_ASSOC)['id'])*-1;
 		}
 	}
 	else
@@ -158,13 +148,13 @@ function resolve_id_by_name ($connection, $name)
 		$res = $connection->prepare("SELECT id FROM users.info WHERE id = ? LIMIT 1;");
 		$res->execute([strval($user_id)]);
 
-		$id = intval($res->fetch(PDO::FETCH_ASSOC)['id']);
+		$id = intval($res->fetch(\PDO::FETCH_ASSOC)['id']);
 		if ($id === 0)
 		{
 			$res = $connection->prepare("SELECT id FROM bots.info WHERE id = ? LIMIT 1;");
 			$res->execute([strval($user_id*-1)]);
 
-			$id = intval($res->fetch(PDO::FETCH_ASSOC)['id'])*-1;
+			$id = intval($res->fetch(\PDO::FETCH_ASSOC)['id'])*-1;
 		}
 	}
 
@@ -189,7 +179,7 @@ function resolve_id_by_name ($connection, $name)
 }
 
 // checks of sring empty
-function is_empty ($text)
+function is_empty ($text): bool
 {
 	$test = implode('', explode(PHP_EOL, $text));
 	if ($test == '') {
@@ -209,105 +199,11 @@ function is_empty ($text)
 }
 
 // capitalize the string
-function capitalize ($str, $encoding = "UTF-8")
+function capitalize ($str, $encoding = "UTF-8"): string
 {
 	$str = mb_ereg_replace('^[\ ]+', '', $str);
 
     return mb_strtoupper(mb_substr($str, 0, 1, $encoding), $encoding).mb_substr($str, 1, mb_strlen($str), $encoding);
-}
-
-// checks if user exists
-function user_exists ($connection, $email)
-{
-	return Entity::findById(intval($email)) !== NULL;
-}
-
-// get chat query
-function get_chat_query ($uid, $leaved_time, $return_time, $is_leaved, $is_kicked, $user_id, $last_message = true, $cleared_message_id = 0, $offset = 0, $count = 100)
-{
-	if ($last_message)
-		$last_message = ' DESC LIMIT 1';
-	else
-		$last_message = ' DESC LIMIT '.intval($offset).', '.intval($count);
-
-	$query = "SELECT local_chat_id, is_edited, time, text, event, new_src, new_title, owner_id, to_id, reply, attachments, keyboard FROM messages.chat_engine_1 WHERE deleted_for_all != 1 AND local_chat_id > ".$cleared_message_id." AND (deleted_for NOT LIKE '%".intval($user_id).",%' OR deleted_for IS NULL) AND uid = ".$uid." ORDER BY local_chat_id".$last_message.";";
-
-	if ($uid < 0)
-	{
-		if ($is_kicked || $is_leaved)
-		{
-			$query = 'SELECT local_chat_id, is_edited, time, text, event, new_src, new_title, owner_id, to_id, reply, attachments, keyboard FROM messages.chat_engine_1 WHERE deleted_for_all != 1 AND local_chat_id > '.$cleared_message_id.' AND (deleted_for NOT LIKE "%'.intval($user_id).',%" OR deleted_for IS NULL) AND uid = '.$uid.' AND time <= '.$leaved_time.' ORDER BY local_chat_id'.$last_message.';';
-		} else {
-			if (!$is_leaved && $return_time !== 0) 
-			{
-				$query = 'SELECT local_chat_id, is_edited, time, text, event, new_src, new_title, owner_id, to_id, reply, attachments, keyboard FROM messages.chat_engine_1 WHERE deleted_for_all != 1 AND local_chat_id > '.$cleared_message_id.' AND uid = '.$uid.' AND (deleted_for NOT LIKE "%'.intval($user_id).',%" OR deleted_for IS NULL) AND (time <= '.$leaved_time.' OR time >= '.$return_time.') ORDER BY local_chat_id'.$last_message.';';
-							
-				if ($leaved_time === 0)
-				{
-					$query = 'SELECT local_chat_id, is_edited, time, text, event, new_src, new_title, owner_id, to_id, reply, attachments, keyboard FROM messages.chat_engine_1 WHERE (deleted_for NOT LIKE "%'.intval($user_id).',%" OR deleted_for IS NULL) AND deleted_for_all != 1 AND local_chat_id > '.$cleared_message_id.' AND uid = '.$uid.' OR uid = '.$uid.' AND time >= '.$return_time.' AND (deleted_for NOT LIKE "%'.intval($user_id).',%" OR deleted_for IS NULL) ORDER BY local_chat_id'.$last_message.';';
-				}
-			}
-		}
-	}
-
-	return $query;
-}
-
-function get_polling_data ($cache, $user_id, $mode = "sse")
-{
-	$done = openssl_encrypt(strval($user_id.'_'.strval(rand(1, 1000000000)).'_permissions'), 'AES-256-OFB', strval(rand(1, 10000000000)), 0, strval(rand(1, 1000000000)), rand(1, 9999999));
-
-	$cache->set($done, intval($user_id));
-	$result = array('url'=> Project::getDefaultDomain() . ':8080?mode=listen&state='.$mode.'&key='.urlencode($done), 'last_event_id' => 0, 'owner_id' => intval($user_id));
-
-	return $result;
-}
-
-function get_user_timezone ($connection, $user_id)
-{
-	$res = $connection->prepare("SELECT timezone FROM users.info WHERE id = ? LIMIT 1;");
-	$res->execute([$user_id]);
-
-	$timezone = $res->fetch(PDO::FETCH_ASSOC)["timezone"];
-	if (!$timezone)
-		$timezone = "Europe/Moscow";
-
-	return $timezone;
-}
-
-function get_timezones_list ($connection)
-{
-	$res = $connection->prepare("SELECT worldtime, phptime FROM utils.timestamps;");
-	$res->execute();
-
-	return $res->fetchAll(PDO::FETCH_ASSOC);
-}
-
-// checks  the user_id's password. Returns boolean
-function verify_user_password ($connection, $user_id, $password)
-{
-	if (preg_match("/[^a-zа-яёЁбБвВгГдДжЖзЗиИйЙкКлЛмМнНоОпПРрсСтТуУфФхХцЦчЧшШщЩъЪыЫьЬэЭюЮяЯРА-ЯA-Z-'*@#$%_.\d!@#$%\^&*]/", $password)  || is_empty($password) || strlen($password) < 6)
-		return false;
-
-	$res = $connection->prepare("SELECT password FROM users.info WHERE id = ?");
-	$res->execute([$user_id]);
-	$old_password_hash = strval($res->fetch(PDO::FETCH_ASSOC)["password"]);
-	
-	return password_verify($password, $old_password_hash);
-}
-
-// converts integers like 1000000 to 1М. Returns converted string
-function nice_string ($number)
-{
-	$number = intval($number);
-	$count  = strval($number);
-
-	if ($number >= 1000)
-		$count = intval($number/1000) . "К";
-	if ($number >= 1000000)
-		$count = intval($number/1000000) . "М";
-
-	return $count;
 }
 
 // update online time
@@ -320,4 +216,3 @@ function update_online_time ($connection, $old_time, $user_id)
 
 	return false;
 }
-?>

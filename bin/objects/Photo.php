@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/attachment.php';
+require_once __DIR__ . '/Attachment.php';
 
 /**
  * Photo class

@@ -12,10 +12,10 @@ if ($selected_theme === "")
 }
 
 // getting database connection and require Theme object file.
-require_once __DIR__ . '/../bin/parsers/attachments.php';
+require_once __DIR__ . '/../bin/parsers/AttachmentsParser.php';
 
 // here we will setup headers for CORS
-header('Access-Control-Allow-Origin: ' . get_page_origin());
+header('Access-Control-Allow-Origin: ' . unt\functions\get_page_origin());
 header('Access-Control-Allow-Credentials: true');    
 
 // getting DB connection and setup theme.
@@ -67,7 +67,7 @@ switch ($mode) {
 
 		// send code.
 		header("Content-Type: text/css");
-		header("Access-Control-Allow-Origin: ".get_page_origin());
+		header("Access-Control-Allow-Origin: ".unt\functions\get_page_origin());
 		die($code);
 	break;
 	case 'js':
@@ -90,7 +90,7 @@ switch ($mode) {
 
 		// send code.
 		header("Content-Type: text/javascript");
-		header("Access-Control-Allow-Origin: ".get_page_origin());
+		header("Access-Control-Allow-Origin: ".unt\functions\get_page_origin());
 		die($code);
 	break;
 	default:

@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/../../bin/objects/session.php';
+require_once __DIR__ . '/../../bin/objects/Session.php';
 
 // handle session actions here
 if (isset(Request::get()->data["action"]))

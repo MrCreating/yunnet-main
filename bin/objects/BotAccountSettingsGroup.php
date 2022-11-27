@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/settingsGroup.php';
+require_once __DIR__ . '/SettingsGroup.php';
 
 /**
  * Class for Bot Account settings

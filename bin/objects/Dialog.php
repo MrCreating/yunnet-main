@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/chat.php';
+require_once __DIR__ . '/Chat.php';
 
 /**
  * one-by-one chat class
@@ -9,7 +9,7 @@ require_once __DIR__ . '/chat.php';
 
 class Dialog extends Chat
 {
-	private $companion = NULL;
+	private ?Entity $companion = NULL;
 
 	public function __construct (string $localId)
 	{
@@ -27,6 +27,7 @@ class Dialog extends Chat
 				if ($user_id != 0)
 				{
 					$entity = Entity::findById($user_id);
+
 					if ($entity && $entity->valid())
 					{
 						$this->companion = $entity;
@@ -72,7 +73,7 @@ class Dialog extends Chat
 		return array_reverse($result);
 	}
 
-	public function getCompanion (): Entity
+	public function getCompanion (): ?Entity
 	{
 		return $this->companion;
 	}

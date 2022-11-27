@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/token.php';
+require_once __DIR__ . '/Token.php';
 
 /**
  * Declares App object
@@ -197,7 +197,7 @@ class App
 		$new_title  = $this->getTitle();
 		$current_id = $this->getId();
 
-		if (is_empty($new_title) || strlen($new_title) > 32)
+		if (unt\functions\is_empty($new_title) || strlen($new_title) > 32)
 			return false;
 
 		$res = $this->currentConnection->uncache("App_" . $This->getId())->prepare("UPDATE apps.info SET title = :new_title WHERE id = :id LIMIT 1");
@@ -256,11 +256,11 @@ class App
 		if ($owner_id == 0) return NULL;
 
 		// checking title for empty and long-length.
-		if (is_empty($title) || strlen($title) > 64) return false;
+		if (unt\functions\is_empty($title) || strlen($title) > 64) return false;
 
 		$connection = $_SERVER['dbConnection'];
 		if (!$connection)
-			$connection = get_database_connection();
+			$connection = DataBaseManager::getConnection();
 
 		// inserting into DB and getting ID for app.
 		$res = $connection->prepare("INSERT INTO apps.info (owner_id, title, creation_time) VALUES (:owner_id, :title, :creation_time);");

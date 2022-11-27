@@ -1,5 +1,4 @@
 <?php
-error_reporting(0);
 
 $db = mysqli_connect("127.0.0.1", "root", "iA22021981_");
 

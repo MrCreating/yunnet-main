@@ -1,11 +1,11 @@
 <?php
 
-require_once __DIR__ . '/accountSettingsGroup.php';
-require_once __DIR__ . '/botAccountSettingsGroup.php';
-require_once __DIR__ . '/pushSettingsGroup.php';
-require_once __DIR__ . '/privacySettingsGroup.php';
-require_once __DIR__ . '/securitySettingsGroup.php';
-require_once __DIR__ . '/themingSettingsGroup.php';
+require_once __DIR__ . '/AccountSettingsGroup.php';
+require_once __DIR__ . '/BotAccountSettingsGroup.php';
+require_once __DIR__ . '/PushSettingsGroup.php';
+require_once __DIR__ . '/PrivacySettingsGroup.php';
+require_once __DIR__ . '/SecuritySettingsGroup.php';
+require_once __DIR__ . '/ThemingSettingsGroup.php';
 
 /**
  * Settings class.
@@ -76,7 +76,7 @@ class Settings
 		}
 	}
 
-	function getSettingsGroup (string $type): SettingsGroup
+	function getSettingsGroup (string $type): ?SettingsGroup
 	{
 		switch ($type) {
 			case 'account':

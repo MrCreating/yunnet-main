@@ -56,7 +56,7 @@ switch (explode('.', $path)[count(explode('.', $path))-1]) {
 		$type = 'jpeg';
 	default:
 		$type = explode('.', $path)[count(explode('.', $path))-1]; break;
-};
+}
 
 // sending content type header.
 header('Content-Type: image/'.$type.PHP_EOL);
@@ -72,5 +72,5 @@ switch ($type) {
 	case 'jpg':
 	case 'jpeg':
 		die(file_get_contents($path)); break;
-};
+}
 ?>

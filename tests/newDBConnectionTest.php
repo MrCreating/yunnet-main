@@ -4,7 +4,7 @@
  * DB CONNECTION TEST
 */
 
-require __DIR__ . '/../bin/database.php';
+require __DIR__ . '/../bin/DataBaseManager.php';
 
 $db = new DataBaseConnection();
 echo "Created DB instance!\n";

@@ -73,7 +73,7 @@ function get_accounts ($connection, $user_id, $receiveToken = false)
 
 /**
  * Bounds a new account
- * @return true if ok or int with error code.
+ * @return int if ok or int with error code.
  * 
  * Parameters:
  * @param $login - account login
@@ -118,20 +118,20 @@ function add_account ($connection, $login, $password, $owner_id, $type = 1, $aut
 
 			return $res->execute();
 		} catch (Exception $e) {
-			if ($e->code === \Vodka2\VKAudioToken\TokenException::TWOFA_REQ && isset($e->extra->validation_sid)) {
+			if ($e->getCode() === \Vodka2\VKAudioToken\TokenException::TWOFA_REQ && isset($e->extra->validation_sid)) {
 				try {
 					(new TwoFAHelper($params))->validatePhone($e->extra->validation_sid);
 			        
 			     	return 10;
 				} catch (Exception $e) {
-					if ($e->code === 5)
+					if ($e->getCode() === 5)
 					{
 					   	return 20;
 					}
 				}
 			}
 
-			if ($e->code === 2)
+			if ($e->getCode() === 2)
 			{
 			    return 5;
 			}

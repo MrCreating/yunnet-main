@@ -6,7 +6,7 @@ if (isset(Request::get()->data['action']))
 
 	if ($action === "get_rules_text")
 	{
-		$rulesText = get_rules_text();
+		$rulesText = unt\functions\get_rules_text();
 
 		die(json_encode(array('rules'=>$rulesText)));
 	}

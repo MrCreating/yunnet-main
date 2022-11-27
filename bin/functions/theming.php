@@ -114,7 +114,7 @@ function get_themes ($connection, $user_id, $count = 30, $offset = 0)
 {
 	// connecting modules
 	if (!class_exists('Theme'))
-		require __DIR__ . "/../objects/theme.php";
+		require __DIR__ . "/../objects/Theme.php";
 
 	return Theme::getList(intval($count), intval($offset));
 }
@@ -147,7 +147,7 @@ function get_current_theme_credentials ($connection, $user_id)
 function create_theme ($connection, $owner_id, $title, $description, $is_private = 0, $is_default = 0)
 {
 	if (!class_exists('Theme'))
-		require __DIR__ . "/../objects/theme.php";
+		require __DIR__ . "/../objects/Theme.php";
 
 	return Theme::create(strval($title), strval($description), boolval($is_private));
 }
@@ -181,7 +181,7 @@ function update_theme_code ($theme, $updater_id, $code_type, $code)
 	if ($code_type !== "js" && $code_type !== "css")
 		return false;
 
-	if (is_empty($code))
+	if (unt\functions\is_empty($code))
 		return false;
 
 	if ($code_type === "js")
@@ -225,7 +225,7 @@ function parse_keyboard ($keyboard)
 		foreach ($item as $number => $button) {
 			$id         = $ids[intval($button["id"])] ? intval($button["id"]) : NULL;
 			$color      = parse_hex($button["color"]);
-			$text       = !(is_empty($button["text"]) || strlen($button["text"]) > 256) ? strval($button["text"]) : NULL;
+			$text       = !(unt\functions\is_empty($button["text"]) || strlen($button["text"]) > 256) ? strval($button["text"]) : NULL;
 			$text_color = parse_hex($button["textColor"]);
 
 			// all keyboard must be valid.
@@ -236,7 +236,7 @@ function parse_keyboard ($keyboard)
 		}
 	}
 
-	$additional_data = (!is_empty($keyboard['params']['data']) && strlen($keyboard['params']['data']) <= 1000) ? strval($keyboard['params']['data']) : NULL;
+	$additional_data = (!unt\functions\is_empty($keyboard['params']['data']) && strlen($keyboard['params']['data']) <= 1000) ? strval($keyboard['params']['data']) : NULL;
 
 	$keyboard['params'] = [
 		'oneTime'  => $keyboard['params']['oneTime'] === true ? true : false,
@@ -342,7 +342,7 @@ function delete_theme ($connection, $user_id, $owner_id, $theme_id)
 {
 	// connecting modules
 	if (!class_exists('Theme'))
-		require __DIR__ . "/../objects/theme.php";
+		require __DIR__ . "/../objects/Theme.php";
 
 	$theme = new Theme(intval($owner_id), intval($theme_id));
 

@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/conversation.php';
+require_once __DIR__ . '/Conversation.php';
 
 /**
  * Chat networks - this is a goup of conversations

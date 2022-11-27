@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/session.php';
+require_once __DIR__ . '/Session.php';
 
 /**
  * Context class. Have a DataBase connection, current user account, e.t.c
@@ -24,7 +24,7 @@ class Context
 
 			if ($this->getCurrentSession()->isLogged())
 			{
-				update_online_time($this->getConnection(), intval($this->getCurrentUser()->getOnline()->lastOnlineTime), $this->getCurrentUser()->getId());
+				unt\functions\update_online_time($this->getConnection(), intval($this->getCurrentUser()->getOnline()->lastOnlineTime), $this->getCurrentUser()->getId());
 			}
 		}
 	}

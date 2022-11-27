@@ -224,7 +224,7 @@ class Notification extends EventEmitter
 	{
 		$connection = $_SERVER['dbConnection'];
 		if (!$connection)
-			$connection = get_database_connection();
+			$connection = DataBaseManager::getConnection();
 
 		$res = $connection->prepare("SELECT COUNT(DISTINCT local_id) FROM users.notes WHERE owner_id = ? AND is_read = 0");
 		if ($res->execute(intval($_SESSION['user_id'])))

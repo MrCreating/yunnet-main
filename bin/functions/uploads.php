@@ -52,7 +52,7 @@ function fetch_upload ($connection, $query, $user_id)
 {
 	// connecting modules
 	if (!class_exists('Photo'))
-		require __DIR__ . "/../objects/photo.php";
+		require __DIR__ . "/../objects/Photo.php";
 
 	// parsing query.
 	$data = explode('|', openssl_decrypt(strval(str_replace(' ', '+', explode('__', $query)[0])), 'AES-256-OFB', SERVER_KEY, 0, SERVER_IV, intval(explode('__', $query)[1])));

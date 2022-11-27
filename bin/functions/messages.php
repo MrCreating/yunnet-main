@@ -5,8 +5,7 @@
  *
 */
 
-require_once __DIR__ . '/../platform-tools/emitters.php';
-require_once __DIR__ . '/../objects/poll.php';
+require_once __DIR__ . '/../objects/Poll.php';
 require_once __DIR__ . '/theming.php';
 require_once __DIR__ . "/users.php";
 
