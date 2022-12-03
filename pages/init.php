@@ -13,10 +13,6 @@ header('Strict-Transport-Security: max-age=31536000; preload; includeSubDomains'
 $context = Context::get();
 $connection = $context->getConnection();
 
-/*if (!$context->isMobile() && explode('.', strtolower($_SERVER['HTTP_HOST']))[0] === 'm')
-{
-	die(header("Location: ". Project::getDefaultDomain() . $_SERVER['REQUEST_URI']));
-}*/
 if ($context->isMobile() && explode('.', strtolower($_SERVER['HTTP_HOST']))[0] !== 'm')
 {
 	die(header("Location: ". Project::getMobileDomain() . $_SERVER['REQUEST_URI']));

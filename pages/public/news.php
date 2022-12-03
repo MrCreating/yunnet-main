@@ -1,5 +1,5 @@
 <?php
-	
+
 require_once __DIR__ . "/../../bin/functions/wall.php";
 
 if (isset(Request::get()->data['action']))

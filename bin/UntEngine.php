@@ -2,6 +2,9 @@
 
 namespace unt;
 
+/**
+ * Класс ядра
+ */
 class UntEngine
 {
     protected array $subdomains = [
@@ -10,10 +13,25 @@ class UntEngine
 
     public function __construct ()
     {
+        if (getenv('UNT_PRODUCTION') !== '1')
+        {
+            session_write_close();
+            ini_set('session.cookie_domain', $_SERVER['HTTP_HOST']);
+            session_start();
+        }
+
         spl_autoload_register(function ($data) {
             $path_templates = explode('\\', $data);
 
             $path = __DIR__ . '/' . $path_templates[1] . '/' . $path_templates[2] . '.php';
+            if (count($path_templates) < 2)
+            {
+                $path = __DIR__ . '/objects/' . $path_templates[0] . '.php';
+                if (!file_exists($path))
+                    $path = __DIR__ . '/platform-tools/' . $path_templates[0] . '.php';
+                if (!file_exists($path))
+                    $path = __DIR__ . '/parsers/' . $path_templates[0] . '.php';
+            }
 
             require_once $path;
         });
@@ -21,32 +39,58 @@ class UntEngine
         $to             = explode('.', strtolower($_SERVER['HTTP_HOST']))[0];
         $requested_page = explode('?', strtolower($_SERVER['REQUEST_URI']))[0];
 
+        if (!in_array($to, $this->subdomains))
+        {
+            //die(header("Location: " . getenv('UNT_PRODUCTION' === '1' ? 'https://yunnet.ru/' : 'http://localhost')));
+        }
+
+        define('REQUESTED_PAGE', $requested_page);
+
+        require_once __DIR__ . '/../bin/base_functions.php';
         require_once __DIR__ . '/base_functions.php';
 
         // checking domains.
         switch ($to)
         {
             case "api":
+                // https://api.yunnet.ru - API для разработчиков
                 die(require_once __DIR__ . '/../api/index.php');
             case "dev":
+                // https://dev.yunnet.ru - доки для разработчиков
                 die(require_once __DIR__ . '/../pages/dev/index.php');
             case "d-1":
+                // https://d-1.yunnet.ru - сервер вложений
                 die(require_once __DIR__ . '/../attachments/index.php');
             case "lp":
-                die(require_once __DIR__ . '/../pages/lp/index.php');
+                // https://lp.yunnet.ru - сервер реального времени, скоро будет удален.
+                die(require_once __DIR__ . '/../realtime/index.php');
             case "themes":
+                // https://themes.yunnet.ru - сервер тем
                 die(require_once __DIR__ . '/../attachments/themes.php');
             case "auth":
+                // https://auth.yunnet.ru - виджет OAuth
                 die(require_once __DIR__ . '/../pages/widgets/auth/index.php');
             case "test":
+                // https://test.yunnet.ru - GitHub WenHook панель управления + обработка событий разработки
                 die(require_once __DIR__ . '/../dev/tester/index.php');
         }
 
+        // https://yunnet.ru все остальное
         die(require_once __DIR__ . '/../pages/init.php');
+    }
+
+    /**
+     * Быстрое включение или выключение ошибок
+     */
+    public function errors (bool $enable = true): UntEngine
+    {
+        ini_set('display_errors', $enable);
+        error_reporting($enable ? E_ALL : 0);
+        return $this;
     }
 
     public static function init (): UntEngine
     {
-        return new static();
+        return self::$unt = new static();
     }
 }
