@@ -1,7 +1,9 @@
 <?php
 namespace Vodka2\VKAudioToken;
 
-class TokenException extends \Exception
+use Exception;
+
+class TokenException extends Exception
 {
     const REGISTRATION_ERROR = 0;
     const TOKEN_NOT_REFRESHED = 1;

@@ -17,7 +17,7 @@ for ($user_id = 1; $user_id <= $maxUserId; $user_id++)
 	{
 		$offsetOfPage = ($page-1)*30;
 
-		$res = $connection->prepare("SELECT DISTINCT uid, last_time FROM messages.members_chat_list WHERE hidden = 0 AND user_id = ? AND lid != 0".($only_chats ? ' AND uid < 0' : '')." ORDER BY last_time DESC LIMIT ".intval($offsetOfPage).", 30;");
+		$res = DataBaseManager::getConnection()->prepare("SELECT DISTINCT uid, last_time FROM messages.members_chat_list WHERE hidden = 0 AND user_id = ? AND lid != 0".($only_chats ? ' AND uid < 0' : '')." ORDER BY last_time DESC LIMIT ".intval($offsetOfPage).", 30;");
 
 		$res->execute([intval($user_id)]);
 		$chats = $res->fetchAll(PDO::FETCH_ASSOC);
@@ -39,7 +39,7 @@ for ($user_id = 1; $user_id <= $maxUserId; $user_id++)
 			{
 				echo "Chat uid " . $uid . " is not exists on user " . $user_id . "! Hiding it..." . PHP_EOL;
 
-				$connection->prepare("UPDATE messages.members_chat_list SET hidden = 1 WHERE uid = ? AND user_id = ?;")->execute([$uid, $user_id]);
+				DataBaseManager::getConnection()->prepare("UPDATE messages.members_chat_list SET hidden = 1 WHERE uid = ? AND user_id = ?;")->execute([$uid, $user_id]);
 			}
 		}
 	}

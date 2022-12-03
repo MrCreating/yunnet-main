@@ -1,7 +1,5 @@
 <?php
 
-$context = Context::get();
-
-require_once __DIR__ . '/../../pages/public/flex.php';
+require_once PROJECT_ROOT . 'unt/public/flex.php';
 
 ?>

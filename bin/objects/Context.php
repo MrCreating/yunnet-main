@@ -24,7 +24,7 @@ class Context
 
 			if ($this->getCurrentSession()->isLogged())
 			{
-				unt\functions\update_online_time($this->getConnection(), intval($this->getCurrentUser()->getOnline()->lastOnlineTime), $this->getCurrentUser()->getId());
+				unt\functions\update_online_time($this->current_connection, intval($this->getCurrentUser()->getOnline()->lastOnlineTime), $this->getCurrentUser()->getId());
 			}
 		}
 	}

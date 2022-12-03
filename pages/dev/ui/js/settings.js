@@ -818,7 +818,7 @@ const settings = {
                             delete settings.users.profiles[response.id]
 
                             return settings.users.get(response.id).then(resolve).catch(reject)
-                        };
+                        }
                     }
                 });
             });

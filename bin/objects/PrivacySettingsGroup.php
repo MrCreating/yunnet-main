@@ -17,7 +17,7 @@ class PrivacySettingsGroup extends SettingsGroup
 		$this->currentEntity     = $user;
 		
 		$this->type              = "privacy";
-		$this->currentConnection = $connection;
+		$this->currentConnection = DataBaseManager::getConnection();
 
 		$this->privacyValues     = $params;
 	}

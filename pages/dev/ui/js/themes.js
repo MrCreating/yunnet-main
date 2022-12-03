@@ -271,7 +271,7 @@ const photos = {
 
 			let likesCountDiv = document.createElement('div');
 			likeItem.appendChild(likesCountDiv);
-			likesCountDiv.innerText = attachmentObject.photo.meta.likes.count > 0 ? pages.parsers.niceString(attachmentObject.photo.meta.likes.count) : '';;
+			likesCountDiv.innerText = attachmentObject.photo.meta.likes.count > 0 ? pages.parsers.niceString(attachmentObject.photo.meta.likes.count) : '';
 
 			likesCountDiv.style.marginLeft = '10px';
 			likesCountDiv.style.marginBottom = '7px';
@@ -291,7 +291,7 @@ const photos = {
 						setLike.style.display = '';
 					}
 				}).catch(function (error) {
-					return;
+
 				});
 			}
 		}).catch(function (err) {

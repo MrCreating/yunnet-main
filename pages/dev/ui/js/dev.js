@@ -1769,7 +1769,7 @@ const dev = {
 						unt.Icon[methodsGroupName.toUpperCase()],
 						methodsGroupName
 					]);
-				};
+				}
 
 				let collapsible = pages.elements.createCollapsible(items);
 

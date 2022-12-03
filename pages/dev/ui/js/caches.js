@@ -39,7 +39,7 @@ class Chat {
 
 						if (this.getLength() < 100) break;
 					}
-				};
+				}
 
 				this[key] = value;
 			}
@@ -718,7 +718,7 @@ class Chat {
 			});
 		});
 	}
-};
+}
 
 class URLParser {
 	constructor (url = window.location.href) {
@@ -754,7 +754,7 @@ class URLParser {
 
 				try {
 					value = JSON.parse(value);
-				} catch (e) {};
+				} catch (e) {}
 
 				return resultObject[key] = value;
 			}

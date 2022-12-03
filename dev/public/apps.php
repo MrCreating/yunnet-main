@@ -3,7 +3,7 @@
 /**
  * Apps system design,
 */
-if (!$context->isLogged())
+if (!Context::get()->isLogged())
 	die(header("Location: /"));
 
 if (!class_exists('App'))
@@ -22,7 +22,7 @@ if (isset(Request::get()->data['action']))
 				require __DIR__ . "/../../bin/functions/auth.php";
 
 			$app_id   = intval(Request::get()->data['app_id']);
-			$owner_id = intval(Request::get()->data['bot_id']) > 0 ? (intval(Request::get()->data['bot_id']) * -1) : $context->getCurrentUser()->getId();
+			$owner_id = intval(Request::get()->data['bot_id']) > 0 ? (intval(Request::get()->data['bot_id']) * -1) : Context::get()->getCurrentUser()->getId();
 			$perms    = explode(',', strval(Request::get()->data['permissions']));
 
 			$permissions = [];
@@ -70,9 +70,9 @@ if (isset(Request::get()->data['action']))
 			if ($token_info['owner_id'] < 0)
 			{
 				$bot = new Bot(intval($token_info['owner_id'])*-1);
-				if (!$bot->valid() || $bot->getOwnerId() !== $context->getCurrentUser()->getId())
+				if (!$bot->valid() || $bot->getOwnerId() !== Context::get()->getCurrentUser()->getId())
 					die(json_encode(array('error'=>1)));
-			} else if ($token_info['owner_id'] !== $context->getCurrentUser()->getId())
+			} else if ($token_info['owner_id'] !== Context::get()->getCurrentUser()->getId())
 			{
 				die(json_encode(array('error'=>1)));
 			}
@@ -97,9 +97,9 @@ if (isset(Request::get()->data['action']))
 			if ($token_info['owner_id'] < 0)
 			{
 				$bot = new Bot(intval($token_info['owner_id'])*-1);
-				if (!$bot->valid() || $bot->getOwnerId() !== $context->getCurrentUser()->getId())
+				if (!$bot->valid() || $bot->getOwnerId() !== Context::get()->getCurrentUser()->getId())
 					die(json_encode(array('error'=>1)));
-			} else if ($token_info['owner_id'] !== $context->getCurrentUser()->getId())
+			} else if ($token_info['owner_id'] !== Context::get()->getCurrentUser()->getId())
 			{
 				die(json_encode(array('error'=>1)));
 			}
@@ -117,7 +117,7 @@ if (isset(Request::get()->data['action']))
 			if (!function_exists('create_app'))
 				require __DIR__ . "/../../bin/functions/auth.php";
 
-			$app = create_app($connection, $context->getCurrentUser()->getId(), Request::get()->data["app_title"]);
+			$app = create_app($connection, Context::get()->getCurrentUser()->getId(), Request::get()->data["app_title"]);
 			if (!$app)
 				die(json_encode(array('error'=>1)));
 
@@ -126,13 +126,13 @@ if (isset(Request::get()->data['action']))
 
 		case 'get_tokens':
 			$app = new App(intval(Request::get()->data['app_id']));
-			if (!$app->valid() || ($app->getOwnerId() !== $context->getCurrentUser()->getId()))
+			if (!$app->valid() || ($app->getOwnerId() !== Context::get()->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
 			if (!function_exists('get_tokens_list'))
 				require __DIR__ . '/../../bin/functions/auth.php';
 
-			$tokens_list = get_tokens_list($connection, $context->getCurrentUser()->getId(), $app->getId());
+			$tokens_list = get_tokens_list($connection, Context::get()->getCurrentUser()->getId(), $app->getId());
 
 			$result = [];
 			foreach ($tokens_list as $index => $token) {
@@ -140,7 +140,7 @@ if (isset(Request::get()->data['action']))
 					'app_id'      => intval($token['app_id']),
 					'id'          => intval($token['id']),
 					'token'       => strval($token['token']),
-					'owner'       => $context->getCurrentUser()->toArray(),
+					'owner'       => Context::get()->getCurrentUser()->toArray(),
 					'permissions' => $token['permissions']
 				];
 			}
@@ -153,7 +153,7 @@ if (isset(Request::get()->data['action']))
 				require __DIR__ . '/../../bin/objects/apps.php';
 			
 			$app = new App(intval(Request::get()->data['app_id']));
-			if (!$app->valid() || ($app->getOwnerId() !== $context->getCurrentUser()->getId()))
+			if (!$app->valid() || ($app->getOwnerId() !== Context::get()->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
 			if (!$app->setTitle(Request::get()->data["new_title"])->apply())
@@ -167,7 +167,7 @@ if (isset(Request::get()->data['action']))
 				require __DIR__ . '/../../bin/objects/apps.php';
 			
 			$app = new App(intval(Request::get()->data['app_id']));
-			if (!$app->valid() || ($app->getOwnerId() !== $context->getCurrentUser()->getId()))
+			if (!$app->valid() || ($app->getOwnerId() !== Context::get()->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
 			die(json_encode(array('success'=>intval($app->delete()))));
@@ -182,7 +182,7 @@ if (isset(Request::get()->data['action']))
 				require __DIR__ . '/../../bin/objects/apps.php';
 
 			$app = new App(intval(Request::get()->data['app_id']));
-			if (!$app->valid() || ($app->getOwnerId() !== $context->getCurrentUser()->getId()))
+			if (!$app->valid() || ($app->getOwnerId() !== Context::get()->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
 			$photo = (new AttachmentsParser())->getObject($photo);
@@ -201,7 +201,7 @@ if (isset(Request::get()->data['action']))
 				require __DIR__ . '/../../bin/objects/apps.php';
 
 			$app = new App(intval(Request::get()->data['app_id']));
-			if (!$app->valid() || ($app->getOwnerId() !== $context->getCurrentUser()->getId()))
+			if (!$app->valid() || ($app->getOwnerId() !== Context::get()->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
 			$result = $app->setPhoto(NULL)->apply();

@@ -17,9 +17,9 @@ if (isset(Request::get()->data["action"]))
 			if (!function_exists('create_bot'))
 				require __DIR__ . "/../../bin/functions/bots.php";
 
-			if (count(get_bots_list($connection, $context->getCurrentUser()->getId())) < 30)
+			if (count(get_bots_list($connection, Context::get()->getCurrentUser()->getId())) < 30)
 			{
-				$result = create_bot($connection, $context->getCurrentUser()->getId(), Request::get()->data["bot_name"]);
+				$result = create_bot($connection, Context::get()->getCurrentUser()->getId(), Request::get()->data["bot_name"]);
 				if (!$result)
 					die(json_encode(array('error'=>1)));
 
@@ -32,7 +32,7 @@ if (isset(Request::get()->data["action"]))
 
 		case 'get_tokens':
 			$bot = new Bot(intval(Request::get()->data['bot_id']));
-			if (!$bot->valid() || ($bot->getOwnerId() !== $context->getCurrentUser()->getId()))
+			if (!$bot->valid() || ($bot->getOwnerId() !== Context::get()->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
 			if (!function_exists('get_tokens_list'))
@@ -56,7 +56,7 @@ if (isset(Request::get()->data["action"]))
 
 		case 'change_screen_name':
 			$bot = new Bot(intval(Request::get()->data['bot_id']));
-			if (!$bot->valid() || ($bot->getOwnerId() !== $context->getCurrentUser()->getId()))
+			if (!$bot->valid() || ($bot->getOwnerId() !== Context::get()->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
 			if (!function_exists('update_screen_name'))
@@ -66,11 +66,11 @@ if (isset(Request::get()->data["action"]))
 
 			if ($result === false)
 			{
-				die(json_encode(array('error'=>1, 'error_message'=>$context->lang["in_f_3"])));
+				die(json_encode(array('error'=>1, 'error_message'=>Context::get()->lang["in_f_3"])));
 			}
 			if ($result === -1)
 			{
-				die(json_encode(array('error'=>1, 'error_message'=>$context->lang["in_f_4"])));
+				die(json_encode(array('error'=>1, 'error_message'=>Context::get()->lang["in_f_4"])));
 			}
 
 			die(json_encode(array('success'=>unt\functions\is_empty(Request::get()->data['new_screen_name']) ? 0 : 1)));
@@ -83,7 +83,7 @@ if (isset(Request::get()->data["action"]))
 				require __DIR__ . '/../../bin/objects/entities.php';
 
 			$bot = new Bot(intval(Request::get()->data['bot_id']));
-			if (!$bot->valid() || ($bot->getOwnerId() !== $context->getCurrentUser()->getId()))
+			if (!$bot->valid() || ($bot->getOwnerId() !== Context::get()->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
 			$photo = (new AttachmentsParser())->getObject(strval(Request::get()->data["photo"]));
@@ -104,10 +104,10 @@ if (isset(Request::get()->data["action"]))
 				require __DIR__ . '/../../bin/objects/entities.php';
 
 			$bot = new Bot(intval(Request::get()->data['bot_id']));
-			if (!$bot->valid() || ($bot->getOwnerId() !== $context->getCurrentUser()->getId()))
+			if (!$bot->valid() || ($bot->getOwnerId() !== Context::get()->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
-			die(json_encode(array('state'=>intval($connection->prepare("UPDATE bots.info SET photo_path = NULL WHERE id = ? LIMIT 1;")->execute([intval(Request::get()->data['bot_id'])])))));
+			die(json_encode(array('state'=>intval(DataBaseManager::getConnection()->prepare("UPDATE bots.info SET photo_path = NULL WHERE id = ? LIMIT 1;")->execute([intval(Request::get()->data['bot_id'])])))));
 		break;
 		case 'set_title':
 			if (!function_exists('update_bot_name'))
@@ -116,7 +116,7 @@ if (isset(Request::get()->data["action"]))
 				require __DIR__ . '/../../bin/objects/entities.php';
 
 			$bot = new Bot(intval(Request::get()->data['bot_id']));
-			if (!$bot->valid() || ($bot->getOwnerId() !== $context->getCurrentUser()->getId()))
+			if (!$bot->valid() || ($bot->getOwnerId() !== Context::get()->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
 			$result = update_bot_name($connection, intval(Request::get()->data["bot_id"]), strval(Request::get()->data["new_title"]));
@@ -132,7 +132,7 @@ if (isset(Request::get()->data["action"]))
 				require __DIR__ . '/../../bin/objects/entities.php';
 
 			$bot = new Bot(intval(Request::get()->data['bot_id']));
-			if (!$bot->valid() || ($bot->getOwnerId() !== $context->getCurrentUser()->getId()))
+			if (!$bot->valid() || ($bot->getOwnerId() !== Context::get()->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
 			$res = set_privacy_settings($connection, intval($bot->getId()*-1), intval(Request::get()->data["group_id"]), intval(Request::get()->data["new_value"]));

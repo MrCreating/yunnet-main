@@ -154,18 +154,17 @@ class Notification extends EventEmitter
 	//////////////////////////////////////
 	public static function create (int $tp_id, string $type, ?array $additionalData = NULL): ?Notification
 	{
-		$connection = DataBaseManager::getConnection();
 		$entity = Entity::findById($to_id);
 
 		if (!$entity || $entity->getType() === 'bot') return NULL;
 
-		$res = $connection->prepare("SELECT DISTINCT local_id FROM users.notes WHERE owner_id = ? ORDER BY local_id DESC LIMIT 1");
+		$res = DataBaseManager::getConnection()->prepare("SELECT DISTINCT local_id FROM users.notes WHERE owner_id = ? ORDER BY local_id DESC LIMIT 1");
 
 		if ($res->execute([$to_id]))
 		{
 			$new_local_id = intval($res->fetch(PDO::FETCH_ASSOC)["local_id"]) + 1;
 
-			$res = $connection->prepare("INSERT INTO users.notes (owner_id, local_id, type, data, is_read) VALUES (:owner_id, :local_id, :type, :data, 0)");
+			$res = DataBaseManager::getConnection()->prepare("INSERT INTO users.notes (owner_id, local_id, type, data, is_read) VALUES (:owner_id, :local_id, :type, :data, 0)");
 
 			$res->bindParam(":owner_id", $to_id,        PDO::PARAM_INT);
 			$res->bindParam(":local_id", $new_local_id, PDO::PARAM_INT);
@@ -203,7 +202,7 @@ class Notification extends EventEmitter
 
 		$result = [];
 
-		$res = $connection->prepare("SELECT DISTINCT local_id FROM users.notes WHERE owner_id = ? AND is_read = 0 LIMIT ".intval($offset).",".intval($count).";");
+		$res = DataBaseManager::getConnection()->prepare("SELECT DISTINCT local_id FROM users.notes WHERE owner_id = ? AND is_read = 0 LIMIT ".intval($offset).",".intval($count).";");
 		if ($res->execute([intval($_SESSION['user_id'])]))
 		{
 			$local_ids  = $res->fetchAll(PDO::FETCH_ASSOC);
@@ -226,7 +225,7 @@ class Notification extends EventEmitter
 		if (!$connection)
 			$connection = DataBaseManager::getConnection();
 
-		$res = $connection->prepare("SELECT COUNT(DISTINCT local_id) FROM users.notes WHERE owner_id = ? AND is_read = 0");
+		$res = DataBaseManager::getConnection()->prepare("SELECT COUNT(DISTINCT local_id) FROM users.notes WHERE owner_id = ? AND is_read = 0");
 		if ($res->execute(intval($_SESSION['user_id'])))
 		{
 			$result = $res->fetch(PDO::FETCH_ASSOC);

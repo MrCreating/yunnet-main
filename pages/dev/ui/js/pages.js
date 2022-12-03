@@ -1205,7 +1205,7 @@ const pages = {
 									.then(function (url) {
 										return uploads
 											.upload(url, files[0], function (event) {
-												return;
+
 											})
 											.then(function (attachment) {
 												attachments.appendChild(pages.parsers.attachment(attachment, function () {
@@ -3311,7 +3311,7 @@ const pages = {
 
 				let likesCountDiv = document.createElement('div');
 				likeItem.appendChild(likesCountDiv);
-				likesCountDiv.innerText = attachment.photo.meta.likes.count > 0 ? pages.parsers.niceString(attachment.photo.meta.likes.count) : '';;
+				likesCountDiv.innerText = attachment.photo.meta.likes.count > 0 ? pages.parsers.niceString(attachment.photo.meta.likes.count) : '';
 
 				likesCountDiv.style.marginLeft = '10px';
 				likesCountDiv.style.marginBottom = '7px';
@@ -3330,7 +3330,7 @@ const pages = {
 							setLike.style.display = '';
 						}
 					}).catch(function (error) {
-						return;
+
 					});
 				}
 
@@ -4497,7 +4497,7 @@ const pages = {
 
 								sendItem.setLoading(false);
 							});
-						};
+						}
 
 						if (!chat.editMode) return doSend();
 						else return doSave();
@@ -5248,7 +5248,7 @@ const pages = {
 
 					ui.bindItems();
 				}).catch(function (err) {
-					return;
+
 				})
 			}
 
@@ -5285,7 +5285,7 @@ const pages = {
 					
 					return ui.bindItems();
 				}).catch(function (err) {
-					return;
+
 				})
 			}
 			if (type === 'friendship_requested') {
@@ -5297,7 +5297,7 @@ const pages = {
 					
 					return ui.bindItems();
 				}).catch(function (err) {
-					return;
+
 				})
 			}
 			if (type === 'friendship_accepted') {
@@ -5309,7 +5309,7 @@ const pages = {
 
 					return ui.bindItems();
 				}).catch(function (err) {
-					return;
+
 				})
 			}
 			if (type === 'post_like') {
@@ -5322,7 +5322,7 @@ const pages = {
 				
 					return ui.bindItems();
 				}).catch(function (err) {
-					return;
+
 				})
 			}
 			if (type === 'photo_like')
@@ -5336,7 +5336,7 @@ const pages = {
 				
 					return ui.bindItems();
 				}).catch(function (err) {
-					return;
+
 				})
 			}
 
@@ -9000,7 +9000,7 @@ const pages = {
 							typingElement.innerHTML += ', ';
 					}
 				}).catch(function (err) {
-					return;
+
 				})
 			}
 		},		

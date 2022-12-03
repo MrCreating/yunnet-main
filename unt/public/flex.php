@@ -41,7 +41,7 @@ if (isset(Request::get()->data['action']))
 			$fields    = strval(Request::get()->data["fields"]);
 
 			if ($entity_id === 0) 
-				$entity_id = Context::get()->getCurrentUser() === NULL ? 0 : $context->getCurrentUser()->getId();
+				$entity_id = Context::get()->getCurrentUser() === NULL ? 0 : Context::get()->getCurrentUser()->getId();
 
 			if (Context::get()->getCurrentUser() && Context::get()->getCurrentUser()->isBanned()) 
 				$entity_id = Context::get()->getCurrentUser()->getId();
@@ -94,7 +94,7 @@ if (isset(Request::get()->data['action']))
 
 			$text = strval(Request::get()->data['text']);
 			$atts = strval(Request::get()->data['attachments']);
-			$wall = intval(Request::get()->data['wall_id']) !== 0 ? intval(Request::get()->data['wall_id']) : $context->getCurrentUser()->getId();
+			$wall = intval(Request::get()->data['wall_id']) !== 0 ? intval(Request::get()->data['wall_id']) : Context::get()->getCurrentUser()->getId();
 
 			$result = create_post(DataBaseManager::getConnection()->getClient(), Context::get()->getCurrentUser()->getId(), $wall, $text, $atts);
 
@@ -119,7 +119,7 @@ if (isset(Request::get()->data['action']))
 			$wall = intval(Request::get()->data['wall_id']);
 			$post = intval(Request::get()->data['post_id']);
 
-			$result = update_post_data(Context::get()->getConnection(), Context::get()->getCurrentUser()->getId(), $wall, $post, $text, $atts);
+			$result = update_post_data(DataBaseManager::getConnection(), Context::get()->getCurrentUser()->getId(), $wall, $post, $text, $atts);
 
 			// if not post updated - show this.
 			if (!$result) die(json_encode(array('error' => 1)));
@@ -167,7 +167,7 @@ if (isset(Request::get()->data['action']))
 
 			$user_id = intval(Request::get()->data['user_id']);
 
-			if (!Entity::findById($user_id) == NULL || !can_access_closed(DataBaseManager::getConnection()->getClient(), $context->getCurrentUser()->getId(), $user_id) || in_blacklist($connection, $user_id, $context->getCurrentUser()->getId()))
+			if (!Entity::findById($user_id) == NULL || !can_access_closed(DataBaseManager::getConnection()->getClient(), Context::get()->getCurrentUser()->getId(), $user_id) || in_blacklist($connection, $user_id, Context::get()->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
 			$section = strval(Request::get()->data['section']);

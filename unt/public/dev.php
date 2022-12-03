@@ -6,10 +6,9 @@ require_once __DIR__ . '/../../bin/functions/management.php';
  * ADMIN PANEL!!
 */
 
-$context = Context::get();
-$current_user_level = $context->getCurrentUser()->getAccessLevel();
+$current_user_level = Context::get()->getCurrentUser()->getAccessLevel();
 
-if (!($current_user_level < 1 || !$context->allowToUseUnt()))
+if (!($current_user_level < 1 || !Context::get()->allowToUseUnt()))
 {
 	if (isset(Request::get()->data['action']))
 	{
@@ -20,8 +19,6 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 		if (!$user->valid())
 			die(json_encode(array('error' => 1)));
 
-        $connection = DataBaseManager::getConnection();
-
 		switch ($action)
 		{
 			case 'show_project_files':
@@ -29,7 +26,7 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 
 				$filePath = strval(Request::get()->data['file_path']);
 
-				$directory = opendir(__DIR__ . '/../..' . $filePath);
+				$directory = opendir(__DIR__ . '/../yunnet-main' . $filePath);
 				$response = [];
 
 				$i = 0;
@@ -41,7 +38,7 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 
 					$response[] = [
 						'name' => $file,
-						'type' => is_dir(__DIR__ . '/../..' . $filePath . $file) ? "directory" : "file",
+						'type' => is_dir(__DIR__ . '/../yunnet-main' . $filePath . $file) ? "directory" : "file",
 						'id'   => $i
 					];
 				}
@@ -56,7 +53,7 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 				{
 					if ($user->getAccessLevel() !== 4)
 					{
-						if (ban($connection, $user_id))
+						if (ban(DataBaseManager::getConnection(), $user_id))
 						{
 							die(json_encode(array('state' => !intval($user->isBanned()))));
 						}
@@ -67,7 +64,7 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 			case 'toggle_verification_state':
 				if ($user->getAccessLevel() <= $current_user_level)
 				{
-					$result = intval($connection->prepare("UPDATE ".($user->getType() === "bot" ? "bots.info" : "users.info")." SET is_verified = ? WHERE id = ? LIMIT 1;")->execute([intval(!intval($user->isVerified())), intval($user->getId())]));
+					$result = intval(DataBaseManager::getConnection()->prepare("UPDATE ".($user->getType() === "bot" ? "bots.info" : "users.info")." SET is_verified = ? WHERE id = ? LIMIT 1;")->execute([intval(!intval($user->isVerified())), intval($user->getId())]));
 
 					if ($result)
 						die(json_encode(array('state'=>!intval($user->isVerified()))));
@@ -79,7 +76,7 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 				{
 					if ($user->getType() !== "bot")
 					{
-						$result = intval($connection->prepare("UPDATE users.info SET online_hidden = ? WHERE id = ? LIMIT 1;")->execute([intval(!intval($user->getOnline()->isOnlineHidden)), intval($user->getId())]));
+						$result = intval(DataBaseManager::getConnection()->prepare("UPDATE users.info SET online_hidden = ? WHERE id = ? LIMIT 1;")->execute([intval(!intval($user->getOnline()->isOnlineHidden)), intval($user->getId())]));
 
 						if ($result)
 							die(json_encode(array('state'=>!intval($user->getOnline()->isOnlineHidden))));
@@ -102,10 +99,10 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 							{
                                 case -2:
                                 case -1:
-									die(json_encode(array('error'=>1, 'message'=>$context->getLanguage()->bad_data_fn)));
+									die(json_encode(array('error'=>1, 'message'=>Context::get()->getLanguage()->bad_data_fn)));
 								break;
                                 case -3:
-									die(json_encode(array('error'=>1, 'message'=>$context->getLanguage()->need_all_data)));
+									die(json_encode(array('error'=>1, 'message'=>Context::get()->getLanguage()->need_all_data)));
 								break;
 							}
 						}
@@ -121,10 +118,10 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 							{
                                 case -2:
                                 case -1:
-									die(json_encode(array('error'=>1, 'message'=>$context->getLanguage()->bad_data_ln)));
+									die(json_encode(array('error'=>1, 'message'=>Context::get()->getLanguage()->bad_data_ln)));
 								break;
                                 case -3:
-									die(json_encode(array('error'=>1, 'message'=>$context->getLanguage()->need_all_data)));
+									die(json_encode(array('error'=>1, 'message'=>Context::get()->getLanguage()->need_all_data)));
 								break;
 							}
 						}
@@ -137,11 +134,11 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 						$result = $user->edit()->setScreenName(unt\functions\is_empty(Request::get()->data["screen_name"]) ? NULL : Request::get()->data["screen_name"]);
 						if ($result === 0)
 						{
-							die(json_encode(array('error'=>1, 'message'=>$context->getLanguage()->in_f_3)));
+							die(json_encode(array('error'=>1, 'message'=>Context::get()->getLanguage()->in_f_3)));
 						}
 						if ($result === -1)
 						{
-							die(json_encode(array('error'=>1, 'message'=>$context->getLanguage()->in_f_4)));
+							die(json_encode(array('error'=>1, 'message'=>Context::get()->getLanguage()->in_f_4)));
 						}
 
 						die(json_encode(array('response'=>1)));
@@ -167,7 +164,7 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 						}
 					}
 
-					die(json_encode(array('error' => 1, 'message' => $context->getLanguage()->in_f_2)));
+					die(json_encode(array('error' => 1, 'message' => Context::get()->getLanguage()->in_f_2)));
 				}
 			break;
 
@@ -198,7 +195,7 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
 			case 'delete_user':
 				if ($current_user_level >= 3 && $user->getAccessLevel() <= $current_user_level)
 				{
-					die(json_encode(array('success'=>delete_user($connection, $user_id))));
+					die(json_encode(array('success'=>delete_user(DataBaseManager::getConnection(), $user_id))));
 				}
 			break;
 
@@ -207,9 +204,9 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
                 {
                     $sql_query = Request::get()->data['sql_query'];
 
-                    $connection->getClient()->prepare('START TRANSACTION')->execute();
+                    DataBaseManager::getConnection()->getClient()->prepare('START TRANSACTION')->execute();
 
-                    $res = $connection->getClient()->prepare($sql_query);
+                    $res = DataBaseManager::getConnection()->getClient()->prepare($sql_query);
                     $result = '';
 
                     if ($res->execute()) {
@@ -217,14 +214,14 @@ if (!($current_user_level < 1 || !$context->allowToUseUnt()))
                             'response' => $res->fetchAll(PDO::FETCH_ASSOC)
                         ));
                     } else {
-                        $error = $connection->getClient()->errorInfo();
+                        $error = DataBaseManager::getConnection()->getClient()->errorInfo();
 
                         $result = json_encode(array(
                             'fail' => $error
                         ));
                     }
 
-                    $connection->getClient()->prepare('ROLLBACK')->execute();
+                    DataBaseManager::getConnection()->getClient()->prepare('ROLLBACK')->execute();
                     die($result);
                 }
             break;

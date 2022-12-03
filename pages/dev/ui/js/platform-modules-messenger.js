@@ -439,7 +439,7 @@ unt.modules.messenger = {
 						if (page === 1)
 							resultDiv.show();
 
-						return;
+
 					});
 				});
 			}

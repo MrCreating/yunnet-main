@@ -1,6 +1,4 @@
 <?php
-$context = Context::get();
-$connection = $context->getConnection();
 
 require_once __DIR__ . '/../../page_templates.php';
 

@@ -367,7 +367,7 @@ const codes = {
 				chat.getJoinLink().then(function (link) {
 					linkInputField.setText(link);
 				}).catch(function (err) {
-					return;
+
 				});
 
 				let inProcess = false;
@@ -397,7 +397,7 @@ const codes = {
 					if (value < 0 || value > 9) return;
 
 					return chat.setPermissions(groupName, value).then(function (response) {
-						return;
+
 					}).catch(function (err) {
 						return unt.toast({html: settings.lang.getValue("upload_error")})
 					});

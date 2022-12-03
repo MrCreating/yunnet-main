@@ -7,7 +7,7 @@ require __DIR__ . '/bin/functions/messages.php';
 
 $connection = DataBaseManager::getConnection();
 
-$res = $connection->prepare("SELECT id FROM users.info;");
+$res = DataBaseManager::getConnection()->prepare("SELECT id FROM users.info;");
 $res->execute();
 
 $user_ids = $res->fetchAll(PDO::FETCH_ASSOC);
@@ -19,7 +19,7 @@ foreach ($user_ids as $key => $value) {
 		$uid  = intval($chat['uid']);
 		$time = intval($chat['last_message']['time']);
 
-		$res = $connection->prepare("UPDATE messages.members_chat_list SET last_time = ? WHERE uid = ? AND last_time = 0")->execute([intval($time), intval($uid)]);
+		$res = DataBaseManager::getConnection()->prepare("UPDATE messages.members_chat_list SET last_time = ? WHERE uid = ? AND last_time = 0")->execute([intval($time), intval($uid)]);
 		
 		var_dump($res).PHP_EOL;
 	}

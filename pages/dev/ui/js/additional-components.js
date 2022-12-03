@@ -2212,7 +2212,7 @@ unt.components = new Object({
 				if (!defaultParams.closeAble) return;
 				a.click();
 				window.removeEventListener('keydown', escForExit);
-			};
+			}
 
 			window.addEventListener('keydown', escForExit);
 

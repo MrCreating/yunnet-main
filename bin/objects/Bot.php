@@ -21,7 +21,7 @@ class Bot extends Entity
 
 		if ($user_id === 0) return;
 
-		$res = $this->currentConnection->cache("Bot_" . $bot_id)->prepare("SELECT id, name, owner_id, screen_name, photo_path, settings, is_verified, is_banned FROM bots.info WHERE id = ? AND is_deleted = 0 LIMIT 1");
+		$res = $this->currentConnection/*->cache("Bot_" . $bot_id)*/->prepare("SELECT id, name, owner_id, screen_name, photo_path, settings, is_verified, is_banned FROM bots.info WHERE id = ? AND is_deleted = 0 LIMIT 1");
 
 		if ($res->execute([$bot_id]))
 		{
@@ -123,7 +123,7 @@ class Bot extends Entity
 			if ($this->photo && !$this->photo->valid()) return false;
 
 			$query = $this->photo->getQuery();
-			$res = $connection->prepare("UPDATE bots.info SET photo_path = :query WHERE id = :id AND is_deleted = 0 LIMIT 1;");
+			$res = DataBaseManager::getConnection()->prepare("UPDATE bots.info SET photo_path = :query WHERE id = :id AND is_deleted = 0 LIMIT 1;");
 
 			$res->bindParam(":query", $query,         PDO::PARAM_STR);
 			$res->bindParam(":id",    $this->getId(), PDO::PARAM_INT);
@@ -136,7 +136,7 @@ class Bot extends Entity
 
 	public function getRelationsState (int $send_id = 0): int
 	{
-		$res = $this->currentConnection->cache("Bot_relations_" . $send_id)->prepare("SELECT state FROM users.bot_relations WHERE user_id = ? AND bot_id = ? LIMIT 1");
+		$res = $this->currentConnection/*->cache("Bot_relations_" . $send_id)*/->prepare("SELECT state FROM users.bot_relations WHERE user_id = ? AND bot_id = ? LIMIT 1");
 		if ($res->execute([$send_id, $this->getId()]))
 		{
 			return intval($res->fetch(PDO::FETCH_ASSOC)["state"]);
@@ -254,7 +254,7 @@ class Bot extends Entity
 
 		$connection = DataBaseManager::getConnection();
 
-		$res = $connection->prepare("SELECT DISTINCT id FROM bots.info WHERE owner_id = ? AND is_deleted = 0 LIMIT 30");
+		$res = DataBaseManager::getConnection()->prepare("SELECT DISTINCT id FROM bots.info WHERE owner_id = ? AND is_deleted = 0 LIMIT 30");
 		if ($res->execute([intval($_SESSION['user_id'])]))
 		{
 			$data = $res->fetchAll(PDO::FETCH_ASSOC);
@@ -290,7 +290,7 @@ class Bot extends Entity
 			]
 		];
 
-		$res = $connection->prepare("INSERT INTO bots.info (name, owner_id, creation_time, settings) VALUES (:name, :owner_id, :cr_time, :settings)");
+		$res = DataBaseManager::getConnection()->prepare("INSERT INTO bots.info (name, owner_id, creation_time, settings) VALUES (:name, :owner_id, :cr_time, :settings)");
 
 		$res->bindParam(":name",     $bot_name,              PDO::PARAM_STR);
 		$res->bindParam(":owner_id", $owner_id,              PDO::PARAM_INT);
@@ -299,7 +299,7 @@ class Bot extends Entity
 
 		if ($res->execute())
 		{
-			$res = $connection->prepare("SELECT LAST_INSERT_ID()");
+			$res = DataBaseManager::getConnection()->prepare("SELECT LAST_INSERT_ID()");
 
 			if ($res->execute())
 			{

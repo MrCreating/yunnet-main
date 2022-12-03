@@ -19,7 +19,7 @@ class PushSettingsGroup extends SettingsGroup
 		$this->currentEntity     = $user;
 
 		$this->type              = "push";
-		$this->currentConnection = $connection;
+		$this->currentConnection = DataBaseManager::getConnection();
 		$this->eventEmitter      = new EventEmitter();
 
 		$this->notificationsEnabled = $params['notifications'];

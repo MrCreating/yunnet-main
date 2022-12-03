@@ -15,12 +15,9 @@ if (!class_exists('Entity'))
 if (!function_exists('get_registered_methods'))
 	require __DIR__ . '/../../bin/functions/dev_functions.php';
 
-$context    = new Context();
-$connection = $context->getConnection();
-
 // variables
-$is_logged = $context->isLogged();
-$is_mobile = $context->isMobile();
+$is_logged = Context::get()->isLogged();
+$is_mobile = Context::get()->isMobile();
 
 if (strtoupper($_SERVER['REQUEST_METHOD']) === "POST")
 {
@@ -34,5 +31,5 @@ if (strtoupper($_SERVER['REQUEST_METHOD']) === "POST")
 }
 
 require __DIR__ . '/../../pages/page_templates.php';
-die(default_page_template($is_mobile, $context->getLanguage()->id, $context->getCurrentUser()));
+die(default_page_template($is_mobile, Context::get()->getLanguage()->id, Context::get()->getCurrentUser()));
 ?>

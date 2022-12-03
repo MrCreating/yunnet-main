@@ -7,7 +7,7 @@ if (isset(Request::get()->data["action"]))
 {
 	$action = strtolower(Request::get()->data["action"]);
 
-	if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
+	if (!Context::get()->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
 	switch ($action) {
 		case 'search':
@@ -36,7 +36,7 @@ if (isset(Request::get()->data["action"]))
 		case 'hide_request':
 			$user_id = intval(Request::get()->data['user_id']);
 
-			$result = hide_friendship_request($connection, $context->getCurrentUser()->getId(), $user_id);
+			$result = hide_friendship_request($connection, Context::get()->getCurrentUser()->getId(), $user_id);
 			if (!$result)
 				die(json_encode(array('error' => 1)));
 

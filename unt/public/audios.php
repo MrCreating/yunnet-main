@@ -7,7 +7,7 @@ if (isset(Request::get()->data['action']))
 {
 	$action = strtolower(Request::get()->data['action']);
 
-	if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
+	if (!Context::get()->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
 	$accountType = intval(Request::get()->data['type']);
 
@@ -19,7 +19,7 @@ if (isset(Request::get()->data['action']))
 				$password = strval(Request::get()->data['password']);
 				$code = intval(Request::get()->data['auth_code']) > 0 ? strval(Request::get()->data['auth_code']) : '';
 
-				$result = add_account($connection, $login, $password, $context->getCurrentUser()->getId(), 1, $code);
+				$result = add_account($connection, $login, $password, Context::get()->getCurrentUser()->getId(), 1, $code);
 				if ($result === true)
 					die(json_encode(array('success' => 1)));
 
@@ -33,7 +33,7 @@ if (isset(Request::get()->data['action']))
 		case 'unbound_account':
 			if ($accountType === 1)
 			{
-				$result = delete_account($connection, $context->getCurrentUser()->getId(), $accountType);
+				$result = delete_account($connection, Context::get()->getCurrentUser()->getId(), $accountType);
 				if ($result === true)
 					die(json_encode(array('success'=>1)));
 
@@ -48,7 +48,7 @@ if (isset(Request::get()->data['action']))
 			$currentOfffset = intval(Request::get()->data['offset']);
 			$audiosCount = intval(Request::get()->data['count']);
 
-			$audios_list = get_audio($connection, $context->getCurrentUser()->getId(), 1, $currentOfffset, $audiosCount);
+			$audios_list = get_audio($connection, Context::get()->getCurrentUser()->getId(), 1, $currentOfffset, $audiosCount);
 			if ($audios_list === false)
 				die(json_encode(array('error'=>1)));
 

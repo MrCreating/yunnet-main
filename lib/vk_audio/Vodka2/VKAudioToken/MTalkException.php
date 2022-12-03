@@ -2,7 +2,9 @@
 
 namespace Vodka2\VKAudioToken;
 
-class MTalkException extends \Exception {
+use Exception;
+
+class MTalkException extends Exception {
     const CANT_OPEN_SOCKET = 0;
     const WRONG_RESPONSE = 1;
     private $extra;

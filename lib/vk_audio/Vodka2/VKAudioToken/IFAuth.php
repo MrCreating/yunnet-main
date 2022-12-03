@@ -3,6 +3,9 @@
 namespace Vodka2\VKAudioToken;
 
 // Some ideas from https://github.com/python273/vk_api
+use DOMDocument;
+use DOMXPath;
+
 class IFAuth {
     private $scope;
     private $login;
@@ -39,7 +42,7 @@ class IFAuth {
     }
 
     private function findFormData($result, $errCode = false) {
-        $doc = new \DOMDocument();
+        $doc = new DOMDocument();
         @$doc->loadHTML($result);
         $forms = $doc->getElementsByTagName("form");
         if (count($forms) == 0) {
@@ -84,9 +87,9 @@ class IFAuth {
     private function check2FA($result, $cookies) {
         $formData = $this->findFormData($result);
         if (isset($formData['action'])) {
-            $doc = new \DOMDocument();
+            $doc = new DOMDocument();
             @$doc->loadHTML($result);
-            $xpath = new \DOMXPath($doc);
+            $xpath = new DOMXPath($doc);
             $message = "";
             $texts = $xpath->query("//form/preceding::div[string-length(text()[1]) > 5 and position() < 4]");
             foreach ($texts as $text) {

@@ -6,11 +6,11 @@ if (isset(Request::get()->data['action']))
 {
 	$action = strtolower(Request::get()->data['action']);
 
-	if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
+	if (!Context::get()->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
 	switch ($action) {
 		case 'get_posts':
-			$posts = get_news($connection, $context->getCurrentUser()->getId(), $context->getCurrentUser()->getId());
+			$posts = get_news($connection, Context::get()->getCurrentUser()->getId(), Context::get()->getCurrentUser()->getId());
 
 			die(json_encode($posts));
 		break;

@@ -6,8 +6,10 @@
  * ! - восстановленная
  */
 
+use unt\UntEngine;
+
 require_once __DIR__ . '/../bin/UntEngine.php';
 
-\unt\UntEngine::init();
+UntEngine::init();
 
 ?>

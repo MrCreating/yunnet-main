@@ -34,7 +34,7 @@ function create_friendship ($connection, $owner_id, $user_id)
 	$UNKNOWN   = 0;
 
 	// getting current state.
-	$res = $connection->prepare("SELECT id, user1, user2, state FROM users.relationships WHERE (user1 = ? AND user2 = ?) OR (user1 = ? AND user2 = ?) LIMIT 1;");
+	$res = DataBaseManager::getConnection()->prepare("SELECT id, user1, user2, state FROM users.relationships WHERE (user1 = ? AND user2 = ?) OR (user1 = ? AND user2 = ?) LIMIT 1;");
 	$res->execute([intval($owner_id), intval($user_id), intval($user_id), intval($owner_id)]);
 	$friendship = $res->fetch(PDO::FETCH_ASSOC);
 
@@ -67,8 +67,8 @@ function create_friendship ($connection, $owner_id, $user_id)
                     'user_id' => intval($user_id)
                 ]);
 
-				$connection->prepare("UPDATE users.relationships SET state = 2 WHERE id = ? LIMIT 1;")->execute([intval($friendship['id'])]);
-				$connection->prepare("UPDATE users.relationships SET is_hidden = 0 WHERE id = ? LIMIT 1;")->execute([intval($friendship['id'])]);
+				DataBaseManager::getConnection()->prepare("UPDATE users.relationships SET state = 2 WHERE id = ? LIMIT 1;")->execute([intval($friendship['id'])]);
+				DataBaseManager::getConnection()->prepare("UPDATE users.relationships SET is_hidden = 0 WHERE id = ? LIMIT 1;")->execute([intval($friendship['id'])]);
 
 				return true;
 			}
@@ -76,15 +76,15 @@ function create_friendship ($connection, $owner_id, $user_id)
 
 		if ($state === $UNKNOWN)
 		{
-			$connection->prepare("UPDATE users.relationships SET user1 = ? WHERE id = ? LIMIT 1;")->execute([intval($owner_id), intval($friendship['id'])]);
-			$connection->prepare("UPDATE users.relationships SET user2 = ? WHERE id = ? LIMIT 1;")->execute([intval($user_id), intval($friendship['id'])]);
-			$connection->prepare("UPDATE users.relationships SET is_hidden = 0 WHERE id = ? LIMIT 1;")->execute([intval($friendship['id'])]);
+			DataBaseManager::getConnection()->prepare("UPDATE users.relationships SET user1 = ? WHERE id = ? LIMIT 1;")->execute([intval($owner_id), intval($friendship['id'])]);
+			DataBaseManager::getConnection()->prepare("UPDATE users.relationships SET user2 = ? WHERE id = ? LIMIT 1;")->execute([intval($user_id), intval($friendship['id'])]);
+			DataBaseManager::getConnection()->prepare("UPDATE users.relationships SET is_hidden = 0 WHERE id = ? LIMIT 1;")->execute([intval($friendship['id'])]);
 			
 			create_notification($connection, $user_id, "friendship_requested", [
 				'user_id' => intval($owner_id)
 			]);
 
-			return $connection->prepare("UPDATE users.relationships SET state = 1 WHERE id = ? LIMIT 1;")->execute([intval($friendship['id'])]);
+			return DataBaseManager::getConnection()->prepare("UPDATE users.relationships SET state = 1 WHERE id = ? LIMIT 1;")->execute([intval($friendship['id'])]);
 		}
 	} else 
 	{
@@ -92,7 +92,7 @@ function create_friendship ($connection, $owner_id, $user_id)
 			'user_id' => intval($owner_id)
 		]);
 
-		return $connection->prepare("INSERT INTO users.relationships (user1, user2, state) VALUES (?, ?, ?);")->execute([
+		return DataBaseManager::getConnection()->prepare("INSERT INTO users.relationships (user1, user2, state) VALUES (?, ?, ?);")->execute([
 			intval($owner_id), intval($user_id), 1
 		]);
 	}
@@ -110,7 +110,7 @@ function delete_friendship ($connection, $owner_id, $user_id)
 	if ($owner_id === $user_id)
 		return false;
 
-	$res = $connection->prepare("SELECT user1, user2, state FROM users.relationships WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ?;");
+	$res = DataBaseManager::getConnection()->prepare("SELECT user1, user2, state FROM users.relationships WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ?;");
 	$res->execute([intval($owner_id), intval($user_id), intval($user_id), intval($owner_id)]);
 	$friendship = $res->fetch(PDO::FETCH_ASSOC);
 
@@ -123,21 +123,21 @@ function delete_friendship ($connection, $owner_id, $user_id)
 
 	if ($state === 2)
 	{
-		$connection->prepare("UPDATE users.relationships SET user1 = ? WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ?;")->execute([intval($user_id), intval($owner_id), intval($user_id), intval($user_id), intval($owner_id)]);
-		$connection->prepare("UPDATE users.relationships SET user2 = ? WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ?;")->execute([intval($owner_id), intval($owner_id), intval($user_id), intval($user_id), intval($owner_id)]);
-		$connection->prepare("UPDATE users.relationships SET is_hidden = 1 WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ?;")->execute([intval($owner_id), intval($owner_id), intval($user_id), intval($user_id), intval($owner_id)]);
+		DataBaseManager::getConnection()->prepare("UPDATE users.relationships SET user1 = ? WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ?;")->execute([intval($user_id), intval($owner_id), intval($user_id), intval($user_id), intval($owner_id)]);
+		DataBaseManager::getConnection()->prepare("UPDATE users.relationships SET user2 = ? WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ?;")->execute([intval($owner_id), intval($owner_id), intval($user_id), intval($user_id), intval($owner_id)]);
+		DataBaseManager::getConnection()->prepare("UPDATE users.relationships SET is_hidden = 1 WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ?;")->execute([intval($owner_id), intval($owner_id), intval($user_id), intval($user_id), intval($owner_id)]);
 
 		create_notification($connection, $user_id, "deleted_friend", [
 			'user_id' => intval($owner_id)
 		]);
 
-		return $connection->prepare("UPDATE users.relationships SET state = 1 WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ?;")->execute([intval($owner_id), intval($user_id), intval($user_id), intval($owner_id)]);
+		return DataBaseManager::getConnection()->prepare("UPDATE users.relationships SET state = 1 WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ?;")->execute([intval($owner_id), intval($user_id), intval($user_id), intval($owner_id)]);
 	}
 	if ($state === 1)
 	{
 		if ($owner_id === $initiator)
 		{
-			return $connection->prepare("UPDATE users.relationships SET state = 0 WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ?;")->execute([intval($owner_id), intval($user_id), intval($user_id), intval($owner_id)]);
+			return DataBaseManager::getConnection()->prepare("UPDATE users.relationships SET state = 0 WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ?;")->execute([intval($owner_id), intval($user_id), intval($user_id), intval($owner_id)]);
 		}
 	}
 
@@ -151,15 +151,15 @@ function get_friends_list ($connection, $user_id, $section = "friends", $extende
 	switch ($section)
 	{
 		case "subscribers":
-			$res = $connection->prepare("SELECT user1, user2, state FROM users.relationships WHERE user2 = ? AND state = 1 AND user1 != user2 LIMIT 50;");
+			$res = DataBaseManager::getConnection()->prepare("SELECT user1, user2, state FROM users.relationships WHERE user2 = ? AND state = 1 AND user1 != user2 LIMIT 50;");
 			$res->execute([intval($user_id)]);
 		break;
 		case "outcoming":
-			$res = $connection->prepare("SELECT user1, user2, state FROM users.relationships WHERE user1 = ? AND state = 1 AND user1 != user2 LIMIT 50;");
+			$res = DataBaseManager::getConnection()->prepare("SELECT user1, user2, state FROM users.relationships WHERE user1 = ? AND state = 1 AND user1 != user2 LIMIT 50;");
 			$res->execute([intval($user_id)]);
 		break;
 		default:
-			$res = $connection->prepare("SELECT user1, user2, state FROM users.relationships WHERE (user1 = ? OR user2 = ?) AND state = 2 AND user1 != user2 LIMIT 50;");
+			$res = DataBaseManager::getConnection()->prepare("SELECT user1, user2, state FROM users.relationships WHERE (user1 = ? OR user2 = ?) AND state = 2 AND user1 != user2 LIMIT 50;");
 			$res->execute([intval($user_id), intval($user_id)]);
 		break;
 	}
@@ -189,15 +189,15 @@ function get_friends_list ($connection, $user_id, $section = "friends", $extende
 // get cunters for come user
 function get_counters ($connection, $user_id)
 {
-	$res = $connection->prepare("SELECT DISTINCT COUNT(local_id) FROM users.notes WHERE is_read = 0 AND is_hidden = 0 AND owner_id = ?;");
+	$res = DataBaseManager::getConnection()->prepare("SELECT DISTINCT COUNT(local_id) FROM users.notes WHERE is_read = 0 AND is_hidden = 0 AND owner_id = ?;");
 	$res->execute([$user_id]);
 	$notes_count = intval($res->fetch(PDO::FETCH_ASSOC)["COUNT(local_id)"]);
 	
-	$res = $connection->prepare("SELECT COUNT(DISTINCT uid) FROM messages.members_chat_list WHERE is_read = 0 AND hidden = 0 AND user_id = ?;");
+	$res = DataBaseManager::getConnection()->prepare("SELECT COUNT(DISTINCT uid) FROM messages.members_chat_list WHERE is_read = 0 AND hidden = 0 AND user_id = ?;");
 	$res->execute([$user_id]);
 	$messages_count = intval($res->fetch(PDO::FETCH_ASSOC)["COUNT(DISTINCT uid)"]);
 
-	$res = $connection->prepare("SELECT DISTINCT COUNT(id) FROM users.relationships WHERE state = 1 AND is_hidden = 0 AND user2 = ? AND user1 != user2;");
+	$res = DataBaseManager::getConnection()->prepare("SELECT DISTINCT COUNT(id) FROM users.relationships WHERE state = 1 AND is_hidden = 0 AND user2 = ? AND user1 != user2;");
 	$res->execute([$user_id]);
 	$friends_count = intval($res->fetch(PDO::FETCH_ASSOC)["COUNT(id)"]);
 
@@ -258,7 +258,7 @@ function search_users ($connection, $query, $additional_params = [
 	$query_call .= " LIMIT ".intval($additional_params['offset']).",".intval($additional_params["count"]).";";
 
 	// preparing requests
-	$res = $connection->prepare($query_call);
+	$res = DataBaseManager::getConnection()->prepare($query_call);
 	foreach ($query as $index => $word) {
 		if (unt\functions\is_empty($word))
 			continue;
@@ -318,7 +318,7 @@ function get_friendship_state ($connection, $user_id, $check_id)
 	if ($user_id === $check_id) return 2;
 
 	// selecting user frindship
-	$res = $connection->prepare("SELECT user1, user2, state, is_hidden FROM users.relationships WHERE (user1 = ? AND user2 = ?) OR (user1 = ? AND user2 = ?) LIMIT 1;");
+	$res = DataBaseManager::getConnection()->prepare("SELECT user1, user2, state, is_hidden FROM users.relationships WHERE (user1 = ? AND user2 = ?) OR (user1 = ? AND user2 = ?) LIMIT 1;");
 	$res->execute([intval($user_id), intval($check_id), intval($check_id), intval($user_id)]);
 
 	// result of.
@@ -398,6 +398,6 @@ function hide_friendship_request ($connection, $user_id, $hide_id)
         'user_id' => intval($hide_id)
     ]);
 
-	return $connection->prepare("UPDATE users.relationships SET is_hidden = 1 WHERE (user1 = ? AND user2 = ?) OR (user1 = ? AND user2 = ?) LIMIT 1;")->execute([intval($user_id), intval($hide_id), intval($hide_id), intval($user_id)]);
+	return DataBaseManager::getConnection()->prepare("UPDATE users.relationships SET is_hidden = 1 WHERE (user1 = ? AND user2 = ?) OR (user1 = ? AND user2 = ?) LIMIT 1;")->execute([intval($user_id), intval($hide_id), intval($hide_id), intval($user_id)]);
 }
 ?>

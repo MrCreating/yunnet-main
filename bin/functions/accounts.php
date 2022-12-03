@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../lib/vk_audio/autoloader.php';
 use Vodka2\VKAudioToken\AndroidCheckin;
 use Vodka2\VKAudioToken\SmallProtobufHelper;
 use Vodka2\VKAudioToken\CommonParams;
+use Vodka2\VKAudioToken\TokenException;
 use Vodka2\VKAudioToken\TokenReceiver;
 use Vodka2\VKAudioToken\MTalkClient;
 use Vodka2\VKAudioToken\TwoFAHelper;
@@ -34,7 +35,7 @@ function get_accounts ($connection, $user_id, $receiveToken = false)
 
 	$tokens = [];
 
-	$res = $connection->prepare('SELECT token FROM users.accounts WHERE owner_id = ? AND type = ? AND is_active = 1 LIMIT 1;');
+	$res = DataBaseManager::getConnection()->prepare('SELECT token FROM users.accounts WHERE owner_id = ? AND type = ? AND is_active = 1 LIMIT 1;');
 
 	if ($res->execute([intval($user_id), 1]))
 	{
@@ -110,7 +111,7 @@ function add_account ($connection, $login, $password, $owner_id, $type = 1, $aut
 			$token    = $receiver->getToken();
 			$acc_type = 1;
 
-			$res = $connection->prepare('INSERT INTO users.accounts (owner_id, type, token) VALUES (:owner_id, :type, :token);');
+			$res = DataBaseManager::getConnection()->prepare('INSERT INTO users.accounts (owner_id, type, token) VALUES (:owner_id, :type, :token);');
 
 			$res->bindParam(':owner_id', $owner_id, PDO::PARAM_INT);
 			$res->bindParam(':type',     $acc_type, PDO::PARAM_INT);
@@ -118,7 +119,7 @@ function add_account ($connection, $login, $password, $owner_id, $type = 1, $aut
 
 			return $res->execute();
 		} catch (Exception $e) {
-			if ($e->getCode() === \Vodka2\VKAudioToken\TokenException::TWOFA_REQ && isset($e->extra->validation_sid)) {
+			if ($e->getCode() === TokenException::TWOFA_REQ && isset($e->extra->validation_sid)) {
 				try {
 					(new TwoFAHelper($params))->validatePhone($e->extra->validation_sid);
 			        
@@ -152,7 +153,7 @@ function add_account ($connection, $login, $password, $owner_id, $type = 1, $aut
 */
 function delete_account ($connection, $owner_id, $account_type = 1)
 {
-	return $connection->prepare('UPDATE users.accounts SET is_active = 0 WHERE owner_id = ? AND type = ?;')->execute([intval($owner_id), intval($account_type)]);
+	return DataBaseManager::getConnection()->prepare('UPDATE users.accounts SET is_active = 0 WHERE owner_id = ? AND type = ?;')->execute([intval($owner_id), intval($account_type)]);
 }
 
 ?>

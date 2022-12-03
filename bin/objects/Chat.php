@@ -563,7 +563,7 @@ abstract class Chat extends EventEmitter
 		if ($showOnly === 2)
 			$query = "SELECT DISTINCT uid, lid, last_time FROM messages.members_chat_list WHERE hidden = 0 AND user_id = ? AND lid != 0 AND uid > 0 ORDER BY last_time DESC LIMIT ".intval($offset).",".intval($count);
 
-		$res = $connection->prepare($query);
+		$res = DataBaseManager::getConnection()->prepare($query);
 		if ($res->execute([intval($_SESSION['user_id'])]))
 		{
 			$local_chat_ids = $res->fetchAll(PDO::FETCH_ASSOC);
@@ -631,7 +631,7 @@ abstract class Chat extends EventEmitter
 		if (!$uid) return -4;
 
 		$connection = DataBaseManager::getConnection();
-		if ($connection->prepare("INSERT INTO messages.members_engine_1 (uid, title, permissions, photo) VALUES (?, ?, ?, ?)")->execute([
+		if (DataBaseManager::getConnection()->prepare("INSERT INTO messages.members_engine_1 (uid, title, permissions, photo) VALUES (?, ?, ?, ?)")->execute([
 			$uid,
 			$title,
 			serialize($permissions),
@@ -648,14 +648,14 @@ abstract class Chat extends EventEmitter
 
 				$user_permissions_level = $user_id === $creator_id ? 9 : 0;
 
-				$res = $connection->prepare('SELECT lid FROM messages.members_chat_list WHERE user_id = ? ORDER BY lid LIMIT 1');
+				$res = DataBaseManager::getConnection()->prepare('SELECT lid FROM messages.members_chat_list WHERE user_id = ? ORDER BY lid LIMIT 1');
 				if ($res->execute([$user_id]))
 				{
 					$lid = intval($res->fetch(PDO::FETCH_ASSOC)["lid"]) - 1;
 					if ($user_id === intval($_SESSION['user_id']))
 						$my_local_chat_id = $lid;
 
-					$connection->prepare('INSERT INTO messages.members_chat_list (user_id, lid, uid, cleared_message_id, invited_by, permissions_level, last_time) VALUES (?, ?, ?, 0, ?, ?, ?)')->execute([$user_id, $lid, $uid, $creator_id, $user_permissions_level, time()]);
+					DataBaseManager::getConnection()->prepare('INSERT INTO messages.members_chat_list (user_id, lid, uid, cleared_message_id, invited_by, permissions_level, last_time) VALUES (?, ?, ?, 0, ?, ?, ?)')->execute([$user_id, $lid, $uid, $creator_id, $user_permissions_level, time()]);
 				}
 			}
 

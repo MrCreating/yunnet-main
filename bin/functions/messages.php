@@ -26,7 +26,7 @@ function get_uid_by_lid ($connection, $lid, $is_bot = false, $user_id)
 	if ($is_bot && $lid > 0) $lid = $lid*-1;
 
 	// selecting uid.
-	$res = $is_bot ? $connection->prepare("SELECT uid FROM messages.members_chat_list WHERE lid = ".$lid." AND uid > 0 AND user_id = ".$user_id." LIMIT 1;") : $connection->prepare("SELECT uid FROM messages.members_chat_list WHERE lid = ".$lid." AND user_id = ".$user_id." LIMIT 1;");
+	$res = $is_bot ? DataBaseManager::getConnection()->prepare("SELECT uid FROM messages.members_chat_list WHERE lid = ".$lid." AND uid > 0 AND user_id = ".$user_id." LIMIT 1;") : DataBaseManager::getConnection()->prepare("SELECT uid FROM messages.members_chat_list WHERE lid = ".$lid." AND user_id = ".$user_id." LIMIT 1;");
 	$res->execute();
 
 	// fetching uid.
@@ -79,20 +79,20 @@ function get_last_uid ($dialog = true)
 function toggle_send_access ($connection, $user_id, $bot_id, $allow = true)
 {
 	// getting current state
-	$res = $connection->prepare("SELECT state FROM users.bot_relations WHERE user_id = ? AND bot_id = ? LIMIT 1;");
+	$res = DataBaseManager::getConnection()->prepare("SELECT state FROM users.bot_relations WHERE user_id = ? AND bot_id = ? LIMIT 1;");
 	$res->execute([intval($user_id), intval($bot_id)]);
 	$data = $res->fetch(PDO::FETCH_ASSOC)['state'];
 	if ($data === NULL)
 	{
-		$connection->prepare("INSERT INTO users.bot_relations (user_id, bot_id, state) VALUES (?, ?, -1);")->execute([intval($user_id), intval($bot_id)]);
+		DataBaseManager::getConnection()->prepare("INSERT INTO users.bot_relations (user_id, bot_id, state) VALUES (?, ?, -1);")->execute([intval($user_id), intval($bot_id)]);
 	}
 
 	if ($allow)
 	{
-		return $connection->prepare("UPDATE users.bot_relations SET state = 1 WHERE user_id = ? AND bot_id = ? LIMIT 1;")->execute([intval($user_id), intval($bot_id)]);
+		return DataBaseManager::getConnection()->prepare("UPDATE users.bot_relations SET state = 1 WHERE user_id = ? AND bot_id = ? LIMIT 1;")->execute([intval($user_id), intval($bot_id)]);
 	} else
 	{
-		return $connection->prepare("UPDATE users.bot_relations SET state = -1 WHERE user_id = ? AND bot_id = ? LIMIT 1;")->execute([intval($user_id), intval($bot_id)]);
+		return DataBaseManager::getConnection()->prepare("UPDATE users.bot_relations SET state = -1 WHERE user_id = ? AND bot_id = ? LIMIT 1;")->execute([intval($user_id), intval($bot_id)]);
 	}
 }
 
@@ -107,7 +107,7 @@ function toggle_send_access ($connection, $user_id, $bot_id, $allow = true)
 function is_chat_allowed ($connection, $user_id, $bot_id)
 {
 	// getting state
-	$res = $connection->prepare("SELECT state FROM users.bot_relations WHERE user_id = ? AND bot_id = ? LIMIT 1;");
+	$res = DataBaseManager::getConnection()->prepare("SELECT state FROM users.bot_relations WHERE user_id = ? AND bot_id = ? LIMIT 1;");
 	if ($res->execute([intval($user_id), intval($bot_id)]))
 	{
 		$data = $res->fetch(PDO::FETCH_ASSOC);

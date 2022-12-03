@@ -4,7 +4,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-function _xmlHttpGet() { let e; try {e = new ActiveXObject("Msxml2.XMLHTTP")} catch (t) { try {e = new ActiveXObject("Microsoft.XMLHTTP");} catch (t) {e = !1;}}; return e || "undefined" == typeof XMLHttpRequest || (e = new XMLHttpRequest()), e; }
+function _xmlHttpGet() { let e; try {e = new ActiveXObject("Msxml2.XMLHTTP")} catch (t) { try {e = new ActiveXObject("Microsoft.XMLHTTP");} catch (t) {e = !1;}} return e || "undefined" == typeof XMLHttpRequest || (e = new XMLHttpRequest()), e; }
 
 String.prototype.capitalize = function () {
   return this.charAt(0).toUpperCase() + this.slice(1).toLowerCase();
@@ -111,7 +111,7 @@ function htmlspecialchars (string) {
   }
 
   return escapedString;
-};
+}
 
 (function (factory) {
   window.cash = factory();
@@ -1270,7 +1270,7 @@ unt.AutoInit = function (context) {
       plugin.init(registry[pluginName], {});
     } catch (e) {
       console.log('[!] Failed to init: ' + pluginName);
-      continue;
+
     }
   }
 };
@@ -6230,7 +6230,7 @@ String.prototype.isEmpty = function () {
         $this.one('blur', function (e) {
           $(this).removeClass('tabbed');
         });
-        return;
+
       }
     });
 
@@ -7425,7 +7425,7 @@ unt.textareaAutoResize = function ($textarea) {
         $this.one('blur', function (e) {
           $(this).removeClass('tabbed');
         });
-        return;
+
       }
     });
 

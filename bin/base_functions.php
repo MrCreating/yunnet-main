@@ -2,6 +2,10 @@
 
 namespace unt\functions;
 
+use Context;
+use DataBaseManager;
+use PDO;
+
 /**
  * Initial and most used functions and operations
  */
@@ -86,7 +90,7 @@ function get_dev_language ($connection)
 	}
 	else
 	{
-		$res = $connection->prepare("SELECT settings FROM users.info WHERE id = ?;");
+		$res = DataBaseManager::getConnection()->prepare("SELECT settings FROM users.info WHERE id = ?;");
 		$res->execute([strval($_SESSION['user_id'])]);
 
 		$settings = json_decode($res->fetch(PDO::FETCH_ASSOC)['settings'], true);
@@ -131,30 +135,30 @@ function resolve_id_by_name ($connection, $name)
 
 	if ($user_id === 0)
 	{
-		$res = $connection->prepare("SELECT id FROM users.info WHERE screen_name = ? LIMIT 1;");
+		$res = DataBaseManager::getConnection()->prepare("SELECT id FROM users.info WHERE screen_name = ? LIMIT 1;");
 		$res->execute([$name]);
 
-		$id = intval($res->fetch(\PDO::FETCH_ASSOC)['id']);
+		$id = intval($res->fetch(PDO::FETCH_ASSOC)['id']);
 		if ($id === 0)
 		{
-			$res = $connection->prepare("SELECT id FROM bots.info WHERE screen_name = ? LIMIT 1;");
+			$res = DataBaseManager::getConnection()->prepare("SELECT id FROM bots.info WHERE screen_name = ? LIMIT 1;");
 			$res->execute([$name]);
 
-			$id = intval($res->fetch(\PDO::FETCH_ASSOC)['id'])*-1;
+			$id = intval($res->fetch(PDO::FETCH_ASSOC)['id'])*-1;
 		}
 	}
 	else
 	{
-		$res = $connection->prepare("SELECT id FROM users.info WHERE id = ? LIMIT 1;");
+		$res = DataBaseManager::getConnection()->prepare("SELECT id FROM users.info WHERE id = ? LIMIT 1;");
 		$res->execute([strval($user_id)]);
 
-		$id = intval($res->fetch(\PDO::FETCH_ASSOC)['id']);
+		$id = intval($res->fetch(PDO::FETCH_ASSOC)['id']);
 		if ($id === 0)
 		{
-			$res = $connection->prepare("SELECT id FROM bots.info WHERE id = ? LIMIT 1;");
+			$res = DataBaseManager::getConnection()->prepare("SELECT id FROM bots.info WHERE id = ? LIMIT 1;");
 			$res->execute([strval($user_id*-1)]);
 
-			$id = intval($res->fetch(\PDO::FETCH_ASSOC)['id'])*-1;
+			$id = intval($res->fetch(PDO::FETCH_ASSOC)['id'])*-1;
 		}
 	}
 
@@ -212,7 +216,7 @@ function update_online_time ($connection, $old_time, $user_id)
 	$old_time = $old_time > 0 ? intval($old_time) : 0;
 
 	if (((time() - $old_time) >= 0) || $old_time <= 0)
-		return $connection->prepare("UPDATE users.info SET is_online = ? WHERE id = ? LIMIT 1;")->execute([time()+30, intval($user_id)]);
+		return DataBaseManager::getConnection()->prepare("UPDATE users.info SET is_online = ? WHERE id = ? LIMIT 1;")->execute([time()+30, intval($user_id)]);
 
 	return false;
 }

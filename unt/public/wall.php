@@ -93,10 +93,10 @@ if (isset(Request::get()->data["action"]))
 /*if ($wall_id !== 0)
 {
 	// if current user is not blacklisted on wall owner
-	if (!in_blacklist($connection, $wall_id, $context->getCurrentUser()->getId()))
+	if (!in_blacklist($connection, $wall_id, Context::get()->getCurrentUser()->getId()))
 	{	
 		// if current user can not see owner_id wall - redirect
-		$can_access_closed = can_access_closed($connection, $context->getCurrentUser()->getId(), $wall_id);
+		$can_access_closed = can_access_closed($connection, Context::get()->getCurrentUser()->getId(), $wall_id);
 		if (!$can_access_closed)
 			die(header("Location: /id".$wall_id));
 
@@ -106,13 +106,13 @@ if (isset(Request::get()->data["action"]))
 		{
 			if (isset(Request::get()->data["action"]))
 			{
-				if (!$context->isLogged()) die(json_encode(array('unauth'=>1)));
+				if (!Context::get()->isLogged()) die(json_encode(array('unauth'=>1)));
 				
 				$action = strtolower(Request::get()->data["action"]);
 				switch ($action) {
 					case 'delete':
-						if (!$context->isLogged()) die(json_encode(array('unauth'=>1)));
-						$result = delete_post($connection, $context->getCurrentUser()->getId(), $wall_id, $post_id);
+						if (!Context::get()->isLogged()) die(json_encode(array('unauth'=>1)));
+						$result = delete_post($connection, Context::get()->getCurrentUser()->getId(), $wall_id, $post_id);
 
 						if (!$result)
 							die(json_encode(array('error'=>1)));
@@ -120,12 +120,12 @@ if (isset(Request::get()->data["action"]))
 						die(json_encode(array('result'=>1)));
 					break;
 					case 'save_post':
-						if (!$context->isLogged()) die(json_encode(array('unauth'=>1)));
+						if (!Context::get()->isLogged()) die(json_encode(array('unauth'=>1)));
 
 						$text = strval(Request::get()->data['text']);
 						$attachments = strval(Request::get()->data['attachments']);
 
-						$result = update_post_data($connection, $context->getCurrentUser()->getId(), $wall_id, $post_id, $text, $attachments);
+						$result = update_post_data($connection, Context::get()->getCurrentUser()->getId(), $wall_id, $post_id, $text, $attachments);
 						if (!$result)
 							die(json_encode(array('error'=>1)));
 

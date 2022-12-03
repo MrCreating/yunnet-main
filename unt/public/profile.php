@@ -39,12 +39,12 @@ if (isset(Request::get()->data['action']))
 		break;
 	}
 
-	if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
+	if (!Context::get()->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
 	switch ($action)
 	{
 		case 'set_new_status':
-			if ($context->getCurrentUser() && ($user->getId() !== $context->getCurrentUser()->getId()))
+			if (Context::get()->getCurrentUser() && ($user->getId() !== Context::get()->getCurrentUser()->getId()))
 				die(json_encode(array('error' => 1)));
 
 			die(json_encode(array('success' => intval(Context::get()->getCurrentUser()->edit()->setStatus(Request::get()->data['new_status'])))));
@@ -53,19 +53,19 @@ if (isset(Request::get()->data['action']))
 		case 'add':
 			if ($in_blacklist) die(json_encode(array('error' => 1)));
 
-			$result = create_friendship($connection, ($context->getCurrentUser() !== NULL ? $context->getCurrentUser()->getId() : 0), $selected_user["id"]);
+			$result = create_friendship($connection, (Context::get()->getCurrentUser() !== NULL ? Context::get()->getCurrentUser()->getId() : 0), $selected_user["id"]);
 
 			die(json_encode(array('success' => $result)));
 		break;
 
 		case 'block':
-			$result = block_user($connection, ($context->getCurrentUser() !== NULL ? $context->getCurrentUser()->getId() : 0), $selected_user["id"]);
+			$result = block_user($connection, (Context::get()->getCurrentUser() !== NULL ? Context::get()->getCurrentUser()->getId() : 0), $selected_user["id"]);
 
 			die(json_encode(array('success' => $result)));
 		break;
 
 		case 'delete':
-			$result = delete_friendship($connection, ($context->getCurrentUser() !== NULL ? $context->getCurrentUser()->getId() : 0), $selected_user["id"]);
+			$result = delete_friendship($connection, (Context::get()->getCurrentUser() !== NULL ? Context::get()->getCurrentUser()->getId() : 0), $selected_user["id"]);
 
 			die(json_encode(array('success' => $result)));
 		break;
@@ -73,9 +73,9 @@ if (isset(Request::get()->data['action']))
 		case 'toggle_send_access':
 			if ($in_blacklist) die(json_encode(array('error' => 1)));
 
-			$bot_messages_allowed = is_chat_allowed($connection, $context->getCurrentUser()->getId(), $selected_user["id"]*-1);
+			$bot_messages_allowed = is_chat_allowed($connection, Context::get()->getCurrentUser()->getId(), $selected_user["id"]*-1);
 
-			toggle_send_access($connection, ($context->getCurrentUser() !== NULL ? $context->getCurrentUser()->getId() : 0), $selected_user['id']*-1, !$bot_messages_allowed);
+			toggle_send_access($connection, (Context::get()->getCurrentUser() !== NULL ? Context::get()->getCurrentUser()->getId() : 0), $selected_user['id']*-1, !$bot_messages_allowed);
 
 			die(json_encode(array('state' => !$bot_messages_allowedy)));
 			break;

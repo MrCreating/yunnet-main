@@ -21,7 +21,7 @@ class AccountSettingsGroup extends SettingsGroup
 		$this->currentEntity     = $user;
 		
 		$this->type              = "account";
-		$this->currentConnection = $connection;
+		$this->currentConnection = DataBaseManager::getConnection();
 
 		$this->currentLangId = $params['lang_id'];
 		$this->closedProfile = $params['is_closed'];

@@ -27,7 +27,7 @@ function get_menu_items_data ($connection, $user_id)
 	];
 
 	$item_ids = array();
-	$res = $connection->prepare("SELECT themes FROM users.info WHERE id = ? LIMIT 1;");
+	$res = DataBaseManager::getConnection()->prepare("SELECT themes FROM users.info WHERE id = ? LIMIT 1;");
 	$res->execute([intval($user_id)]);
 
 	$menu_ids = unserialize($res->fetch(PDO::FETCH_ASSOC)["themes"])["menu"];
@@ -87,14 +87,14 @@ function set_menu_items ($connection, $user_id, $menu_ids)
 	}
 
 	// all preparations is ok - set new menu.
-	$res = $connection->prepare("SELECT themes FROM users.info WHERE id = ? LIMIT 1;");
+	$res = DataBaseManager::getConnection()->prepare("SELECT themes FROM users.info WHERE id = ? LIMIT 1;");
 	$res->execute([intval($user_id)]);
 	$themes = unserialize($res->fetch(PDO::FETCH_ASSOC)["themes"]);
 
 	$themes["menu"] = $item_ids;
 	$themes = serialize($themes);
 
-	$res = $connection->prepare("UPDATE users.info SET themes = :themes WHERE id = :user_id LIMIT 1;");
+	$res = DataBaseManager::getConnection()->prepare("UPDATE users.info SET themes = :themes WHERE id = :user_id LIMIT 1;");
 
 	$res->bindParam(":themes",  $themes,  PDO::PARAM_STR);
 	$res->bindParam(":user_id", $user_id, PDO::PARAM_INT);
@@ -128,7 +128,7 @@ function get_themes ($connection, $user_id, $count = 30, $offset = 0)
 */
 function get_current_theme_credentials ($connection, $user_id)
 {
-	$res = $connection->prepare("SELECT current_theme FROM users.info WHERE id = ? LIMIT 1;");
+	$res = DataBaseManager::getConnection()->prepare("SELECT current_theme FROM users.info WHERE id = ? LIMIT 1;");
 	$res->execute([intval($user_id)]);
 
 	return $res->fetch(PDO::FETCH_ASSOC)["current_theme"];
@@ -301,7 +301,7 @@ function apply_theme ($connection, $user_id, $theme = false)
  */
 function themes_js_allowed ($connection, $user_id) 
 {
-	$res = $connection->prepare("SELECT themes_allow_js FROM users.info WHERE id = ? LIMIT 1;");
+	$res = DataBaseManager::getConnection()->prepare("SELECT themes_allow_js FROM users.info WHERE id = ? LIMIT 1;");
 	if ($res->execute([$user_id]))
 	{
 		return boolval(intval($res->fetch(PDO::FETCH_ASSOC)["themes_allow_js"]));
@@ -321,7 +321,7 @@ function toggle_js_allowance ($connection, $user_id)
 {
 	$new_mode = !themes_js_allowed($connection, $user_id);
 
-	if ($connection->prepare("UPDATE users.info SET themes_allow_js = ? WHERE id = ? LIMIT 1;")->execute([intval($new_mode), $user_id])) 
+	if (DataBaseManager::getConnection()->prepare("UPDATE users.info SET themes_allow_js = ? WHERE id = ? LIMIT 1;")->execute([intval($new_mode), $user_id]))
 	{
 		return intval($new_mode);
 	}

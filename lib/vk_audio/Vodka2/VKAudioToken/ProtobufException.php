@@ -2,7 +2,9 @@
 
 namespace Vodka2\VKAudioToken;
 
-class ProtobufException extends \Exception {
+use Exception;
+
+class ProtobufException extends Exception {
     const SYMBOL = 0;
     const NOT_FOUND = 1;
     public function __construct($code, $sym = ''){

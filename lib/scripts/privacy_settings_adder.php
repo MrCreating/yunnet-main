@@ -2,7 +2,7 @@
 require __DIR__ . "/bin/base_functions.php";
 $connection = DataBaseManager::getConnection();
 
-$res = $connection->prepare("SELECT id, settings FROM users.info;");
+$res = DataBaseManager::getConnection()->prepare("SELECT id, settings FROM users.info;");
 $res->execute();
 
 $default = [
@@ -30,7 +30,7 @@ foreach ($data as $key => $value) {
 	$settings["privacy"]["can_comment_posts"] = 0;
 	$settings["closed_profile"] = 0;
 
-	$res = $connection->prepare("UPDATE users.info SET settings = :settings WHERE id = :id;");
+	$res = DataBaseManager::getConnection()->prepare("UPDATE users.info SET settings = :settings WHERE id = :id;");
 	$res->bindParam(":settings", json_encode($settings), PDO::PARAM_STR);
 	$res->bindParam(":id",       intval($user_id),       PDO::PARAM_INT);
 	if ($res->execute())

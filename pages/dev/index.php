@@ -73,8 +73,8 @@ switch (explode('.', explode('/', strval(explode('?', $_SERVER['REQUEST_URI'])[0
 				case '.jpeg':
 				case '.jpg':
 					die(imagejpeg($img));
-			};
-		}
+			}
+        }
 }
 
 // send code

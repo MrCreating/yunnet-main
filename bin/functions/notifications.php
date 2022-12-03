@@ -9,13 +9,13 @@ require_once __DIR__ . '/../objects/Notification.php';
 */
 function create_notification ($connection, $to_id, $type, $data)
 {
-	$res = $connection->prepare("SELECT DISTINCT local_id FROM users.notes WHERE owner_id = ? ORDER BY local_id DESC LIMIT 1;");
+	$res = DataBaseManager::getConnection()->prepare("SELECT DISTINCT local_id FROM users.notes WHERE owner_id = ? ORDER BY local_id DESC LIMIT 1;");
 	$res->execute([intval($to_id)]);
 
 	// getting local_id of new notifications
 	$new_local_id = intval($res->fetch(PDO::FETCH_ASSOC)["local_id"])+1;
 
-	$res = $connection->prepare("INSERT INTO users.notes (owner_id, local_id, type, data, is_read) VALUES (:owner_id, :local_id, :type, :data, 0);");
+	$res = DataBaseManager::getConnection()->prepare("INSERT INTO users.notes (owner_id, local_id, type, data, is_read) VALUES (:owner_id, :local_id, :type, :data, 0);");
 
 	$encoded_data = json_encode($data);
 

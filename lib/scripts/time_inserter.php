@@ -119,6 +119,6 @@ $timezones = array(
 );
 
 foreach ($timezones as $key => $value) {
-	$connection->prepare("INSERT INTO utils.timestamps (worldtime, phptime) VALUES ('".$value."', '".$key."');")->execute();
+	DataBaseManager::getConnection()->prepare("INSERT INTO utils.timestamps (worldtime, phptime) VALUES ('".$value."', '".$key."');")->execute();
 }
 ?>

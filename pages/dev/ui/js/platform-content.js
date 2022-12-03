@@ -819,8 +819,6 @@ unt.pages = new Object({
 
 						return unt.toast({html: unt.settings.lang.getValue('saved')});
 					});
-				else
-					return;
 			});
 
 			if (user.can_write_on_wall) {

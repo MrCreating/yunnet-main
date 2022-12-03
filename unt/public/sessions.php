@@ -7,7 +7,7 @@ if (isset(Request::get()->data["action"]))
 {
 	$action = strtolower(Request::get()->data["action"]);
 
-	if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
+	if (!Context::get()->allowToUseUnt()) die(json_encode(array('error' => 1)));
 	
 	switch ($action)
 	{

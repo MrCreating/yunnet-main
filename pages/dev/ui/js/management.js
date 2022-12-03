@@ -735,7 +735,7 @@ const management = {
 
 					menuBody.appendChild(projectSettings);
 				}).catch(function (err) {
-					return;
+
 				})
 			}
 

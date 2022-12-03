@@ -1,15 +1,10 @@
 <?php
 
-function check_the_domain () 
-{
-	return explode('.', strtolower($_SERVER['HTTP_HOST']))[0];
-}
-
-function default_page_template ($is_mobile, $lang = "en", $user)
+function default_page_template ($is_mobile, $lang = "en", $user): string
 {
 	$userlevel  = $user ? $user->getAccessLevel() : 0;
 
-	$domain = check_the_domain();
+	$domain = explode('.', strtolower($_SERVER['HTTP_HOST']))[0];
 
 	$devChecked  = $domain === 'dev';
 	$authChecked = $domain === 'auth';

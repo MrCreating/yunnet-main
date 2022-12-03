@@ -18,7 +18,7 @@ function get_news ($connection, $user_id)
 	$friends_list = array_merge([$user_id], get_friends_list($connection, $user_id, null, 0));
 	foreach ($friends_list as $index => $friend_id) {
 		
-		$res = $connection->prepare('SELECT local_id FROM wall.posts WHERE to_id = ? AND owner_id = ? AND is_deleted = 0 ORDER BY time DESC LIMIT 5;');
+		$res = DataBaseManager::getConnection()->prepare('SELECT local_id FROM wall.posts WHERE to_id = ? AND owner_id = ? AND is_deleted = 0 ORDER BY time DESC LIMIT 5;');
 		if ($res->execute([intval($friend_id), intval($friend_id)]))
 		{
 			$data = $res->fetchAll(PDO::FETCH_ASSOC);
@@ -119,7 +119,7 @@ function create_post ($connection, $owner_id, $wall_id, $text = '', $attachments
 	/**
 	 * Now getting the local id and increment it.
 	*/
-	$res = $connection->prepare("SELECT COUNT(DISTINCT local_id) FROM wall.posts WHERE to_id = ?;");
+	$res = DataBaseManager::getConnection()->prepare("SELECT COUNT(DISTINCT local_id) FROM wall.posts WHERE to_id = ?;");
 	
 	if ($res->execute([intval($wall_id)]))
 	{
@@ -127,7 +127,7 @@ function create_post ($connection, $owner_id, $wall_id, $text = '', $attachments
 		$new_local_id = intval($res->fetch(PDO::FETCH_ASSOC)['COUNT(DISTINCT local_id)']) + 1;
 		
 		// creating new post.
-		$res = $connection->prepare("INSERT INTO wall.posts (owner_id, local_id, text, time, to_id, attachments, event) VALUES (:owner_id, :local_id, :text, :time, :to_id, :attachments, :event);");
+		$res = DataBaseManager::getConnection()->prepare("INSERT INTO wall.posts (owner_id, local_id, text, time, to_id, attachments, event) VALUES (:owner_id, :local_id, :text, :time, :to_id, :attachments, :event);");
 
 		// binding post data.
 		$res->bindParam(":owner_id",    $owner_id,     PDO::PARAM_INT);

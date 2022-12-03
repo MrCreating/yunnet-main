@@ -25,7 +25,7 @@ class Token
 
 		$this->bound_app = $bound_app;
 
-		$res = $this->currentConnection->cache('Token_' . $id . '_' . ($bound_app ? $bound_app->getId() : 0))->prepare("SELECT id, token, permissions, owner_id FROM apps.tokens WHERE id = :id AND app_id = :app_id AND is_deleted = 0 LIMIT 1");
+		$res = $this->currentConnection/*->cache('Token_' . $id . '_' . ($bound_app ? $bound_app->getId() : 0))*/->prepare("SELECT id, token, permissions, owner_id FROM apps.tokens WHERE id = :id AND app_id = :app_id AND is_deleted = 0 LIMIT 1");
 
 		$token_id = intval($id);
 		$app_id   = $bound_app ? intval($bound_app->getId()) : 0;

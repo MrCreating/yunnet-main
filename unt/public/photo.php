@@ -6,7 +6,7 @@ $credentials = substr(REQUESTED_PAGE, 1);
 
 if (isset(Request::get()->data['action']))
 {
-	if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
+	if (!Context::get()->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
 	$action = strtolower(trim(Request::get()->data['action']));
 	$workingAttachment = (new AttachmentsParser())->getObject($credentials);

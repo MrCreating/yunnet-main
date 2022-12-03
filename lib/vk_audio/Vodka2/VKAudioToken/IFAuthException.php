@@ -2,7 +2,9 @@
 namespace Vodka2\VKAudioToken;
 
 
-class IFAuthException extends \Exception {
+use Exception;
+
+class IFAuthException extends Exception {
     const LOGIN_FORM_NOT_FOUND = 0;
     const TOKEN_NOT_FOUND = 1;
     const BAD_LOGIN_FORM = 2;

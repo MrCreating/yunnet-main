@@ -19,7 +19,7 @@ function ban ($connection, $user_id)
 	$cache = Cache::getCacheServer();
 
 	// checking current state
-	$res = $connection->prepare("SELECT is_banned FROM ".(intval($user_id) > 0 ? "users.info" : "bots.info")." WHERE id = ? LIMIT 1;");
+	$res = DataBaseManager::getConnection()->prepare("SELECT is_banned FROM ".(intval($user_id) > 0 ? "users.info" : "bots.info")." WHERE id = ? LIMIT 1;");
 	$res->execute([intval($user_id) > 0 ? intval($user_id) : intval($user_id)*-1]);
 
 	// current ban state
@@ -29,7 +29,7 @@ function ban ($connection, $user_id)
 	$cache->set('banned_'.intval($user_id) > 0 ? intval($user_id) : intval($user_id)*-1, strval($is_banned));
 
 	// doing ban or unban
-	return $connection->prepare("UPDATE ".(intval($user_id) < 0 ? "bots.info" : "users.info")." SET is_banned = ? WHERE id = ? AND is_deleted = 0 LIMIT 1;")->execute([intval(!$is_banned), intval($user_id) > 0 ? intval($user_id) : intval($user_id)*-1]);
+	return DataBaseManager::getConnection()->prepare("UPDATE ".(intval($user_id) < 0 ? "bots.info" : "users.info")." SET is_banned = ? WHERE id = ? AND is_deleted = 0 LIMIT 1;")->execute([intval(!$is_banned), intval($user_id) > 0 ? intval($user_id) : intval($user_id)*-1]);
 }
 
 /**
@@ -45,7 +45,7 @@ function set_user_level ($connection, $user_id, $new_level = 0)
 	if (intval($new_level) < 0 || intval($new_level) > 3) return false;
 
 	// setting new level
-	return $connection->prepare("UPDATE users.info SET userlevel = ? WHERE id = ? AND is_deleted = 0 LIMIT 1;")->execute([intval($new_level), intval($user_id)]);
+	return DataBaseManager::getConnection()->prepare("UPDATE users.info SET userlevel = ? WHERE id = ? AND is_deleted = 0 LIMIT 1;")->execute([intval($new_level), intval($user_id)]);
 }
 
 /**
@@ -66,7 +66,7 @@ function set_user_cookies ($connection, $user_id, $group_id, $count)
 	$column_name = $group_id === 1 ? "cookies" : "half_cookies";
 
 	// setting new amount.
-	return $connection->prepare("UPDATE users.info SET ".$column_name." = ? WHERE id = ? AND is_deleted = 0 LIMIT 1;")->execute([intval($count), intval($user_id)]);
+	return DataBaseManager::getConnection()->prepare("UPDATE users.info SET ".$column_name." = ? WHERE id = ? AND is_deleted = 0 LIMIT 1;")->execute([intval($count), intval($user_id)]);
 }
 
 /**
@@ -79,7 +79,7 @@ function set_user_cookies ($connection, $user_id, $group_id, $count)
 */
 function delete_user ($connection, $user_id)
 {
-	$res = $connection->prepare("UPDATE " . ($user_id > 0 ? "users.info" : "bots.info") . " SET is_deleted = 1 WHERE id = ? LIMIT 1");
+	$res = DataBaseManager::getConnection()->prepare("UPDATE " . ($user_id > 0 ? "users.info" : "bots.info") . " SET is_deleted = 1 WHERE id = ? LIMIT 1");
 
 	if ($res->execute([$user_id > 0 ? $user_id : ($user_id * -1)]))
 	{

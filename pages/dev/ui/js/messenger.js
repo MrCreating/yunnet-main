@@ -967,7 +967,7 @@ window.addEventListener('authCompleted', function () {
 							messages_list.appendChild(element);
 						}
 					}).catch(function (err) {
-						return;
+
 					})
 				}
 			}
@@ -1422,7 +1422,7 @@ window.addEventListener('authCompleted', function () {
 					}).catch(function (err) {
 						console.log(err);
 
-						return;
+
 					})
 				}
 			}

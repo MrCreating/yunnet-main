@@ -347,7 +347,7 @@ class Theme extends Attachment
 	{
 		$connection = DataBaseManager::getConnection();
 
-		if ($connection->prepare("UPDATE users.info SET settings_theming_current_theme = NULL WHERE id = ? LIMIT 1")->execute([intval($_SESSION['user_id'])]))
+		if (DataBaseManager::getConnection()->prepare("UPDATE users.info SET settings_theming_current_theme = NULL WHERE id = ? LIMIT 1")->execute([intval($_SESSION['user_id'])]))
 		{
 			return (new EventEmitter())->sendEvent([intval($_SESSION['user_id'])], [0], [
 				'event' => 'interface_event',
@@ -379,7 +379,7 @@ class Theme extends Attachment
 				return NULL;
 
 		// inserting new theme data.
-		$res = $connection->prepare("INSERT INTO users.themes (user_id, owner_id, title, description, is_hidden) VALUES (
+		$res = DataBaseManager::getConnection()->prepare("INSERT INTO users.themes (user_id, owner_id, title, description, is_hidden) VALUES (
 			:user_id, :owner_id, :title, :description, :is_hidden
 		);");
 
@@ -391,7 +391,7 @@ class Theme extends Attachment
 
 		if ($res->execute())
 		{
-			$res = $connection->prepare("SELECT LAST_INSERT_ID();");
+			$res = DataBaseManager::getConnection()->prepare("SELECT LAST_INSERT_ID();");
 			
 			if ($res->execute())
 			{
@@ -507,8 +507,8 @@ class Theme extends Attachment
 console.log(`[OK] Theme is working! Fine :)`)
 ");
 				// update that info in DB
-				$connection->prepare('UPDATE users.themes SET path_to_css = "/'.intval($owner_id).'/'.intval($new_theme_id).'/theme.css" WHERE id = ?;')->execute([intval($new_theme_id)]);
-				$connection->prepare('UPDATE users.themes SET path_to_js = "/'.intval($owner_id).'/'.intval($new_theme_id).'/theme.js" WHERE id = ?;')->execute([intval($new_theme_id)]);
+				DataBaseManager::getConnection()->prepare('UPDATE users.themes SET path_to_css = "/'.intval($owner_id).'/'.intval($new_theme_id).'/theme.css" WHERE id = ?;')->execute([intval($new_theme_id)]);
+				DataBaseManager::getConnection()->prepare('UPDATE users.themes SET path_to_js = "/'.intval($owner_id).'/'.intval($new_theme_id).'/theme.js" WHERE id = ?;')->execute([intval($new_theme_id)]);
 
 				$result = new Theme(intval($owner_id), intval($new_theme_id));
 				if ($result->valid())
@@ -531,7 +531,7 @@ console.log(`[OK] Theme is working! Fine :)`)
 		$result = [];
 
 		// gettings themes for user_id and that not deleted
-		$res = $connection->prepare("SELECT DISTINCT id, owner_id FROM users.themes WHERE (user_id = ? OR is_default = 1) AND (is_deleted = 0 OR is_default = 1) LIMIT ".intval($offset).",".intval($count).";");
+		$res = DataBaseManager::getConnection()->prepare("SELECT DISTINCT id, owner_id FROM users.themes WHERE (user_id = ? OR is_default = 1) AND (is_deleted = 0 OR is_default = 1) LIMIT ".intval($offset).",".intval($count).";");
 
 		if ($res->execute([intval($_SESSION['user_id'])]))
 		{

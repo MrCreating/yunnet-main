@@ -497,17 +497,15 @@ class Post extends Attachment
 
 	public static function getList (int $wall_id, int $offset = 0, int $count = 50, bool $only_my_posts = false): array
 	{
-		$connection = DataBaseManager::getConnection();
-
 		$count = ($count <= 0 ? 1 : $count) > 1000 ? 1000 : $count;
-		$offset = $offset <= 0 ? 0 : $offset;
+		$offset = max($offset, 0);
 
 		$result      = [];
 		$pinned_post = [];
 
 		if (!$only_my_posts && $offset === 0)
 		{
-			$res = $connection->prepare('SELECT local_id FROM wall.posts WHERE to_id = ? AND owner_id = ? AND is_deleted = 0 AND is_pinned = 1 LIMIT 1');
+			$res = DataBaseManager::getConnection()->prepare('SELECT local_id FROM wall.posts WHERE to_id = ? AND owner_id = ? AND is_deleted = 0 AND is_pinned = 1 LIMIT 1');
 			if ($res->execute([intval($wall_id), intval($wall_id)]))
 			{
 				$data = $res->fetch(PDO::FETCH_ASSOC);
@@ -517,7 +515,7 @@ class Post extends Attachment
 			}
 		}
 
-		$res = $connection->prepare('SELECT local_id FROM wall.posts WHERE to_id = ? '.($only_my_posts ? 'AND owner_id = '.intval($wall_id).' ' : '').'AND is_deleted = 0 AND is_pinned = 0 ORDER BY time DESC LIMIT '.intval($offset).','.intval($count).';');
+		$res = DataBaseManager::getConnection()->prepare('SELECT local_id FROM wall.posts WHERE to_id = ? '.($only_my_posts ? 'AND owner_id = '.intval($wall_id).' ' : '').'AND is_deleted = 0 AND is_pinned = 0 ORDER BY time DESC LIMIT '.intval($offset).','.intval($count).';');
 
 		if ($res->execute([intval($wall_id)]))
 		{

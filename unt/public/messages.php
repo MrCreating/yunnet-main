@@ -315,14 +315,14 @@ if (isset(Request::get()->data["action"]))
 
 	switch ($action) {
 		case 'get_chat_info_by_link':
-			$chat = get_chat_by_query($connection, Request::get()->data['link_query'], ($context->getCurrentUser() ? $context->getCurrentUser()->getId() : 0));
+			$chat = get_chat_by_query($connection, Request::get()->data['link_query'], (Context::get()->getCurrentUser() ? Context::get()->getCurrentUser()->getId() : 0));
 			if (!$chat)
 				die(json_encode(array('error'=>3)));
 
 			$members = $chat->getMembers();
-			if ($members['users']['user_'.($context->getCurrentUser() ? $context->getCurrentUser()->getId() : 0)])
+			if ($members['users']['user_'.(Context::get()->getCurrentUser() ? Context::get()->getCurrentUser()->getId() : 0)])
 			{
-				die(json_encode(array('error'=>2, 'chat_id'=>$members['users']['user_'.$context->getCurrentUser()->getId()]['local_id'])));
+				die(json_encode(array('error'=>2, 'chat_id'=>$members['users']['user_'.Context::get()->getCurrentUser()->getId()]['local_id'])));
 			}
 
 			die(json_encode(array(
@@ -336,7 +336,7 @@ if (isset(Request::get()->data["action"]))
 		break;
 	}
 
-	if (!$context->allowToUseUnt()) die(json_encode(array('error' => 1)));
+	if (!Context::get()->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
 	switch ($action)
 	{
@@ -347,7 +347,7 @@ if (isset(Request::get()->data["action"]))
 
 			$sel    = intval($chat_data["chat_id"]);
 			$is_bot = boolval($chat_data["is_bot"]);
-			$uid    = get_uid_by_lid($connection, $sel, $is_bot, $context->getCurrentUser()->getId());
+			$uid    = get_uid_by_lid($connection, $sel, $is_bot, Context::get()->getCurrentUser()->getId());
 			if (!$uid)
 				die(json_encode(array('error' => 1)));
 
@@ -362,7 +362,7 @@ if (isset(Request::get()->data["action"]))
 				$permissions = $chat->getPermissions();
 				$members     = $chat->getMembers();
 
-				$me = $members["users"]["user_".$context->getCurrentUser()->getId()];
+				$me = $members["users"]["user_".Context::get()->getCurrentUser()->getId()];
 				if (!$me || $me["flags"]["is_leaved"] || $me["flags"]["is_kicked"])
 					die(json_encode(array('error' => 1)));
 			}
@@ -379,7 +379,7 @@ if (isset(Request::get()->data["action"]))
 					$message_ids[] = intval($id);
 			}
 
-			$result = delete_messages($connection, $uid, $context->getCurrentUser()->getId(), $message_ids, $del_for_all, [
+			$result = delete_messages($connection, $uid, Context::get()->getCurrentUser()->getId(), $message_ids, $del_for_all, [
 				'chat_id' => $sel,
 				'is_bot'  => $is_bot
 			], $permissions, $me);
@@ -388,14 +388,14 @@ if (isset(Request::get()->data["action"]))
 		break;
 
 		case 'join_to_chat_by_link':
-			$chat = get_chat_by_query($connection, Request::get()->data['link_query'], $context->getCurrentUser()->getId());
+			$chat = get_chat_by_query($connection, Request::get()->data['link_query'], Context::get()->getCurrentUser()->getId());
 			if (!$chat)
 				die(json_encode(array('error'=>3)));
 
 			$members = $chat->getMembers();
-			if ($members['users']['user_'.$context->getCurrentUser()->getId()])
+			if ($members['users']['user_'.Context::get()->getCurrentUser()->getId()])
 			{
-				die(json_encode(array('error'=>2, 'chat_id'=>$members['users']['user_'.$context->getCurrentUser()->getId()]['local_id'])));
+				die(json_encode(array('error'=>2, 'chat_id'=>$members['users']['user_'.Context::get()->getCurrentUser()->getId()]['local_id'])));
 			}
 
 			$owner_id_of_chat = 0;
@@ -406,7 +406,7 @@ if (isset(Request::get()->data["action"]))
 				}
 			}
 
-			$lid = $chat->addUser($owner_id_of_chat, $context->getCurrentUser()->getId(), [
+			$lid = $chat->addUser($owner_id_of_chat, Context::get()->getCurrentUser()->getId(), [
 				'join_by_link' => true
 			]);
 
@@ -420,34 +420,34 @@ if (isset(Request::get()->data["action"]))
 
 			$sel    = intval($chat_data["chat_id"]);
 			$is_bot = boolval($chat_data["is_bot"]);
-			$uid    = get_uid_by_lid($connection, $sel, $is_bot, $context->getCurrentUser()->getId());
+			$uid    = get_uid_by_lid($connection, $sel, $is_bot, Context::get()->getCurrentUser()->getId());
 			if (!$uid)
 				die(json_encode(array('error' => 1)));
 
-			if (can_write_to_chat($connection, $uid, $context->getCurrentUser()->getId(), $chat_data))
+			if (can_write_to_chat($connection, $uid, Context::get()->getCurrentUser()->getId(), $chat_data))
 			{
 				$event = [
 					'event'   => 'typing',
 					'state'   => 'typing',
-					'from_id' => $context->getCurrentUser()->getId(),
+					'from_id' => Context::get()->getCurrentUser()->getId(),
 					'peer_id' => 0
 				];
 
 				if ($uid > 0)
 				{
 					$user_ids = [$sel];
-					$lids     = [$context->getCurrentUser()->getId()];
+					$lids     = [Context::get()->getCurrentUser()->getId()];
 
-					emit_event($user_ids, $lids, $event, $context->getCurrentUser()->getId());
+					emit_event($user_ids, $lids, $event, Context::get()->getCurrentUser()->getId());
 				}
 				else
 				{
-					$chat_data = get_chat_info($connection, $uid, true, true, $context->getCurrentUser()->getId());
+					$chat_data = get_chat_info($connection, $uid, true, true, Context::get()->getCurrentUser()->getId());
 
 					$user_ids = $chat_data["members"];
 					$lids     = $chat_data["local_chat_ids"];
 
-					emit_event($user_ids, $lids, $event, $context->getCurrentUser()->getId());
+					emit_event($user_ids, $lids, $event, Context::get()->getCurrentUser()->getId());
 				}
 
 				die(json_encode(array('success'=>1)));

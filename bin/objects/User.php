@@ -36,7 +36,7 @@ class User extends Entity
 
 		$this->currentConnection = DataBaseManager::getConnection();
 
-		$res = $this->currentConnection->cache('User_' . $user_id)->prepare("SELECT id, type, first_name, last_name, email, status, is_banned, is_verified, is_online, online_hidden, userlevel, photo_path, screen_name, cookies, half_cookies, gender, settings_account_language, settings_account_is_closed, settings_privacy_can_write_messages, settings_privacy_can_write_on_wall, settings_privacy_can_comment_posts, settings_privacy_can_invite_to_chats, settings_push_notifications, settings_push_sound, settings_theming_js_allowed, settings_theming_new_design, settings_theming_current_theme, settings_theming_menu_items FROM users.info WHERE id = ? AND is_deleted = 0 LIMIT 1");
+		$res = $this->currentConnection/*->cache('User_' . $user_id)*/->prepare("SELECT id, type, first_name, last_name, email, status, is_banned, is_verified, is_online, online_hidden, userlevel, photo_path, screen_name, cookies, half_cookies, gender, settings_account_language, settings_account_is_closed, settings_privacy_can_write_messages, settings_privacy_can_write_on_wall, settings_privacy_can_comment_posts, settings_privacy_can_invite_to_chats, settings_push_notifications, settings_push_sound, settings_theming_js_allowed, settings_theming_new_design, settings_theming_current_theme, settings_theming_menu_items FROM users.info WHERE id = ? AND is_deleted = 0 LIMIT 1");
 
 		if ($res->execute([$user_id]))
 		{
@@ -92,7 +92,7 @@ class User extends Entity
 		if ($this->getId() === $user_id) return false;
 		if (!Context::get()->isLogged()) return false;
 
-		$res = $this->currentConnection->cache('User_relations_' . $user_id . '_' . $this->getId())->prepare("SELECT state FROM users.relationships WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ?;");
+		$res = $this->currentConnection/*->cache('User_relations_' . $user_id . '_' . $this->getId())*/->prepare("SELECT state FROM users.relationships WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ?;");
 		if ($res->execute([strval($this->getId()), strval($user_id), strval($user_id), strval($this->getId())]))
 		{
 			$state = intval($res->fetch(PDO::FETCH_ASSOC)["state"]);
@@ -489,9 +489,7 @@ class User extends Entity
 	public static function create (string $firstName, string $lastName, string $email, string $passwordHash, int $gender): ?User
 	{
 		$reg_time   = time();
-		$connection = DataBaseManager::getConnection();
-
-		$res = $connection->prepare("INSERT INTO users.info (first_name, last_name, password, email, gender, settings_account_language, registration_date, is_online) VALUES (:first_name, :last_name, :password, :email, :gender, :lang, :reg_time, :online_time);");
+		$res = DataBaseManager::getConnection()->prepare("INSERT INTO users.info (first_name, last_name, password, email, gender, settings_account_language, registration_date, is_online) VALUES (:first_name, :last_name, :password, :email, :gender, :lang, :reg_time, :online_time);");
 
 		$res->bindParam(":first_name",  $firstName,                        PDO::PARAM_STR);
 		$res->bindParam(":last_name",   $lastName,                         PDO::PARAM_STR);
@@ -504,7 +502,7 @@ class User extends Entity
 
 		if ($res->execute())
 		{
-			$res = $connection->prepare("SELECT LAST_INSERT_ID()");
+			$res = DataBaseManager::getConnection()->prepare("SELECT LAST_INSERT_ID()");
 
 			if ($res->execute())
 			{
@@ -523,7 +521,7 @@ class User extends Entity
 	{
 		$connection = DataBaseManager::getConnection();
 
-		$res = $connection->prepare("SELECT id, password FROM users.info WHERE email = ? AND is_deleted = 0 LIMIT 1");
+		$res = DataBaseManager::getConnection()->prepare("SELECT id, password FROM users.info WHERE email = ? AND is_deleted = 0 LIMIT 1");
 		if ($res->execute([$email]))
 		{
 			$data = $res->fetch(PDO::FETCH_ASSOC);

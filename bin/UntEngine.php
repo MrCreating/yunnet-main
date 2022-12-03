@@ -13,6 +13,8 @@ class UntEngine
 
     public function __construct ()
     {
+        //$this->errors();
+
         if (getenv('UNT_PRODUCTION') !== '1')
         {
             session_write_close();

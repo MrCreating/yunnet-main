@@ -13,7 +13,7 @@ class SecuritySettingsGroup extends SettingsGroup
 	public function __construct (Entity $user, DataBaseManager $connection, array $params = [])
 	{
 		$this->currentEntity     = $user;
-		$this->currentConnection = $connection;
+		$this->currentConnection = DataBaseManager::getConnection();
 	}
 
 	public function setPassword (string $newPassword): bool

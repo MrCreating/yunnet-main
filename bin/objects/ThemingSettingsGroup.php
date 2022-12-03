@@ -21,7 +21,7 @@ class ThemingSettingsGroup extends SettingsGroup
 		$this->currentEntity     = $user;
 
 		$this->type              = "theming";
-		$this->currentConnection = $connection;
+		$this->currentConnection = DataBaseManager::getConnection();
 
 		$this->newDesignUsed = $params['new_design'];
 		$this->JSAllowed     = $params['js_allowed'];

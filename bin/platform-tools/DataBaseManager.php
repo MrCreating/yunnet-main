@@ -42,21 +42,11 @@ class DataBaseManager
 		return $this->getClient()->prepare($query);
 	}
 
-	public function cache (string $key, int $time = 86400): DataBaseManager
-	{
-		$this->cacheKey  = $key;
-		$this->cacheTime = $time;
-
-		return $this;
-	}
-
+    /**
+     * @deprecated
+     */
 	public function uncache (string $key = ''): DataBaseManager
 	{
-		$this->cacheKey  = NULL;
-		$this->cacheTime = NULL;
-
-		$this->cacheClient->removeItem($key);
-
 		return $this;
 	}
 

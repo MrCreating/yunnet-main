@@ -31,7 +31,7 @@ class Photo extends Attachment
 
 		$this->currentConnection = DataBaseManager::getConnection();
 
-		$res = $this->currentConnection->cache("Photo_" . $owner_id . "_" . $id . "_" . $access_key)->prepare("SELECT path, query, width, height FROM attachments.d_1 WHERE owner_id = ? AND id = ? AND access_key = ? LIMIT 1;");
+		$res = $this->currentConnection/*->cache("Photo_" . $owner_id . "_" . $id . "_" . $access_key)*/->prepare("SELECT path, query, width, height FROM attachments.d_1 WHERE owner_id = ? AND id = ? AND access_key = ? LIMIT 1;");
 
 		if ($res->execute([strval($owner_id), strval($id), strval($access_key)]))
 		{
@@ -60,7 +60,7 @@ class Photo extends Attachment
 				}
 
 				$user_id = intval($_SESSION['user_id']);
-				$res = $this->currentConnection->cache("Liked_" . $user_id)->prepare("SELECT COUNT(DISTINCT user_id) FROM users.likes WHERE attachment = :attachment AND is_liked = 1 AND user_id = :user_id LIMIT 1;");
+				$res = $this->currentConnection/*->cache("Liked_" . $user_id)*/->prepare("SELECT COUNT(DISTINCT user_id) FROM users.likes WHERE attachment = :attachment AND is_liked = 1 AND user_id = :user_id LIMIT 1;");
 
 				$res->bindParam(":attachment", $credentials_info, PDO::PARAM_STR);
 				$res->bindParam(":user_id",    $user_id,          PDO::PARAM_INT);
@@ -166,7 +166,7 @@ class Photo extends Attachment
 
 		$credentials = $this->getCredentials();
 
-		$res = $this->currentConnection->cache("Liked_" . $user_id)->prepare("SELECT is_liked FROM users.likes WHERE attachment = :attachment AND user_id = :user_id LIMIT 1;");
+		$res = $this->currentConnection/*->cache("Liked_" . $user_id)*/->prepare("SELECT is_liked FROM users.likes WHERE attachment = :attachment AND user_id = :user_id LIMIT 1;");
 		$res->bindParam(":attachment", $credentials, PDO::PARAM_STR);
 		$res->bindParam(":user_id",    $user_id,     PDO::PARAM_INT);
 

@@ -26,7 +26,7 @@ class Comment extends Attachment
 
 		$attachment = $bound_post->getCredentials();
 
-		$res = $this->currentConnection->cache('Comment_' . $bound_post->getWallId() . '_' . $bound_post->getPostId() . '_' . $local_id)->prepare('SELECT text, owner_id, time, local_id, attachments FROM wall.comments WHERE attachment = :attachment AND is_deleted = 0 AND local_id = :local_id LIMIT 1');
+		$res = $this->currentConnection/*->cache('Comment_' . $bound_post->getWallId() . '_' . $bound_post->getPostId() . '_' . $local_id)*/->prepare('SELECT text, owner_id, time, local_id, attachments FROM wall.comments WHERE attachment = :attachment AND is_deleted = 0 AND local_id = :local_id LIMIT 1');
 
 		$res->bindParam(":attachment", $attachment, PDO::PARAM_STR);
 		$res->bindParam(":local_id",   $local_id,   PDO::PARAM_INT);

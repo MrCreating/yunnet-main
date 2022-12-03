@@ -114,9 +114,7 @@ class AttachmentsParser
 
 		$query = explode('__', substr($query, 0, strlen($query)))[0];
 
-		$connection = DataBaseManager::getConnection();
-
-		$res = $connection->prepare('SELECT id, owner_id, access_key, type FROM attachments.d_1 WHERE query = ? LIMIT 1');
+		$res = DataBaseManager::getConnection()->prepare('SELECT id, owner_id, access_key, type FROM attachments.d_1 WHERE query = ? LIMIT 1');
 		if ($res->execute([$query]))
 		{
 			$result = $res->fetch(PDO::FETCH_ASSOC);

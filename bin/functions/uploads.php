@@ -143,14 +143,14 @@ function fetch_upload ($connection, $query, $user_id)
 				$done_path = $path.$extension;
 				if (!file_exists(__DIR__ . '/../../attachments/d-1/'.$user_id)) {
 					mkdir(__DIR__ . '/../../attachments/d-1/'.strval($user_id));
-				};
-				if (!file_exists(__DIR__ . '/../../attachments/d-1/'.$user_id.'/images')) {
+				}
+                if (!file_exists(__DIR__ . '/../../attachments/d-1/'.$user_id.'/images')) {
 					mkdir(__DIR__ . '/../../attachments/d-1/'.strval($user_id).'/images');
 					mkdir(__DIR__ . '/../../attachments/d-1/'.strval($user_id).'/documents');
 					mkdir(__DIR__ . '/../../attachments/d-1/'.strval($user_id).'/audios');
-				};
+				}
 
-				// compress image and save.
+                // compress image and save.
 				try {
 					if (move_uploaded_file($item['tmp_name'], __DIR__.$done_path))
 					{
@@ -176,7 +176,7 @@ function fetch_upload ($connection, $query, $user_id)
 						$rv    = $iv;
 						$new_q = openssl_encrypt($done_path.'|'.$type_c, 'AES-256-OFB', SERVER_KEY, 0, SERVER_IV, $iv);
 
-						$res = $connection->prepare('
+						$res = DataBaseManager::getConnection()->prepare('
 							INSERT INTO attachments.d_1 (path, query, owner_id, access_key, id, width, height, type) VALUES (:path, :query, :owner_id, :access_key, :id, :width, :height, "photo");
 						');
 
@@ -212,15 +212,15 @@ function fetch_upload ($connection, $query, $user_id)
 */
 function get_upload_link ($connection, $user_id, $origin = 'https://yunnet.ru', $type = '')
 {
-	$res = $connection->prepare('SELECT id FROM attachments.d_1 ORDER BY id DESC LIMIT 1;');
+	$res = DataBaseManager::getConnection()->prepare('SELECT id FROM attachments.d_1 ORDER BY id DESC LIMIT 1;');
 	$res->execute();
 
 	// getting last attachment id.
 	$last_attachment_id = intval($res->fetch(PDO::FETCH_ASSOC)["id"]);
 	if (!file_exists(__DIR__ . '/../../attachments/d-1/'.strval($user_id))) {
 		mkdir(__DIR__ . '/../attachments/d-1/'.strval($user_id));
-	};
-	switch ($type) {
+	}
+    switch ($type) {
 		case 'theme':
 			$themeInfo = 'owner_id='.$user_id.'|'.strval($type);
 			$iv      = rand(1, 9999999);

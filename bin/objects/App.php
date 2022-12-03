@@ -25,7 +25,7 @@ class App
 	{
 		$this->currentConnection = DataBaseManager::getConnection();
 
-		$res = $this->currentConnection->cache("App_" . $app_id)->prepare("SELECT id, title, owner_id, description, photo_path, direct_auth, creation_time FROM apps.info WHERE id = ? AND is_deleted != 1 LIMIT 1");
+		$res = $this->currentConnection/*->cache("App_" . $app_id)*/->prepare("SELECT id, title, owner_id, description, photo_path, direct_auth, creation_time FROM apps.info WHERE id = ? AND is_deleted != 1 LIMIT 1");
 		if ($res->execute([$app_id]))
 		{
 			$data = $res->fetch(PDO::FETCH_ASSOC);
@@ -258,12 +258,8 @@ class App
 		// checking title for empty and long-length.
 		if (unt\functions\is_empty($title) || strlen($title) > 64) return false;
 
-		$connection = $_SERVER['dbConnection'];
-		if (!$connection)
-			$connection = DataBaseManager::getConnection();
-
 		// inserting into DB and getting ID for app.
-		$res = $connection->prepare("INSERT INTO apps.info (owner_id, title, creation_time) VALUES (:owner_id, :title, :creation_time);");
+		$res = DataBaseManager::getConnection()->prepare("INSERT INTO apps.info (owner_id, title, creation_time) VALUES (:owner_id, :title, :creation_time);");
 
 		$new_time = time();
 
@@ -274,7 +270,7 @@ class App
 		// if created.
 		if ($res->execute())
 		{
-			$res = $connection->prepare("SELECT LAST_INSERT_ID();");
+			$res = DataBaseManager::getConnection()->prepare("SELECT LAST_INSERT_ID();");
 			$res->execute();
 
 			$app_id = intval($res->fetch(PDO::FETCH_ASSOC)["LAST_INSERT_ID()"]);

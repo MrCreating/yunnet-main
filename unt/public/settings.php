@@ -64,7 +64,7 @@ if (isset(Request::get()->data["action"]))
 
 			$new_value = boolval(intval(Request::get()->data['new_value']));
 			
-			$pushSettings = $context->getCurrentUser()->getSettings()->getSettingsGroup('push');
+			$pushSettings = Context::get()->getCurrentUser()->getSettings()->getSettingsGroup('push');
 			if ($settingsGroup === $groups[0])
 				$result = $pushSettings->setNotificationsEnabled($new_value);
 			if ($settingsGroup === $groups[1])
@@ -77,7 +77,7 @@ if (isset(Request::get()->data["action"]))
 		break;
 
 		case 'get_blacklisted':
-			$users  = Context::get()->getCurrentUser()->getBlacklist();//get_blacklist($connection, $context->getCurrentUser()->getId(), intval(Request::get()->data['count']), intval(Request::get()->data['offset']));
+			$users  = Context::get()->getCurrentUser()->getBlacklist();//get_blacklist($connection, Context::get()->getCurrentUser()->getId(), intval(Request::get()->data['count']), intval(Request::get()->data['offset']));
 			$result = [];
 
 			foreach ($users as $value) {
@@ -115,7 +115,7 @@ if (isset(Request::get()->data["action"]))
 		break;
 
 		case 'get_accounts':
-			$accounts_list = get_accounts($connection, $context->getCurrentUser()->getId());
+			$accounts_list = get_accounts($connection, Context::get()->getCurrentUser()->getId());
 
 			die(json_encode(array('response' => $accounts_list)));
 		break;

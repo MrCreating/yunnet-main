@@ -6,7 +6,7 @@ $res = mysqli_fetch_all(mysqli_query($db, "select deleted_for, uid, local_chat_i
 
 foreach ($res as $key => $value) 
 {
-	if ($res[$key][0])
+	if ($value[0])
 	{
 		$item = unserialize($res[$key][0]);
 		$uid = intval($res[$key][1]);
