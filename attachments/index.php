@@ -65,12 +65,10 @@ header('Cache-Control: max-age=3600');
 
 // show an a image
 switch ($type) {
-	case 'png':
-		die(file_get_contents($path)); break;
-	case 'gif':
-		die(file_get_contents($path)); break;
-	case 'jpg':
-	case 'jpeg':
+    case 'gif':
+    case 'jpeg':
+    case 'jpg':
+    case 'png':
 		die(file_get_contents($path)); break;
 }
 ?>

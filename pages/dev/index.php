@@ -31,7 +31,7 @@ if ($file_name === 'management.js')
             $file = false;
 
         if (!class_exists('Entity'))
-            require __DIR__ . '/../../bin/objects/entities.php';
+            require __DIR__ . '/../../bin/objects/Entity.php';
 
         $user = new User(intval($_SESSION['user_id']));
         if (!$user->valid() || $user->getAccessLevel() < 1)

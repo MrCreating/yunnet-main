@@ -5,7 +5,8 @@
       "ext-json": "*",
         "ext-pdo": "*",
         "ext-curl": "*",
-      "ext-openssl": "*"
+      "ext-openssl": "*",
+      "ext-imagick": "*"
     },
     "require-dev": {},
     "license": "ISC",

@@ -20,6 +20,9 @@ class UntEngine
             session_start();
         }
 
+        header('Save-Data: on');
+        header('Strict-Transport-Security: max-age=31536000; preload; includeSubDomains');
+
         spl_autoload_register(function ($data) {
             $path_templates = explode('\\', $data);
 
@@ -44,7 +47,9 @@ class UntEngine
             //die(header("Location: " . getenv('UNT_PRODUCTION' === '1' ? 'https://yunnet.ru/' : 'http://localhost')));
         }
 
+        // constants
         define('REQUESTED_PAGE', $requested_page);
+        define('PROJECT_ROOT', __DIR__ . '/..');
 
         require_once __DIR__ . '/../bin/base_functions.php';
         require_once __DIR__ . '/base_functions.php';
@@ -66,7 +71,7 @@ class UntEngine
                 die(require_once __DIR__ . '/../realtime/index.php');
             case "themes":
                 // https://themes.yunnet.ru - сервер тем
-                die(require_once __DIR__ . '/../attachments/themes.php');
+                die(require_once __DIR__ . '/../themes/index.php');
             case "auth":
                 // https://auth.yunnet.ru - виджет OAuth
                 die(require_once __DIR__ . '/../pages/widgets/auth/index.php');
@@ -76,7 +81,7 @@ class UntEngine
         }
 
         // https://yunnet.ru все остальное
-        die(require_once __DIR__ . '/../pages/init.php');
+        die(require_once __DIR__ . '/../unt/index.php');
     }
 
     /**
@@ -91,6 +96,6 @@ class UntEngine
 
     public static function init (): UntEngine
     {
-        return self::$unt = new static();
+        return new static();
     }
 }
