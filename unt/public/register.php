@@ -1,8 +1,13 @@
 <?php
-session_start();
 
-require_once __DIR__ . '/../../bin/objects/Session.php';
-require_once __DIR__ . '/../../bin/functions/management.php';
+use unt\objects\Context;
+use unt\objects\Letter;
+use unt\objects\Project;
+use unt\objects\Request;
+use unt\objects\Session;
+use unt\objects\User;
+
+session_start();
 
 /**
  * Register actions
@@ -13,7 +18,7 @@ if (isset(Request::get()->data['action']))
 	$action = strtolower(Request::get()->data['action']);
 	
 	if (Context::get()->allowToUseUnt()) die(json_encode(array('error' => 1)));
-	if (is_register_closed()) die(json_encode(array('closed' => 1)));
+	if (Project::isRegisterClosed()) die(json_encode(array('closed' => 1)));
 
 	switch ($action) {
 		case 'get_state':

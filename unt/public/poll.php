@@ -1,5 +1,9 @@
 <?php
 
+use unt\objects\Entity;
+use unt\objects\Request;
+use unt\parsers\AttachmentsParser;
+
 $credentials = explode('?', substr($_SERVER['REQUEST_URI'], 1))[0];
 
 $poll = (new AttachmentsParser())->getObject($credentials);

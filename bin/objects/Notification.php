@@ -1,38 +1,38 @@
 <?php
 
-require_once __DIR__ . '/../platform-tools/event_manager.php';
+namespace unt\objects;
+
+use unt\platform\EventEmitter;
 
 /**
  * Notification class
 */
 
-class Notification extends EventEmitter
+class Notification extends BaseObject
 {
-	private $currentConnection = NULL;
+    /////////////////////////////
+    /////////////////////////////
 
-	private $id           = NULL;
-	private $ownerId      = NULL;
-	private $creationTime = NULL;
+	private int $id;
+	private int $ownerId;
+	private int $creationTime;
 
-	private $type        = NULL;
+	private string $type;
 
-	private $additionalData = NULL;
+	private array $additionalData;
 
-	private $isValid              = NULL;
-	private $isNotificationRead   = NULL;
-	private $isNotificationHidden = NULL;
+	private bool $isValid = false;
+	private bool $isNotificationRead;
+	private bool $isNotificationHidden;
 
 	public function __construct (int $ownerId, int $notificationId)
 	{
-		$this->currentConnection = DataBaseManager::getConnection();
+        parent::__construct();
 
-		$res = $this->currentConnection->prepare("SELECT type, local_id, data, is_read, is_hidden, owner_id FROM users.notes WHERE local_id = :local_id AND owner_id = :owner_id LIMIT 1");
-		$res->bindParam(":owner_id", $ownerId,        PDO::PARAM_INT);
-		$res->bindParam(":local_id", $notificationId, PDO::PARAM_INT);
-		
-		if ($res->execute())
+		$res = $this->currentConnection->prepare("SELECT type, local_id, data, is_read, is_hidden, owner_id FROM users.notes WHERE local_id = ? AND owner_id = ? LIMIT 1");
+		if ($res->execute([$ownerId, $notificationId]))
 		{
-			$data = $res->fetch(PDO::FETCH_ASSOC);
+			$data = $res->fetch(\PDO::FETCH_ASSOC);
 			if ($data)
 			{
 				$this->isValid = true;
@@ -48,7 +48,7 @@ class Notification extends EventEmitter
 				if ($additionalData)
 				{
 					$this->additionalData = $additionalData;
-					$this->creationTime   = intval($getAdditionalData['time']);
+					$this->creationTime   = intval($additionalData['time']);
 				}
 			}
 		}
@@ -61,37 +61,37 @@ class Notification extends EventEmitter
 
 	public function getType (): string
 	{
-		return strval($this->type);
+		return $this->type;
 	}
 
 	public function getId (): int
 	{
-		return intval($this->id);
+		return $this->id;
 	}
 
 	public function getCreationTime (): int
 	{
-		return intval($this->creationTime);
+		return $this->creationTime;
 	}
 
 	public function getOwnerId (): int
 	{
-		return intval($this->ownerId);
+		return $this->ownerId;
 	}
 
 	public function valid (): bool
 	{
-		return boolval($this->isValid);
+		return $this->isValid;
 	}
 
 	public function isRead (): bool
 	{
-		return boolval($this->isNotificationRead);
+		return $this->isNotificationRead;
 	}
 
 	public function isHidden (): bool
 	{
-		return boolval($this->isNotificationHidden);
+		return $this->isNotificationHidden;
 	}
 
 	public function read (): bool
@@ -103,7 +103,7 @@ class Notification extends EventEmitter
 			$this->isNotificationRead = true;
 			$this->isNotificationHidden = true;
 			
-			$this->sendEvent([$this->getOwnerId()], [0], [
+			(new EventEmitter())->sendEvent([$this->getOwnerId()], [0], [
 				'event' => 'notification_read',
 				'data'  => $this->toArray()
 			]);
@@ -122,7 +122,7 @@ class Notification extends EventEmitter
 		{
 			$this->isNotificationHidden = true;
 
-			$this->sendEvent([$this->getOwnerId()], [0], [
+            (new EventEmitter())->sendEvent([$this->getOwnerId()], [0], [
 				'event' => 'notification_hide',
 				'data'  => $this->toArray()
 			]);
@@ -152,34 +152,28 @@ class Notification extends EventEmitter
 	}
 
 	//////////////////////////////////////
-	public static function create (int $tp_id, string $type, ?array $additionalData = NULL): ?Notification
+	public static function create (int $to_id, string $type, ?array $additionalData = NULL): ?Notification
 	{
-		$entity = Entity::findById($to_id);
+		$entity = User::findById($to_id);
 
-		if (!$entity || $entity->getType() === 'bot') return NULL;
+		if (!$entity) return NULL;
 
-		$res = DataBaseManager::getConnection()->prepare("SELECT DISTINCT local_id FROM users.notes WHERE owner_id = ? ORDER BY local_id DESC LIMIT 1");
+		$res = \unt\platform\DataBaseManager::getConnection()->prepare("SELECT DISTINCT local_id FROM users.notes WHERE owner_id = ? ORDER BY local_id DESC LIMIT 1");
 
 		if ($res->execute([$to_id]))
 		{
-			$new_local_id = intval($res->fetch(PDO::FETCH_ASSOC)["local_id"]) + 1;
+			$new_local_id = intval($res->fetch(\PDO::FETCH_ASSOC)["local_id"]) + 1;
 
-			$res = DataBaseManager::getConnection()->prepare("INSERT INTO users.notes (owner_id, local_id, type, data, is_read) VALUES (:owner_id, :local_id, :type, :data, 0)");
+			$res = \unt\platform\DataBaseManager::getConnection()->prepare("INSERT INTO users.notes (owner_id, local_id, type, data, is_read) VALUES (?, ?, ?, ?, 0)");
 
-			$res->bindParam(":owner_id", $to_id,        PDO::PARAM_INT);
-			$res->bindParam(":local_id", $new_local_id, PDO::PARAM_INT);
-			$res->bindParam(":type",     $type,         PDO::PARAM_STR);
-
-			$res->bindParam(":data", $additionalData ? json_encode($additionalData) : json_encode([]), PDO::PARAM_STR);
-
-			if ($res->execute())
+			if ($res->execute([$to_id, $new_local_id, $type, ($additionalData ? json_encode($additionalData) : json_encode([]))]))
 			{
 				$result = new Notification($to_id, $new_local_id);
 				if ($result->valid())
 				{
-					if ($entity->getSettings()->getSettingsGroup('push')->isNotificationsEnabled())
+					if ($entity->getSettings()->getSettingsGroup(Settings::PUSH_GROUP)->isNotificationsEnabled())
 					{
-						$result->sendEvent([$to_id], [0], [
+                        (new EventEmitter())->sendEvent([$to_id], [0], [
 							'event'        => 'new_notification',
 							'notification' => $result->toArray()
 						]);
@@ -193,20 +187,18 @@ class Notification extends EventEmitter
 		return NULL;
 	}
 
-	public static function getList ($offset = 0, $count = 30): array
+	public static function getList (int $offset = 0, int $count = 30): array
 	{
 		$offset = ($offset < 0 || $offset > 30) ? 0 : $offset;
 		$count  = ($count < 0 || $count > 1000) ? 30 : $count;
 
-		$connection = DataBaseManager::getConnection();
-
 		$result = [];
 
-		$res = DataBaseManager::getConnection()->prepare("SELECT DISTINCT local_id FROM users.notes WHERE owner_id = ? AND is_read = 0 LIMIT ".intval($offset).",".intval($count).";");
+		$res = \unt\platform\DataBaseManager::getConnection()->prepare("SELECT DISTINCT local_id FROM users.notes WHERE owner_id = ? AND is_read = 0 LIMIT ".intval($offset).",".intval($count).";");
 		if ($res->execute([intval($_SESSION['user_id'])]))
 		{
-			$local_ids  = $res->fetchAll(PDO::FETCH_ASSOC);
-			foreach ($local_ids as $index => $id)
+			$local_ids  = $res->fetchAll(\PDO::FETCH_ASSOC);
+			foreach ($local_ids as $id)
 			{
 				$notification = new Notification(intval($_SESSION['user_id']), intval($id['local_id']));
 				if ($notification->valid())
@@ -221,14 +213,10 @@ class Notification extends EventEmitter
 
 	public static function getUnreadCount (): int
 	{
-		$connection = $_SERVER['dbConnection'];
-		if (!$connection)
-			$connection = DataBaseManager::getConnection();
-
-		$res = DataBaseManager::getConnection()->prepare("SELECT COUNT(DISTINCT local_id) FROM users.notes WHERE owner_id = ? AND is_read = 0");
+		$res = \unt\platform\DataBaseManager::getConnection()->prepare("SELECT COUNT(DISTINCT local_id) FROM users.notes WHERE owner_id = ? AND is_read = 0");
 		if ($res->execute(intval($_SESSION['user_id'])))
 		{
-			$result = $res->fetch(PDO::FETCH_ASSOC);
+			$result = $res->fetch(\PDO::FETCH_ASSOC);
 			if ($result['COUNT(DISTINCT local_id'])
 			{
 				return intval($result['COUNT(DISTINCT local_id']);

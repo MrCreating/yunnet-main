@@ -5281,7 +5281,7 @@ const pages = {
 
 				settings.users.get(notification.data.user_id).then(function (user) {
 					moreTextDiv.innerHTML = settings.lang.getValue('deleted_you_friend')
-												.replace('%usernick%', user.is_deleted ? settings.lang.getValue('deleted_account') : ('<a href="/' + (user.name ? ('bot' + user.bot_id) : ('id' + user.user_id)) + '">' + (user.name || user.first_name + ' ' + user.last_name)) + '</a>')
+												.replace('%usernick%', user.is_deleted ? settings.lang.getValue('deleted_account') : ('<a href=' + (user.name ? ('bot' + user.bot_id) : ('id' + user.user_id)) + '"/public">' + (user.name || user.first_name + ' ' + user.last_name)) + '</a>')
 					
 					return ui.bindItems();
 				}).catch(function (err) {
@@ -5293,7 +5293,7 @@ const pages = {
 
 				settings.users.get(notification.data.user_id).then(function (user) {
 					moreTextDiv.innerHTML = settings.lang.getValue('want_to_add')
-												.replace('%usernick%', user.is_deleted ? settings.lang.getValue('deleted_account') : ('<a href="/' + (user.name ? ('bot' + user.bot_id) : ('id' + user.user_id)) + '">' + (user.name || user.first_name + ' ' + user.last_name)) + '</a>')
+												.replace('%usernick%', user.is_deleted ? settings.lang.getValue('deleted_account') : ('<a href=' + (user.name ? ('bot' + user.bot_id) : ('id' + user.user_id)) + '"/public">' + (user.name || user.first_name + ' ' + user.last_name)) + '</a>')
 					
 					return ui.bindItems();
 				}).catch(function (err) {
@@ -5305,7 +5305,7 @@ const pages = {
 				settings.users.get(notification.data.user_id).then(function (user) {
 					moreTextDiv.innerHTML = settings.lang.getValue('added_you')
 												.replace("(а)", user.gender === 2 ? "а" : "")
-												.replace('%usernick%', user.is_deleted ? settings.lang.getValue('deleted_account') : ('<a href="/' + (user.name ? ('bot' + user.bot_id) : ('id' + user.user_id)) + '">' + (user.name || user.first_name + ' ' + user.last_name)) + '</a>')
+												.replace('%usernick%', user.is_deleted ? settings.lang.getValue('deleted_account') : ('<a href=' + (user.name ? ('bot' + user.bot_id) : ('id' + user.user_id)) + '"/public">' + (user.name || user.first_name + ' ' + user.last_name)) + '</a>')
 
 					return ui.bindItems();
 				}).catch(function (err) {
@@ -5317,7 +5317,7 @@ const pages = {
 				settings.users.get(notification.data.user_id).then(function (user) {
 					moreTextDiv.innerHTML = settings.lang.getValue('post_liked')
 												.replace("(а)", user.gender === 2 ? "а" : "")
-												.replace('%username%', user.is_deleted ? settings.lang.getValue('deleted_account') : ('<a href="/' + (user.name ? ('bot' + user.bot_id) : ('id' + user.user_id)) + '">' + (user.name || user.first_name + ' ' + user.last_name)) + '</a>')
+												.replace('%username%', user.is_deleted ? settings.lang.getValue('deleted_account') : ('<a href=' + (user.name ? ('bot' + user.bot_id) : ('id' + user.user_id)) + '"/public">' + (user.name || user.first_name + ' ' + user.last_name)) + '</a>')
 												.replace('%wall%', '/wall' + notification.data.data.wall_id + '_' + notification.data.data.post_id);
 				
 					return ui.bindItems();
@@ -5331,7 +5331,7 @@ const pages = {
 				settings.users.get(notification.data.user_id).then(function (user) {
 					moreTextDiv.innerHTML = settings.lang.getValue('photo_liked')
 												.replace("(а)", user.gender === 2 ? "а" : "")
-												.replace('%username%', user.is_deleted ? settings.lang.getValue('deleted_account') : ('<a href="/' + (user.name ? ('bot' + user.bot_id) : ('id' + user.user_id)) + '">' + (user.name || user.first_name + ' ' + user.last_name)) + '</a>')
+												.replace('%username%', user.is_deleted ? settings.lang.getValue('deleted_account') : ('<a href=' + (user.name ? ('bot' + user.bot_id) : ('id' + user.user_id)) + '"/public">' + (user.name || user.first_name + ' ' + user.last_name)) + '</a>')
 												.replace('%photo%', '/photo' + notification.data.data.owner_id + '_' + notification.data.data.id + '_' + notification.data.data.access_key);
 				
 					return ui.bindItems();

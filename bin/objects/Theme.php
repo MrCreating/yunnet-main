@@ -1,6 +1,10 @@
 <?php
 
-require_once __DIR__ . '/Attachment.php';
+namespace unt\objects;
+
+use Sabberworm\CSS\Parsing\SourceException;
+use unt\platform\Cache;
+use unt\platform\EventEmitter;
 
 /**
  * Theme class
@@ -8,37 +12,40 @@ require_once __DIR__ . '/Attachment.php';
 
 class Theme extends Attachment
 {
-	private $owner_id = NULL;
-	private $id      = NULL;
+    ///////////////////////////////////////
+    const ATTACHMENT_TYPE = 'theme';
+    ///////////////////////////////////////
 
-	private $title       = NULL;
-	private $description = NULL;
+	private int $owner_id;
+	private int $id;
 
-	private $defaultTheme = NULL;
-	private $privateTheme = NULL;
+	private string $title;
+	private string $description;
 
-	private $JSCode   = NULL;
-	private $CSSCode  = NULL;
-	private $JSONCode = NULL;
+	private bool $defaultTheme;
+	private bool $privateTheme;
 
-	private $eventManager      = NULL;
-	private $currentConnection = NULL;
-	private $currentCache      = NULL;
+	private string $JSCode;
+	private string $CSSCode;
+    private string $JSONCode;
+
+	private EventEmitter $eventManager;
+	private Cache $currentCache;
 
 	////////////////
-	private $cssPath = NULL;
-	private $jsPath  = NULL;
-	private $apiPath = NULL;
+	private string $cssPath;
+	private string $jsPath;
+	private string $apiPath;
 
 	function __construct (int $owner_id, int $id)
 	{
-		$this->currentConnection = DataBaseManager::getConnection();
+        parent::__construct();
 
 		$res = $this->currentConnection->prepare("SELECT id, owner_id, title, description, path_to_css, path_to_js, path_to_api, is_hidden, is_default FROM users.themes WHERE owner_id = ? AND id = ? AND (is_deleted = 0 OR is_default = 1) LIMIT 1;");
 
 		if ($res->execute([$owner_id, $id]))
 		{
-			$data = $res->fetch(PDO::FETCH_ASSOC);
+			$data = $res->fetch(\PDO::FETCH_ASSOC);
 			if ($data)
 			{
 				$this->id           = intval($data['id']);
@@ -51,7 +58,7 @@ class Theme extends Attachment
 				$this->cssPath = __DIR__ . "/../../themes/themes" . $data["path_to_css"];
 				$this->jsPath  = __DIR__ . "/../../themes/themes" . $data["path_to_js"];
 
-				$this->isValid      = true;
+				$this->isValid = true;
 
 				$this->eventManager = new EventEmitter();
 				$this->currentCache = new Cache('themes');
@@ -83,7 +90,7 @@ class Theme extends Attachment
 
 				$this->CSSCode  = $CSSCode;
 				$this->JSCode   = $JSCode;
-				$this->JSONCode = $JSONCode;
+				$this->JSONCode = '';
 			}
 		}
 	}
@@ -122,7 +129,7 @@ class Theme extends Attachment
 
 	public function getType (): string
 	{
-		return "theme";
+		return self::ATTACHMENT_TYPE;
 	}
 
 	public function getCredentials (): string
@@ -226,9 +233,8 @@ class Theme extends Attachment
 		if ($code === $this->getCSSCode())
 			return true;
 
-		require __DIR__ . "/../../vendor/autoload.php";
 		try {
-			$css = new Sabberworm\CSS\Parser($code, Sabberworm\CSS\Settings::create()->beStrict());
+			$css = new \Sabberworm\CSS\Parser($code, \Sabberworm\CSS\Settings::create()->beStrict());
 			$res = $css->parse();
 
 			if ($res)
@@ -240,21 +246,20 @@ class Theme extends Attachment
 					return true;
 				}
 			}
-		} catch (Sabberworm\CSS\Parsing\UnexpectedTokenException $e) {
+		} catch (\Sabberworm\CSS\Parsing\UnexpectedTokenException|SourceException $e) {
 			return $e->getMessage();
 		}
 
-		return false;
+        return false;
 	}
 
 	public function setJSCode (string $code)
 	{
-		if ($code === $theme->getJSCode())
+		if ($code === $this->getJSCode())
 			return false;
 
-		require __DIR__ . "/../../vendor/autoload.php";
 		try {
-			$result = Peast\Peast::latest($code, [])->parse();
+			$result = \Peast\Peast::latest($code, [])->parse();
 			if ($result)
 			{
 				$res = intval(file_put_contents($this->jsPath, $code));
@@ -263,18 +268,15 @@ class Theme extends Attachment
 					return true;
 				}
 			}
-		} catch (Peast\Syntax\Exception $e) {
+		} catch (\Peast\Syntax\Exception $e) {
 			$message = $e->getMessage();
 			$line    = $e->getPosition()->getLine();
 			$column  = $e->getPosition()->getColumn();
 			$index   = $e->getPosition()->getIndex();
 
-			$full_string = 
-	"SyntaxError: ".$message.
-	" <br>at line: ".$line.", column: ".$column.
-	" <br>at index: ".$index;
-
-			return $full_string;
+            return "SyntaxError: ".$message.
+            " <br>at line: ".$line.", column: ".$column.
+            " <br>at index: ".$index;
 		}
 
 		return false;
@@ -282,38 +284,38 @@ class Theme extends Attachment
 
 	public function apply (): bool
 	{
-		$theme_id     = intval($this->getId());
-		$theme_title  = strval($this->getTitle());
-		$theme_descr  = strval($this->getDescription());
-		$theme_owner  = intval($this->getOwnerId());
+		$theme_id     = $this->getId();
+		$theme_title  = $this->getTitle();
+		$theme_descr  = $this->getDescription();
+		$theme_owner  = $this->getOwnerId();
 		$private_mode = intval($this->isPrivate());
 
 		if ($theme_owner !== intval($_SESSION['user_id'])) return false;
 
 		// checking new title
-		if (unt\functions\is_empty($theme_title) || strlen($theme_title) > 32) return false;
+		if (\unt\functions\is_empty($theme_title) || strlen($theme_title) > 32) return false;
 
 		// checking new descrption
-		if (unt\functions\is_empty($theme_descr) || strlen($theme_descr) > 512) return false;
+		if (\unt\functions\is_empty($theme_descr) || strlen($theme_descr) > 512) return false;
 
 		$res_title = $this->currentConnection->prepare("UPDATE users.themes SET title = :new_title WHERE id = :theme_id AND owner_id = :owner_id LIMIT 1;");
-		$res_title->bindParam(":new_title", $theme_title, PDO::PARAM_STR);
-		$res_title->bindParam(":theme_id",  $theme_id,    PDO::PARAM_INT);
-		$res_title->bindParam(":owner_id",  $theme_owner, PDO::PARAM_INT);
+		$res_title->bindParam(":new_title", $theme_title, \PDO::PARAM_STR);
+		$res_title->bindParam(":theme_id",  $theme_id,    \PDO::PARAM_INT);
+		$res_title->bindParam(":owner_id",  $theme_owner, \PDO::PARAM_INT);
 		
 		if (!$res_title->execute()) return false;
 
 		$res_descr = $this->currentConnection->prepare("UPDATE users.themes SET description = :new_desc WHERE id = :theme_id AND owner_id = :owner_id LIMIT 1;");
-		$res_descr->bindParam(":new_desc", $theme_descr, PDO::PARAM_STR);
-		$res_descr->bindParam(":theme_id", $theme_id,    PDO::PARAM_INT);
-		$res_descr->bindParam(":owner_id", $theme_owner, PDO::PARAM_INT);
+		$res_descr->bindParam(":new_desc", $theme_descr, \PDO::PARAM_STR);
+		$res_descr->bindParam(":theme_id", $theme_id,    \PDO::PARAM_INT);
+		$res_descr->bindParam(":owner_id", $theme_owner, \PDO::PARAM_INT);
 
 		if (!$res_descr->execute()) return false;
 
 		$res_private = $this->currentConnection->prepare("UPDATE users.themes SET is_hidden = :is_hidden WHERE id = :theme_id AND owner_id = :owner_id AND is_default != 1 LIMIT 1;");
-		$res_private->bindParam(":is_hidden", $private_mode, PDO::PARAM_INT);
-		$res_private->bindParam(":theme_id",  $theme_id,     PDO::PARAM_INT);
-		$res_private->bindParam(":owner_id",  $theme_owner,  PDO::PARAM_INT);
+		$res_private->bindParam(":is_hidden", $private_mode, \PDO::PARAM_INT);
+		$res_private->bindParam(":theme_id",  $theme_id,     \PDO::PARAM_INT);
+		$res_private->bindParam(":owner_id",  $theme_owner,  \PDO::PARAM_INT);
 		
 		if (!$res_private->execute()) return false;
 
@@ -345,9 +347,7 @@ class Theme extends Attachment
 	////////////////////////////////
 	public static function reset (): bool
 	{
-		$connection = DataBaseManager::getConnection();
-
-		if (DataBaseManager::getConnection()->prepare("UPDATE users.info SET settings_theming_current_theme = NULL WHERE id = ? LIMIT 1")->execute([intval($_SESSION['user_id'])]))
+		if (\unt\platform\DataBaseManager::getConnection()->prepare("UPDATE users.info SET settings_theming_current_theme = NULL WHERE id = ? LIMIT 1")->execute([intval($_SESSION['user_id'])]))
 		{
 			return (new EventEmitter())->sendEvent([intval($_SESSION['user_id'])], [0], [
 				'event' => 'interface_event',
@@ -366,12 +366,8 @@ class Theme extends Attachment
 		$is_private = intval($is_private);
 
 		// checking title and description for validity
-		if (unt\functions\is_empty($title) || strlen($title) > 32) return NULL;
-		if (unt\functions\is_empty($description) || strlen($description) > 128) return NULL;
-
-		$connection = $_SERVER['dbConnection'];
-		if (!$connection)
-			$connection = DataBaseManager::getConnection();
+		if (\unt\functions\is_empty($title) || strlen($title) > 32) return NULL;
+		if (\unt\functions\is_empty($description) || strlen($description) > 128) return NULL;
 
 		// creating new user folder if not created.
 		if (!file_exists(__DIR__ . '/../../attachments/themes/' . $owner_id)) 
@@ -379,26 +375,26 @@ class Theme extends Attachment
 				return NULL;
 
 		// inserting new theme data.
-		$res = DataBaseManager::getConnection()->prepare("INSERT INTO users.themes (user_id, owner_id, title, description, is_hidden) VALUES (
+		$res = \unt\platform\DataBaseManager::getConnection()->prepare("INSERT INTO users.themes (user_id, owner_id, title, description, is_hidden) VALUES (
 			:user_id, :owner_id, :title, :description, :is_hidden
 		);");
 
-		$res->bindParam(":user_id",     $owner_id,    PDO::PARAM_INT);
-		$res->bindParam(":owner_id",    $owner_id,    PDO::PARAM_INT);
-		$res->bindParam(":title",       $title,       PDO::PARAM_STR);
-		$res->bindParam(":description", $description, PDO::PARAM_STR);
-		$res->bindParam(":is_hidden",   $is_private,  PDO::PARAM_INT);
+		$res->bindParam(":user_id",     $owner_id,    \PDO::PARAM_INT);
+		$res->bindParam(":owner_id",    $owner_id,    \PDO::PARAM_INT);
+		$res->bindParam(":title",       $title,       \PDO::PARAM_STR);
+		$res->bindParam(":description", $description, \PDO::PARAM_STR);
+		$res->bindParam(":is_hidden",   $is_private,  \PDO::PARAM_INT);
 
 		if ($res->execute())
 		{
-			$res = DataBaseManager::getConnection()->prepare("SELECT LAST_INSERT_ID();");
+			$res = \unt\platform\DataBaseManager::getConnection()->prepare("SELECT LAST_INSERT_ID();");
 			
 			if ($res->execute())
 			{
 				/**
 				 * All theme code stores in the files. Create it.
 				*/
-				$new_theme_id = intval($res->fetch(PDO::FETCH_ASSOC)["LAST_INSERT_ID()"]);
+				$new_theme_id = intval($res->fetch(\PDO::FETCH_ASSOC)["LAST_INSERT_ID()"]);
 
 				if (!file_exists(__DIR__ . '/../../attachments/themes/' . $owner_id . "/" . $new_theme_id))
 					if (!mkdir(__DIR__ . '/../../attachments/themes/' . $owner_id . "/" . $new_theme_id))
@@ -507,10 +503,10 @@ class Theme extends Attachment
 console.log(`[OK] Theme is working! Fine :)`)
 ");
 				// update that info in DB
-				DataBaseManager::getConnection()->prepare('UPDATE users.themes SET path_to_css = "/'.intval($owner_id).'/'.intval($new_theme_id).'/theme.css" WHERE id = ?;')->execute([intval($new_theme_id)]);
-				DataBaseManager::getConnection()->prepare('UPDATE users.themes SET path_to_js = "/'.intval($owner_id).'/'.intval($new_theme_id).'/theme.js" WHERE id = ?;')->execute([intval($new_theme_id)]);
+				\unt\platform\DataBaseManager::getConnection()->prepare('UPDATE users.themes SET path_to_css = "/'.intval($owner_id).'/'.intval($new_theme_id).'/theme.css" WHERE id = ?;')->execute([intval($new_theme_id)]);
+				\unt\platform\DataBaseManager::getConnection()->prepare('UPDATE users.themes SET path_to_js = "/'.intval($owner_id).'/'.intval($new_theme_id).'/theme.js" WHERE id = ?;')->execute([intval($new_theme_id)]);
 
-				$result = new Theme(intval($owner_id), intval($new_theme_id));
+				$result = new Theme($owner_id, $new_theme_id);
 				if ($result->valid())
 					return $result;
 			}
@@ -524,21 +520,17 @@ console.log(`[OK] Theme is working! Fine :)`)
 		if ($count > 100) $count = 100;
 		if ($offset < 0) $offset = 0;
 
-		$connection = $_SERVER['dbConnection'];
-		if (!$connection)
-			$connection = DataBaseManager::getConnection();
-
 		$result = [];
 
 		// gettings themes for user_id and that not deleted
-		$res = DataBaseManager::getConnection()->prepare("SELECT DISTINCT id, owner_id FROM users.themes WHERE (user_id = ? OR is_default = 1) AND (is_deleted = 0 OR is_default = 1) LIMIT ".intval($offset).",".intval($count).";");
+		$res = \unt\platform\DataBaseManager::getConnection()->prepare("SELECT DISTINCT id, owner_id FROM users.themes WHERE (user_id = ? OR is_default = 1) AND (is_deleted = 0 OR is_default = 1) LIMIT ".intval($offset).",".intval($count).";");
 
 		if ($res->execute([intval($_SESSION['user_id'])]))
 		{
-			$data = $res->fetchAll(PDO::FETCH_ASSOC);
+			$data = $res->fetchAll(\PDO::FETCH_ASSOC);
 			if ($data)
 			{
-				foreach ($data as $index => $theme_data)
+				foreach ($data as $theme_data)
 				{
 					$theme = new Theme(intval($theme_data['owner_id']), intval($theme_data['id']));
 

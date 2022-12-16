@@ -1,44 +1,49 @@
 <?php
 
-require_once __DIR__ . '/Credentials.php';
-require_once __DIR__ . '/../objects/Photo.php';
-require_once __DIR__ . '/../objects/Theme.php';
-require_once __DIR__ . '/../objects/Poll.php';
-require_once __DIR__ . '/../objects/Post.php';
+namespace unt\parsers;
+
+use unt\objects\Attachment;
+use unt\objects\BaseObject;
+use unt\objects\Photo;
+use unt\objects\Poll;
+use unt\objects\Post;
+use unt\objects\Theme;
+
+use function unt\functions\is_empty;
 
 /**
  * Parse attachments from credentials
 */
 
-class AttachmentsParser 
+class AttachmentsParser extends BaseObject
 {
 	public function parseCredentials (string $credentials): Credentials
 	{
 		$credentials_data = [];
 		$type = '';
 
-		if (substr(strtolower($credentials), 0, 5) === 'photo')
+		if (substr(strtolower($credentials), 0, 5) === Photo::ATTACHMENT_TYPE)
 		{
-			$type = 'photo';
-			$credentials_data = explode('_', explode('photo', $credentials)[1]);
+			$type = Photo::ATTACHMENT_TYPE;
+			$credentials_data = explode('_', explode(Photo::ATTACHMENT_TYPE, $credentials)[1]);
 		}
 
-		if (substr(strtolower($credentials), 0, 5) === 'theme')
+		if (substr(strtolower($credentials), 0, 5) === Theme::ATTACHMENT_TYPE)
 		{
-			$type = 'theme';
-			$credentials_data = explode('_', explode('theme', $credentials)[1]);
+			$type = Theme::ATTACHMENT_TYPE;
+			$credentials_data = explode('_', explode(Theme::ATTACHMENT_TYPE, $credentials)[1]);
 		}
 
-		if (substr(strtolower($credentials), 0, 4) === 'poll')
+		if (substr(strtolower($credentials), 0, 4) === Poll::ATTACHMENT_TYPE)
 		{
-			$type = 'poll';
-			$credentials_data = explode('_', explode('poll', $credentials)[1]);
+			$type = Poll::ATTACHMENT_TYPE;
+			$credentials_data = explode('_', explode(Poll::ATTACHMENT_TYPE, $credentials)[1]);
 		}
 
-		if (substr(strtolower($credentials), 0, 4) === 'wall')
+		if (substr(strtolower($credentials), 0, 4) === Post::ATTACHMENT_TYPE)
 		{
-			$type = 'wall';
-			$credentials_data = explode('_', explode('wall', $credentials)[1]);
+			$type = Post::ATTACHMENT_TYPE;
+			$credentials_data = explode('_', explode(Post::ATTACHMENT_TYPE, $credentials)[1]);
 		}
 
 		return new Credentials($type, intval($credentials_data[0]), intval($credentials_data[1]), strval($credentials_data[2]));
@@ -46,32 +51,32 @@ class AttachmentsParser
 
 	public function getObject (?string $credentials): ?Attachment
 	{
-		if ($credentials && !unt\functions\is_empty($credentials))
+		if ($credentials && !is_empty($credentials))
 		{
 			$resulted_data = $this->parseCredentials($credentials);
 
-			if ($resulted_data->type === "photo")
+			if ($resulted_data->type === Photo::ATTACHMENT_TYPE)
 			{
 				$attachment_object = new Photo($resulted_data->owner_id, $resulted_data->id, $resulted_data->access_key);
 				if ($attachment_object->valid())
 					return $attachment_object;
 			}
 
-			if ($resulted_data->type === "poll")
+			if ($resulted_data->type === Poll::ATTACHMENT_TYPE)
 			{
 				$attachment_object = new Poll($resulted_data->owner_id, $resulted_data->id, $resulted_data->access_key);
 				if ($attachment_object->valid())
 					return $attachment_object;
 			}
 
-			if ($resulted_data->type === "wall")
+			if ($resulted_data->type === Post::ATTACHMENT_TYPE)
 			{
 				$attachment_object = new Post($resulted_data->owner_id, $resulted_data->id);
 				if ($attachment_object->valid())
 					return $attachment_object;
 			}
 
-			if ($resulted_data->type === 'theme')
+			if ($resulted_data->type === Theme::ATTACHMENT_TYPE)
 			{
 				$attachment_object = new Theme($resulted_data->owner_id, $resulted_data->id);
 				if ($attachment_object->valid())
@@ -84,14 +89,14 @@ class AttachmentsParser
 
 	public function getObjects (?string $credentials): array
 	{
-		if (!$credentials || unt\functions\is_empty($credentials)) return [];
+		if (!$credentials || is_empty($credentials)) return [];
 
 		$attachments_list = explode(',', trim($credentials));
 		$objects_list     = [];
 
 		$attachments_list_parsed = [];
 		foreach ($attachments_list as $index => $item) {
-			if (unt\functions\is_empty($item)) continue;
+			if (is_empty($item)) continue;
 
 			$attachments_list_parsed[] = $item;
 		}
@@ -108,21 +113,21 @@ class AttachmentsParser
 		return $objects_list;
 	}
 
-	public function resolveFromQuery (?string $query): ?Attachment
+	public function resolveFromQuery (?string $query): ?Photo
 	{
-		if (!$query || unt\functions\is_empty($query)) return NULL;
+		if (!$query || \unt\functions\is_empty($query)) return NULL;
 
 		$query = explode('__', substr($query, 0, strlen($query)))[0];
 
-		$res = DataBaseManager::getConnection()->prepare('SELECT id, owner_id, access_key, type FROM attachments.d_1 WHERE query = ? LIMIT 1');
+		$res = \unt\platform\DataBaseManager::getConnection()->prepare('SELECT id, owner_id, access_key, type FROM attachments.d_1 WHERE query = ? LIMIT 1');
 		if ($res->execute([$query]))
 		{
-			$result = $res->fetch(PDO::FETCH_ASSOC);
+			$result = $res->fetch(\PDO::FETCH_ASSOC);
 			if ($result)
 			{
 				$object = NULL;
 
-				if ($result['type'] === "photo")
+				if ($result['type'] === Photo::ATTACHMENT_TYPE)
 					$object = new Photo(intval($result['owner_id']), intval($result['id']), strval($result['access_key']));
 
 				if ($object && $object->valid())

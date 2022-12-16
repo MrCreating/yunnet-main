@@ -1,5 +1,11 @@
 <?php
 
+namespace unt\functions\theming;
+
+use PDO;
+use unt\objects\Theme;
+use unt\platform\DataBaseManager;
+
 /**
  * Here will functions for
  * theme management and other ui functions
@@ -20,7 +26,7 @@
  * 5 - settings
  * 6 - audios
 */
-function get_menu_items_data ($connection, $user_id)
+function get_menu_items_data ($connection, $user_id): array
 {
 	$default_item_ids = [
 		1, 2, 3, 4, 5, 6, 7, 8
@@ -112,10 +118,6 @@ function set_menu_items ($connection, $user_id, $menu_ids)
 */
 function get_themes ($connection, $user_id, $count = 30, $offset = 0)
 {
-	// connecting modules
-	if (!class_exists('Theme'))
-		require __DIR__ . "/../objects/Theme.php";
-
 	return Theme::getList(intval($count), intval($offset));
 }
 
@@ -136,7 +138,7 @@ function get_current_theme_credentials ($connection, $user_id)
 
 /**
  * Create a theme.
- * @return true if ok or false if error.
+ * @return Theme if ok or false if error.
  *
  * Parameters:
  * @param $owner_id - user_id of new owner of theme
@@ -146,9 +148,6 @@ function get_current_theme_credentials ($connection, $user_id)
 */
 function create_theme ($connection, $owner_id, $title, $description, $is_private = 0, $is_default = 0)
 {
-	if (!class_exists('Theme'))
-		require __DIR__ . "/../objects/Theme.php";
-
 	return Theme::create(strval($title), strval($description), boolval($is_private));
 }
 
@@ -181,7 +180,7 @@ function update_theme_code ($theme, $updater_id, $code_type, $code)
 	if ($code_type !== "js" && $code_type !== "css")
 		return false;
 
-	if (unt\functions\is_empty($code))
+	if (\unt\functions\is_empty($code))
 		return false;
 
 	if ($code_type === "js")
@@ -197,91 +196,13 @@ function update_theme_code ($theme, $updater_id, $code_type, $code)
 }
 
 /**
- * Parse the keyboard for messages and not only
- * @return true if ok or false if error
- *
- * Parameters:
- * @param $Keyboard - array keyboard
-*/
-function parse_keyboard ($keyboard)
-{
-	$keyboard_data = $keyboard["keyboard"];
-	$params_data   = $keyboard["params"];
-
-	$ids = [
-		1 => SEND_MESSAGE
-	];
-
-	// keybard and params is required
-	if (!$keyboard_data || !$params_data) return false;
-
-	// max 4 lines
-	if (count($keyboard_data) > 4) return false;
-
-	foreach ($keyboard_data as $index => $item) {
-		// max 4 buttons on line
-		if (count($item) > 4) return false;
-
-		foreach ($item as $number => $button) {
-			$id         = $ids[intval($button["id"])] ? intval($button["id"]) : NULL;
-			$color      = parse_hex($button["color"]);
-			$text       = !(unt\functions\is_empty($button["text"]) || strlen($button["text"]) > 256) ? strval($button["text"]) : NULL;
-			$text_color = parse_hex($button["textColor"]);
-
-			// all keyboard must be valid.
-			if (!$id || !$color || !$text)
-			{
-				return [false, $index, $number];
-			}
-		}
-	}
-
-	$additional_data = (!unt\functions\is_empty($keyboard['params']['data']) && strlen($keyboard['params']['data']) <= 1000) ? strval($keyboard['params']['data']) : NULL;
-
-	$keyboard['params'] = [
-		'oneTime'  => $keyboard['params']['oneTime'] === true ? true : false,
-		'autoShow' => $keyboard['params']['autoShow'] === true ? true : false
-	];
-
-	if ($additional_data)
-		$keyboard['params']['data'] = $additional_data;
-
-	return $keyboard;
-}
-
-/**
- * Parse HEX
- * @return hex code if ok or false if error
- *
- * Parameters:
- * @param $hex - HEX code
-*/
-function parse_hex ($hex)
-{
-	// it must be array
-	if (!is_array($hex)) return false;
-
-	// max array length - 3
-	if (count($hex) != 3) return false;
-
-	$colors = [
-		intval($hex[0]),
-		intval($hex[1]),
-		intval($hex[2])
-	];
-	
-	// OK!
-	return $colors;
-}
-
-/**
  * Apply a theme. Nee s event_emitter
- * @return true if ok or false if error
+ * @param bool $theme - Theme instance.
+*@return true if ok or false if error
  *
  * Paramerters:
- * @param $theme - Theme instance.
-*/
-function apply_theme ($connection, $user_id, $theme = false)
+ */
+function apply_theme ($connection, $user_id, bool $theme = false): bool
 {
 	if ($theme && $theme->valid())
 		return $theme->setAsCurrent();
@@ -299,7 +220,7 @@ function apply_theme ($connection, $user_id, $theme = false)
  * Parameters:
  * @param $user_id - check user id.
  */
-function themes_js_allowed ($connection, $user_id) 
+function themes_js_allowed ($connection, $user_id): bool
 {
 	$res = DataBaseManager::getConnection()->prepare("SELECT themes_allow_js FROM users.info WHERE id = ? LIMIT 1;");
 	if ($res->execute([$user_id]))
@@ -317,7 +238,7 @@ function themes_js_allowed ($connection, $user_id)
  * Parameters:
  * @param $user_id - user if for toggle 
  */
-function toggle_js_allowance ($connection, $user_id)
+function toggle_js_allowance ($connection, $user_id): bool
 {
 	$new_mode = !themes_js_allowed($connection, $user_id);
 
@@ -331,19 +252,15 @@ function toggle_js_allowance ($connection, $user_id)
 
 /**
  * Deletes a theme
- * @return true if ok or false if not
- *
- * Parameters:
  * @param int $user_id  - current user id.
  * @param int $owner_id - owner id of theme
  * @param int $theme_id - theme identifier.
-*/
-function delete_theme ($connection, $user_id, $owner_id, $theme_id)
+*@return true if ok or false if not
+ *
+ * Parameters:
+ */
+function delete_theme ($connection, int $user_id, int $owner_id, int $theme_id)
 {
-	// connecting modules
-	if (!class_exists('Theme'))
-		require __DIR__ . "/../objects/Theme.php";
-
 	$theme = new Theme(intval($owner_id), intval($theme_id));
 
 	return $theme->delete();

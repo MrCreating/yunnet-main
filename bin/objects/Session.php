@@ -1,28 +1,41 @@
 <?php
 
+namespace unt\objects;
+
+use unt\platform\Cache;
+
 /**
  * Session class. Valid for tokens and auth.
 */
 
-class Session
+class Session extends BaseObject
 {
-	private $bound_user = NULL;
+	private Entity $bound_user;
 
-	private $is_mobile  = NULL;
-	private $session_id = NULL;
-	private $is_valid   = NULL;
-	private $is_logged  = NULL;
-	private $is_current = NULL;
-	private $ip_address = NULL;
-	private $login_time = NULL;
-	private $login_info = NULL;
+	private bool $isMobile;
+
+	private string $sessionId;
+
+	private bool $isValid;
+
+	private bool $isLogged;
+
+	private bool $isCurrent;
+
+	private string $ip_address;
+
+	private int $loginTime;
+
+	private string $loginInfo;
 
 	public function __construct (string $id)
 	{
-		$this->is_logged  = false;
-		$this->is_current = false;
-		$this->is_valid   = false;
-		$this->is_mobile  = false;
+        parent::__construct();
+
+		$this->isLogged  = false;
+		$this->isCurrent = false;
+		$this->isValid   = false;
+		$this->isMobile  = false;
 
 		$cache = Cache::getCacheServer();
 
@@ -32,7 +45,7 @@ class Session
 			$current_session_info = $sessions_list[$id];
 			if ($current_session_info)
 			{
-				$this->is_valid = true;
+				$this->isValid = true;
 			}
 
 			if ($current_session_info && !$current_session_info["is_closed"])
@@ -41,11 +54,11 @@ class Session
 				if ($this->bound_user->valid())
 				{
 					$this->ip_address = $current_session_info['ip'];
-					$this->is_mobile  = $current_session_info['data']['mobile'];
-					$this->login_time = $current_session_info['data']['time'];
-					$this->session_id = $current_session_info['id'];
-					$this->login_info = $current_session_info['login_data'];
-					$this->is_logged  = ($this->valid() && $this->bound_user->getId() === intval($_SESSION['user_id']) && $this->getId() === $_SESSION['session_id']);
+					$this->isMobile  = $current_session_info['data']['mobile'];
+					$this->loginTime = $current_session_info['data']['time'];
+					$this->sessionId = $current_session_info['id'];
+					$this->loginInfo = $current_session_info['login_data'];
+					$this->isLogged  = ($this->valid() && $this->bound_user->getId() === intval($_SESSION['user_id']) && $this->getId() === $_SESSION['session_id']);
 				}
 			}
 		}
@@ -53,7 +66,7 @@ class Session
 
 	public function getId (): string
 	{
-		return $this->session_id;
+		return $this->sessionId;
 	}
 
 	public function getCurrentUser (): Entity
@@ -63,12 +76,12 @@ class Session
 
 	public function isMobile (): bool
 	{
-		return $this->is_mobile;
+		return $this->isMobile;
 	}
 
 	public function isLogged (): bool
 	{
-		return $this->is_logged;
+		return $this->isLogged;
 	}
 
 	public function end (): bool
@@ -123,7 +136,7 @@ class Session
 
 	public function isCurrent (): bool
 	{
-		return $this->is_current;
+		return $this->isCurrent;
 	}
 
 	public function getIP (): string
@@ -133,12 +146,12 @@ class Session
 
 	public function getLoginTime (): int
 	{
-		return $this->login_time;
+		return $this->loginTime;
 	}
 
 	public function getLoginInfo (): string
 	{
-		return $this->login_info;
+		return $this->loginInfo;
 	}
 
 	public function toArray (): array
@@ -163,7 +176,7 @@ class Session
 
 	public function valid (): bool
 	{
-		return $this->is_valid;
+		return $this->isValid;
 	}
 
 	// static actions

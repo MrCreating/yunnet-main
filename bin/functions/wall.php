@@ -1,53 +1,29 @@
 <?php
 
+namespace unt\functions\wall;
+
 /**
  * functions with user's wall.
 */
 
-require_once __DIR__ . '/../objects/Poll.php';
-require_once __DIR__ . '/../objects/Post.php';
-require_once __DIR__ . '/../objects/Comment.php';
-require_once __DIR__ . "/notifications.php";
-require_once __DIR__ . '/users.php';
-
-// get news of user
-function get_news ($connection, $user_id)
-{
-	$result = [];
-
-	$friends_list = array_merge([$user_id], get_friends_list($connection, $user_id, null, 0));
-	foreach ($friends_list as $index => $friend_id) {
-		
-		$res = DataBaseManager::getConnection()->prepare('SELECT local_id FROM wall.posts WHERE to_id = ? AND owner_id = ? AND is_deleted = 0 ORDER BY time DESC LIMIT 5;');
-		if ($res->execute([intval($friend_id), intval($friend_id)]))
-		{
-			$data = $res->fetchAll(PDO::FETCH_ASSOC);
-			foreach ($data as $index => $post) {
-				$local_id = intval($post['local_id']);
-
-				$post = Post::findById($friend_id, $local_id);
-				if ($post)
-					$result[] = $post->toArray();
-			}
-		}
-
-	}
-
-	usort($result, function ($a, $b) {
-		return $a['time'] - $b['time'];
-	});
-	return array_reverse($result);
-}
+use PDO;
+use unt\objects\Bot;
+use unt\objects\Context;
+use unt\objects\Post;
+use unt\objects\User;
+use unt\parsers\AttachmentsParser;
+use unt\platform\DataBaseManager;
 
 /**
  * Checks the posts write access
  * @return true if you can or false on error
- * 
+ *
+ * @deprecated
  * Parameters:
  * @param $user_id - current user id
  * @param $check_id - who check to permission?
 */
-function can_write_posts ($connection, $user_id, $check_id)
+function can_write_posts ($connection, $user_id, $check_id): bool
 {
 	if (!Context::get()->isLogged()) return false;
 	
@@ -59,7 +35,7 @@ function can_write_posts ($connection, $user_id, $check_id)
 	// only exists
 	if (!$object->valid()) return false;
 
-	$can_write_posts = $object->getSettings()->getSettingsGroup('privacy')->getGroupValue('can_write_on_wall');
+	$can_write_posts = $object->getSettings()->getSettingsGroup(\unt\objects\Settings::PRIVACY_GROUP)->getGroupValue('can_write_on_wall');
 
 	// all users can write
 	if ($can_write_posts === 0) return true;
@@ -69,7 +45,7 @@ function can_write_posts ($connection, $user_id, $check_id)
 	*/
 
 	// checking if only friends level set.
-	if ($object->getType() === "user" && $can_write_posts === 1 && is_friends($connection, $check_id, $user_id)) return true;
+	if ($object->getType() === User::ENTITY_TYPE && $can_write_posts === 1 && $object->isFriends()) return true;
 
 	// only owners can write on bot's wall
 	if ($object->getType() === "bot" && $can_write_posts === 2 && intval($user_id) === $object->getOwnerId()) return true;
@@ -90,7 +66,7 @@ function can_write_posts ($connection, $user_id, $check_id)
 */
 function create_post ($connection, $owner_id, $wall_id, $text = '', $attachments = '', $event = '')
 {
-	if (!unt\functions\is_empty($event))
+	if (!\unt\functions\is_empty($event))
 	{
 		$allowed_events = ['updated_photo'];
 
@@ -105,13 +81,13 @@ function create_post ($connection, $owner_id, $wall_id, $text = '', $attachments
 	}
 
 	// empty post is not allowed
-	if (unt\functions\is_empty($text) && count($attachments_string) <= 0) return false;
+	if (\unt\functions\is_empty($text) && count($attachments_string) <= 0) return false;
 
 	// too long text is not allowed
 	if (strlen($text) > 128000) return false;
 
 	// checking the user existance.
-	if (!Entity::findById($wall_id) == NULL) return false;
+	if (!($wall_id > 0 ? User::findById($wall_id) : Bot::findById($wall_id)) == NULL) return false;
 
 	// attachments
 	$attachments = implode(',', $attachments_string);
@@ -158,7 +134,7 @@ function create_post ($connection, $owner_id, $wall_id, $text = '', $attachments
  * @param $text - text of the post
  * @param $attachments - attachments for new post
 */
-function update_post_data ($connection, $user_id, $wall_id, $post_id, $text = '', $attachments = '')
+function update_post_data ($connection, $user_id, $wall_id, $post_id, $text = '', $attachments = ''): bool
 {
 	$attachments_list = [];
 	$objects = (new AttachmentsParser())->getObjects($attachments);
@@ -168,7 +144,7 @@ function update_post_data ($connection, $user_id, $wall_id, $post_id, $text = ''
 	}
 
 	// empty post is not allowed
-	if (unt\functions\is_empty($text) && count($attachments_list) <= 0) return false;
+	if (\unt\functions\is_empty($text) && count($attachments_list) <= 0) return false;
 
 	// too long text is not allowed
 	if (strlen($text) > 128000) return false;

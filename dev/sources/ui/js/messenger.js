@@ -397,7 +397,7 @@ const messages = {
 					resultString = settings.lang.getValue('mute_user').replace("(а)", fromObject.gender === 2 ? "а" : "");
 
 					if (toObject && !preview)
-						resultString = resultString.replace('%when%', ('<a style="color: var(--unt-event-names-color, gray) !important" href="/' + (toObject.name ? ("bot" + toObject.bot_id) : ("id" + toObject.user_id)) + '" target="_blank" style="font-weight: bold">' + htmlspecialchars(toObject.name || toObject.name_cases.first_name.dat + " " + toObject.name_cases.last_name.dat) + '</a>'));
+						resultString = resultString.replace('%when%', ('<a style="color: var(--unt-event-names-color, gray) !important" href=' + (toObject.name ? ("bot" + toObject.bot_id) : ("id" + toObject.user_id)) + '"/public" target="_blank" style="font-weight: bold">' + htmlspecialchars(toObject.name || toObject.name_cases.first_name.dat + " " + toObject.name_cases.last_name.dat) + '</a>'));
 					if (toObject && preview)
 						resultString = resultString.replace('%when%', ((htmlspecialchars(toObject.name || toObject.name_cases.first_name.dat + " " + toObject.name_cases.last_name.dat))));
 				break;
@@ -405,7 +405,7 @@ const messages = {
 					resultString = settings.lang.getValue('unmute_user').replace("(а)", fromObject.gender === 2 ? "а" : "");
 
 					if (toObject && !preview)
-						resultString = resultString.replace('%when%', ('<a style="color: var(--unt-event-names-color, gray) !important" href="/' + (toObject.name ? ("bot" + toObject.bot_id) : ("id" + toObject.user_id)) + '" target="_blank" style="font-weight: bold">' + htmlspecialchars(toObject.name || toObject.name_cases.first_name.dat + " " + toObject.name_cases.last_name.dat) + '</a>'));
+						resultString = resultString.replace('%when%', ('<a style="color: var(--unt-event-names-color, gray) !important" href=' + (toObject.name ? ("bot" + toObject.bot_id) : ("id" + toObject.user_id)) + '"/public" target="_blank" style="font-weight: bold">' + htmlspecialchars(toObject.name || toObject.name_cases.first_name.dat + " " + toObject.name_cases.last_name.dat) + '</a>'));
 					if (toObject && preview)
 						resultString = resultString.replace('%when%', ((htmlspecialchars(toObject.name || toObject.name_cases.first_name.dat + " " + toObject.name_cases.last_name.dat))));
 				break;
@@ -428,7 +428,7 @@ const messages = {
 					resultString = settings.lang.getValue('kicked_user').replace("(а)", fromObject.gender === 2 ? "а" : "");
 
 					if (toObject && !preview)
-						resultString = resultString.replace('%when%', ('<a style="color: var(--unt-event-names-color, gray) !important" href="/' + (toObject.name ? ("bot" + toObject.bot_id) : ("id" + toObject.user_id)) + '" target="_blank" style="font-weight: bold">' + htmlspecialchars(toObject.name || toObject.name_cases.first_name.acc + " " + toObject.name_cases.last_name.acc) + '</a>'));
+						resultString = resultString.replace('%when%', ('<a style="color: var(--unt-event-names-color, gray) !important" href=' + (toObject.name ? ("bot" + toObject.bot_id) : ("id" + toObject.user_id)) + '"/public" target="_blank" style="font-weight: bold">' + htmlspecialchars(toObject.name || toObject.name_cases.first_name.acc + " " + toObject.name_cases.last_name.acc) + '</a>'));
 					if (toObject && preview)
 						resultString = resultString.replace('%when%', ((htmlspecialchars(toObject.name || toObject.name_cases.first_name.acc + " " + toObject.name_cases.last_name.acc))));
 				break;
@@ -436,7 +436,7 @@ const messages = {
 					resultString = settings.lang.getValue('invited_user').replace("(а)", fromObject.gender === 2 ? "а" : "");
 
 					if (toObject && !preview)
-						resultString = resultString.replace('%when%', ('<a style="color: var(--unt-event-names-color, gray) !important" href="/' + (toObject.name ? ("bot" + toObject.bot_id) : ("id" + toObject.user_id)) + '" target="_blank" style="font-weight: bold">' + htmlspecialchars(toObject.name || toObject.name_cases.first_name.acc + " " + toObject.name_cases.last_name.acc) + '</a>'));
+						resultString = resultString.replace('%when%', ('<a style="color: var(--unt-event-names-color, gray) !important" href=' + (toObject.name ? ("bot" + toObject.bot_id) : ("id" + toObject.user_id)) + '"/public" target="_blank" style="font-weight: bold">' + htmlspecialchars(toObject.name || toObject.name_cases.first_name.acc + " " + toObject.name_cases.last_name.acc) + '</a>'));
 					if (toObject && preview)
 						resultString = resultString.replace('%when%', ((htmlspecialchars(toObject.name || toObject.name_cases.first_name.acc + " " + toObject.name_cases.last_name.acc))));
 				break;
@@ -451,7 +451,7 @@ const messages = {
 			}
 
 			if (!preview)
-				resultString = resultString.replace('%who%', ('<a style="color: var(--unt-event-names-color, gray) !important" href="/' + (fromObject.name ? ("bot" + fromObject.bot_id) : ("id" + fromObject.user_id)) + '" target="_blank" style="font-weight: bold">' + htmlspecialchars(fromObject.name || fromObject.first_name + " " + fromObject.last_name) + '</a>'));
+				resultString = resultString.replace('%who%', ('<a style="color: var(--unt-event-names-color, gray) !important" href=' + (fromObject.name ? ("bot" + fromObject.bot_id) : ("id" + fromObject.user_id)) + '"/public" target="_blank" style="font-weight: bold">' + htmlspecialchars(fromObject.name || fromObject.first_name + " " + fromObject.last_name) + '</a>'));
 			else
 				resultString = resultString.replace('%who%', fromObject.name || (fromObject.first_name + ' ' + fromObject.last_name));
 
@@ -1406,7 +1406,7 @@ window.addEventListener('authCompleted', function () {
 
 					settings.users.get(event.notification.data.user_id).then(function (user) {
 						let notification = unt.Notification(unt.Icon.GROUP, settings.lang.getValue('friends_adding'), settings.lang.getValue('want_to_add')
-													.replace('%usernick%', user.is_deleted ? settings.lang.getValue('deleted_account') : ('<a href="/' + (user.name ? ('bot' + user.bot_id) : ('id' + user.user_id)) + '">' + (user.name || user.first_name + ' ' + user.last_name)) + '</a>'), [
+													.replace('%usernick%', user.is_deleted ? settings.lang.getValue('deleted_account') : ('<a href=' + (user.name ? ('bot' + user.bot_id) : ('id' + user.user_id)) + '"/public">' + (user.name || user.first_name + ' ' + user.last_name)) + '</a>'), [
 														[settings.lang.getValue('accept'), function () {
 															settings.users.friends.acceptRequest(event.notification.data.user_id);
 

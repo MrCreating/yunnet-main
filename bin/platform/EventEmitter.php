@@ -1,14 +1,20 @@
 <?php
 
+namespace unt\platform;
+
+use unt\objects\BaseObject;
+
 /**
  * New implementation of emit_event function
  * Handle events from realtime server (client-side)
 */
 
-class EventEmitter
+class EventEmitter extends BaseObject
 {
 	public function __construct () 
-	{}
+	{
+        parent::__construct();
+    }
 
 	public function event (array $event, ?array $user_ids = NULL, ?array $local_ids = NULL): bool
 	{
@@ -38,7 +44,7 @@ class EventEmitter
 		curl_setopt($poll_engine, CURLOPT_RETURNTRANSFER, true);
 
 		$result = curl_exec($poll_engine);
-		curl_close($text_engine);
+		curl_close($poll_engine);
 
 		return boolval(intval($result));
 	}

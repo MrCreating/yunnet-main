@@ -1,7 +1,12 @@
 <?php
 
+namespace unt\functions\accounts;
+
 require_once __DIR__ . '/../../lib/vk_audio/autoloader.php';
 
+use Exception;
+use PDO;
+use unt\platform\DataBaseManager;
 use Vodka2\VKAudioToken\AndroidCheckin;
 use Vodka2\VKAudioToken\SmallProtobufHelper;
 use Vodka2\VKAudioToken\CommonParams;
@@ -24,7 +29,7 @@ define('VK_API_DOMAIN', 'https://api.vk.com/');
  * Parameters:
  * @param $user_id - current user id.
 */
-function get_accounts ($connection, $user_id, $receiveToken = false)
+function get_accounts ($connection, $user_id, $receiveToken = false): array
 {
 	$result = [
 		[

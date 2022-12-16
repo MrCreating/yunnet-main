@@ -1,23 +1,21 @@
 <?php
 
-$selected_user = unt\functions\resolve_id_by_name($connection, REQUESTED_PAGE);
-$user = $selected_user['id'] > 0 ? new User($selected_user["id"]) : new Bot($selected_user['id']*-1);
+use unt\objects\Context;
+use unt\objects\Post;
+use unt\objects\Request;
 
-if ($user->getScreenName() && $went_by_id) {
+$user = \unt\objects\Entity::findByScreenName(substr(REQUESTED_PAGE, 1));
+
+if ($user->getScreenName() && (substr(REQUESTED_PAGE, 0, 2) == 'id' || substr(REQUESTED_PAGE, 0, 3) == 'bot')) {
 	die(header("Location: /".$user->getScreenName()));
 }
-
-require_once __DIR__ . "/../../bin/objects/Post.php";
-require_once __DIR__ . "/../../bin/functions/wall.php";
-require_once __DIR__ . "/../../bin/functions/messages.php";
-require_once __DIR__ . '/../../bin/functions/users.php';
 
 if (isset(Request::get()->data['action']))
 {
 	$action = strtolower(Request::get()->data['action']);
 
-	$can_access_closed = $user->getType() === 'user' ? $user->canAccessClosed() : true;
-	$in_blacklist      = $user->getType() === 'user' ? $user->inBlacklist() : false;
+	$can_access_closed = $user->getType() === \unt\objects\User::ENTITY_TYPE ? $user->canAccessClosed() : true;
+	$in_blacklist      = $user->getType() === \unt\objects\User::ENTITY_TYPE && $user->inBlacklist();
 
 	switch ($action)
 	{
@@ -27,7 +25,7 @@ if (isset(Request::get()->data['action']))
 
 			$result = [];
 
-			$posts = Post::getList($selected_user['id'], intval(Request::get()->data['offset'])*20, 20);
+			$posts = Post::getList($user->getId(), intval(Request::get()->data['offset'])*20, 20);
 			foreach ($posts as $index => $post) {
 				$result[] = $post->toArray();
 			}
@@ -40,6 +38,7 @@ if (isset(Request::get()->data['action']))
 	}
 
 	if (!Context::get()->allowToUseUnt()) die(json_encode(array('error' => 1)));
+
 
 	switch ($action)
 	{
@@ -71,13 +70,7 @@ if (isset(Request::get()->data['action']))
 		break;
 
 		case 'toggle_send_access':
-			if ($in_blacklist) die(json_encode(array('error' => 1)));
-
-			$bot_messages_allowed = is_chat_allowed($connection, Context::get()->getCurrentUser()->getId(), $selected_user["id"]*-1);
-
-			toggle_send_access($connection, (Context::get()->getCurrentUser() !== NULL ? Context::get()->getCurrentUser()->getId() : 0), $selected_user['id']*-1, !$bot_messages_allowed);
-
-			die(json_encode(array('state' => !$bot_messages_allowedy)));
+            die(json_encode(array('error' => 1)));
 			break;
 
 		default:

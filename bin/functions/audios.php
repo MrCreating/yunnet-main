@@ -1,5 +1,7 @@
 <?php
 
+namespace unt\functions\audios;
+
 require_once __DIR__.'/../../lib/vk_audio/autoloader.php';
 
 use Vodka2\VKAudioToken\SupportedClients;
@@ -10,15 +12,15 @@ use Vodka2\VKAudioToken\SupportedClients;
 
 /**
  * Getting the audios from accounts or unt
- * @return Array with audios info
+ * @param $user_id - current user id
+ * @param int $account_type - account type
+ * @param int $offset - audios offset (default: 0)
+ * @param int $count - audios count (default: 30)
+*@return Array with audios info
  *
  * Parameters
- * @param $user_id - current user id
- * @param $account_type - account type
- * @param $offset - audios offset (default: 0)
- * @param $count - audios count (default: 30)
-*/
-function get_audio ($connection, $user_id, $account_type = 1, $offset = 0, $count = 30)
+ */
+function get_audio ($connection, $user_id, int $account_type = 1, int $offset = 0, int $count = 30)
 {
 	// perspective unt audios
 	if ($account_type === 0)

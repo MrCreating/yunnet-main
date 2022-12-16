@@ -1,7 +1,12 @@
 <?php
 
-require_once __DIR__ . '/../../bin/functions/accounts.php';
-require_once __DIR__ . '/../../bin/functions/audios.php';
+use unt\objects\Context;
+use unt\objects\Request;
+use unt\platform\DataBaseManager;
+
+use function unt\functions\accounts\add_account;
+use function unt\functions\accounts\delete_account;
+use function unt\functions\audios\get_audio;
 
 if (isset(Request::get()->data['action']))
 {
@@ -19,7 +24,7 @@ if (isset(Request::get()->data['action']))
 				$password = strval(Request::get()->data['password']);
 				$code = intval(Request::get()->data['auth_code']) > 0 ? strval(Request::get()->data['auth_code']) : '';
 
-				$result = add_account($connection, $login, $password, Context::get()->getCurrentUser()->getId(), 1, $code);
+				$result = add_account(DataBaseManager::getConnection(), $login, $password, Context::get()->getCurrentUser()->getId(), 1, $code);
 				if ($result === true)
 					die(json_encode(array('success' => 1)));
 
@@ -33,7 +38,7 @@ if (isset(Request::get()->data['action']))
 		case 'unbound_account':
 			if ($accountType === 1)
 			{
-				$result = delete_account($connection, Context::get()->getCurrentUser()->getId(), $accountType);
+				$result = delete_account(DataBaseManager::getConnection(), Context::get()->getCurrentUser()->getId(), $accountType);
 				if ($result === true)
 					die(json_encode(array('success'=>1)));
 
@@ -48,7 +53,7 @@ if (isset(Request::get()->data['action']))
 			$currentOfffset = intval(Request::get()->data['offset']);
 			$audiosCount = intval(Request::get()->data['count']);
 
-			$audios_list = get_audio($connection, Context::get()->getCurrentUser()->getId(), 1, $currentOfffset, $audiosCount);
+			$audios_list = get_audio(DataBaseManager::getConnection(), Context::get()->getCurrentUser()->getId(), 1, $currentOfffset, $audiosCount);
 			if ($audios_list === false)
 				die(json_encode(array('error'=>1)));
 

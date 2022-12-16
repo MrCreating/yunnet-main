@@ -1,8 +1,9 @@
 <?php
 
-require_once __DIR__ . '/Attachment.php';
-require_once __DIR__ . '/Comment.php';
-require_once __DIR__ . '/../functions/notifications.php';
+namespace unt\objects;
+
+use unt\parsers\AttachmentsParser;
+use unt\platform\DataBaseManager;
 
 /**
  * Post class
@@ -10,57 +11,57 @@ require_once __DIR__ . '/../functions/notifications.php';
 
 class Post extends Attachment
 {
-	private $wall_id       = 0;
-	private $post_id       = 0;
-	private $creation_time = 0;
-	private $owner_id      = 0;
+    ///////////////////////////////////////
+    const ATTACHMENT_TYPE = 'wall';
+    ///////////////////////////////////////
 
-	private $text    = '';
+	private int $wall_id;
+	private int $post_id;
+	private int $creation_time;
+	private int $owner_id;
 
-	private $attachments    = [];
-	private $comments_count = 0;
+	private string $text;
 
-	private $likes = 0;
+	private array $attachments = [];
 
-	private $liked = false;
-	private $is_pinned = false;
+	private int $comments_count = 0;
 
-	private $event = null;
+	private int $likes = 0;
 
-	private $currentConnection = NULL;
+	private bool $liked = false;
+	private bool $is_pinned = false;
+
+	private ?array $event = null;
 
 	function __construct (int $wall_id, int $post_id)
 	{
-		$wall_id = intval($wall_id);
-		$post_id = intval($post_id);	
+        parent::__construct();
 
-		$this->currentConnection = DataBaseManager::getConnection();
 		$res = $this->currentConnection->prepare('SELECT time, text, local_id, to_id, owner_id, attachments, is_pinned, event FROM wall.posts WHERE to_id = ? AND local_id = ? AND is_deleted = 0 LIMIT 1;');
 
-		if ($res->execute([intval($wall_id), intval($post_id)]))
+		if ($res->execute([$wall_id, $post_id]))
 		{
-			$data = $res->fetch(PDO::FETCH_ASSOC);
+			$data = $res->fetch(\PDO::FETCH_ASSOC);
 			if ($data)
 			{
 				$this->isValid = true;
 
-				$this->wall_id = intval($wall_id);
-				$this->post_id = intval($post_id);
+				$this->wall_id = $wall_id;
+				$this->post_id = $post_id;
 
 				// comments count
-				$res = $this->currentConnection->prepare('SELECT COUNT(DISTINCT local_id) FROM wall.comments WHERE attachment = :attachment AND is_deleted = 0;');
+				$res = $this->currentConnection->prepare('SELECT COUNT(DISTINCT local_id) FROM wall.comments WHERE attachment = ? AND is_deleted = 0;');
 
 				$credentials_data = $this->getCredentials();
-				$res->bindParam(":attachment", $credentials_data, PDO::PARAM_STR);
-				$res->execute();
+				$res->execute([$credentials_data]);
 
 				$this->creation_time = intval($data['time']);
 				$this->owner_id      = intval($data['owner_id']);
 				$this->text          = iconv('UTF-8', 'UTF-8//IGNORE', strval($data['text']));
 				$this->is_pinned     = boolval($data['is_pinned']);
 
-				$this->comments_count = intval($res->fetch(PDO::FETCH_ASSOC)["COUNT(DISTINCT local_id)"]);
-				if (!unt\functions\is_empty($data['event']))
+				$this->comments_count = intval($res->fetch(\PDO::FETCH_ASSOC)["COUNT(DISTINCT local_id)"]);
+				if (!\unt\functions\is_empty($data['event']))
 				{
 					$this->event = [];
 
@@ -69,33 +70,28 @@ class Post extends Attachment
 
 				if ($data["attachments"] !== "")
 				{
-					$objects = (new AttachmentsParser())->getObjects($data["attachments"]);
+					$objects = (new \unt\parsers\AttachmentsParser())->getObjects($data["attachments"]);
 
-					foreach ($objects as $index => $attachment) 
+					foreach ($objects as $attachment)
 					{
 						$this->attachments[] = $attachment;
 					}
 				}
 
-				$res = $this->currentConnection->prepare("SELECT COUNT(DISTINCT user_id) FROM users.likes WHERE attachment = :attachment AND is_liked = 1;");
-				$res->bindParam(":attachment", $credentials_data, PDO::PARAM_STR);
-				
-				if ($res->execute())
+				$res = $this->currentConnection->prepare("SELECT COUNT(DISTINCT user_id) FROM users.likes WHERE attachment = ? AND is_liked = 1;");
+
+				if ($res->execute([$credentials_data]))
 				{
-					$this->likes = intval($res->fetch(PDO::FETCH_ASSOC)["COUNT(DISTINCT user_id)"]);
+					$this->likes = intval($res->fetch(\PDO::FETCH_ASSOC)["COUNT(DISTINCT user_id)"]);
 				}
 
 				if (intval($_SESSION['user_id']))
 				{
 					$user_id = intval($_SESSION['user_id']);
-					$res = $this->currentConnection->prepare("SELECT COUNT(DISTINCT user_id) FROM users.likes WHERE attachment = :attachment AND is_liked = 1 AND user_id = :user_id LIMIT 1;");
-
-					$res->bindParam(":attachment", $credentials_data, PDO::PARAM_STR);
-					$res->bindParam(":user_id",    $user_id,          PDO::PARAM_INT);
-					
-					if ($res->execute())
+					$res = $this->currentConnection->prepare("SELECT COUNT(DISTINCT user_id) FROM users.likes WHERE attachment = ? AND is_liked = 1 AND user_id = ? LIMIT 1;");
+					if ($res->execute([$credentials_data, $user_id]))
 					{
-						$this->liked = boolval($res->fetch(PDO::FETCH_ASSOC)["COUNT(DISTINCT user_id)"]);
+						$this->liked = boolval($res->fetch(\PDO::FETCH_ASSOC)["COUNT(DISTINCT user_id)"]);
 					}
 				}
 			}
@@ -124,7 +120,7 @@ class Post extends Attachment
 
 	public function getType (): string
 	{
-		return "wall";
+		return self::ATTACHMENT_TYPE;
 	}
 
 	public function getCredentials (): string
@@ -173,37 +169,31 @@ class Post extends Attachment
 
 	public function like ()
     {
-		if (!$this->valid()) return false;
+		if (!$this->valid()) return NULL;
 
 		$state = NULL;
 
-		$res = $this->currentConnection->prepare("SELECT is_liked FROM users.likes WHERE attachment = :attachment AND user_id = :user_id LIMIT 1");
+		$res = $this->currentConnection->prepare("SELECT is_liked FROM users.likes WHERE attachment = ? AND user_id = ? LIMIT 1");
 
-        $credentials1 = $this->getCredentials();
-        $a = $res->bindParam(":attachment", $credentials1,      PDO::PARAM_STR);
-        $user_id = intval($_SESSION['user_id']);
-        $b = $res->bindParam(":user_id", $user_id, PDO::PARAM_INT);
-
-		if ($res->execute())
+		if ($res->execute([$this->getCredentials(), $_SESSION['user_id']]))
 		{
-			$data = $res->fetch(PDO::FETCH_ASSOC);
+			$data = $res->fetch(\PDO::FETCH_ASSOC);
+
 			if (!$data)
 			{
-				$res = $this->currentConnection->prepare("INSERT INTO users.likes (user_id, is_liked, attachment) VALUES (:user_id, 1, :attachment);");
+				$res = $this->currentConnection->prepare("INSERT INTO users.likes (user_id, is_liked, attachment) VALUES (?, 1, ?);");
                 $credentials = $this->getCredentials();
 
-                $res->bindParam(":attachment", $credentials,      PDO::PARAM_STR);
-				$res->bindParam(":user_id", $user_id, PDO::PARAM_INT);
-				if ($res->execute())
+				if ($res->execute([$_SESSION['user_id'], $credentials]))
 				{
-					if ($this->getWallId() !== $user_id)
-						create_notification($this->currentConnection, $this->getOwnerId(), "post_like", [
-							'user_id' => $user_id,
-							'data'    => [
-								'wall_id' => $this->getWallId(),
-								'post_id' => $this->getPostId()
-							]
-						]);
+					if ($this->getWallId() !== $_SESSION['user_id'])
+                        Notification::create($this->getOwnerId(), 'post_like', [
+                            'user_id' => $_SESSION['user_id'],
+                            'data'    => [
+                                'wall_id' => $this->getWallId(),
+                                'post_id' => $this->getPostId()
+                            ]
+                        ]);
 
 					$state = 1;
 				}
@@ -212,21 +202,15 @@ class Post extends Attachment
 			$is_liked = intval($data["is_liked"]);
 			if ($is_liked)
 			{
-				$res = $this->currentConnection->prepare("UPDATE users.likes SET is_liked = 0 WHERE attachment = :attachment AND user_id = :user_id LIMIT 1;");
-                $credentials2 = $this->getCredentials();
-                $res->bindParam(":attachment", $credentials2,      PDO::PARAM_STR);
-				$res->bindParam(":user_id", $user_id, PDO::PARAM_INT);
-				if ($res->execute())
+				$res = $this->currentConnection->prepare("UPDATE users.likes SET is_liked = 0 WHERE attachment = ? AND user_id = ? LIMIT 1;");
+				if ($res->execute([$this->getCredentials(), $_SESSION['user_id']]))
 				{
 					$state = 0;
 				}
-			} else if (!$is_liked && $data)
+			} else if ($data)
 			{
-				$res = $this->currentConnection->prepare("UPDATE users.likes SET is_liked = 1 WHERE attachment = :attachment AND user_id = :user_id LIMIT 1;");
-                $credentials3 = $this->getCredentials();
-                $res->bindParam(":attachment", $credentials3,      PDO::PARAM_STR);
-				$res->bindParam(":user_id", $user_id, PDO::PARAM_INT);
-				if ($res->execute())
+				$res = $this->currentConnection->prepare("UPDATE users.likes SET is_liked = 1 WHERE attachment = ? AND user_id = ? LIMIT 1;");
+				if ($res->execute([$this->getCredentials(), $_SESSION['user_id']]))
 				{
 					$state = 1;
 				}
@@ -235,12 +219,12 @@ class Post extends Attachment
 
 		if ($state !== NULL)
 		{
-			$res = $this->currentConnection->prepare("SELECT COUNT(DISTINCT user_id) FROM users.likes WHERE attachment = :attachment AND is_liked = 1;");
-            $credentials4 = $this->getCredentials();
-            $res->bindParam(":attachment", $credentials4,      PDO::PARAM_STR);
-			if ($res->execute())
+			$res = $this->currentConnection->prepare("SELECT COUNT(DISTINCT user_id) FROM users.likes WHERE attachment = ? AND is_liked = 1;");
+
+            $likes_count = 0;
+            if ($res->execute([$this->getCredentials()]))
 			{
-				$likes_count = intval($res->fetch(PDO::FETCH_ASSOC)["COUNT(DISTINCT user_id)"]);
+				$likes_count = intval($res->fetch(\PDO::FETCH_ASSOC)["COUNT(DISTINCT user_id)"]);
 			}
 
 			return new class($state, $likes_count) {
@@ -279,7 +263,7 @@ class Post extends Attachment
 
 		if ($this->getOwnerId() !== intval($_SESSION['user_id'])) return 0;
 
-		$this->currentConnection->uncache('Post_' . $this->getWallId() . '_' . $this->getPostId())->prepare("UPDATE wall.posts SET is_pinned = 0 WHERE to_id = ?")->execute([$this->getWallId()]);
+		$this->currentConnection->prepare("UPDATE wall.posts SET is_pinned = 0 WHERE to_id = ?")->execute([$this->getWallId()]);
 
 		if (!$this->isPinned())
 		{
@@ -296,15 +280,15 @@ class Post extends Attachment
 
 		if ($user_id === 0) return false;
 
-		if (intval($user_id) === intval($check_id)) return true;
+		if ($user_id === $check_id) return true;
 
-		if (intval($check_id) < 0) return true;
+		if ($check_id < 0) return true;
 
-		$user_object = Entity::findById(intval($check_id));
+		$user_object = $check_id > 0 ? User::findById($check_id) : Bot::findById($check_id);
 		if (!$user_object || $user_object->isBanned()) return false;
-		if ($user_object->getType() === 'user' && $user_object->inBlacklist()) return false;
+		if ($user_object->getType() === User::ENTITY_TYPE && $user_object->inBlacklist()) return false;
 
-		$settings = $user_object->getSettings()->getSettingsGroup('privacy')->getGroupValue('can_comment_posts');
+		$settings = $user_object->getSettings()->getSettingsGroup(Settings::PRIVACY_GROUP)->getGroupValue('can_comment_posts');
 
 		if ($settings === 0) return true;
 
@@ -322,15 +306,9 @@ class Post extends Attachment
 	public function apply (): bool
 	{
         $wallId = $this->getWallId();
-        $res = $this->currentConnection->uncache('Post_' . $wallId . '_' . $this->getPostId())->prepare("UPDATE wall.posts SET text = :text WHERE to_id = :to_id AND local_id = :local_id LIMIT 1;");
+        $res = $this->currentConnection->prepare("UPDATE wall.posts SET text = ? WHERE to_id = ? AND local_id = ? LIMIT 1;");
 
-        $text = $this->getText();
-        $res->bindParam(":text", $text,   PDO::PARAM_STR);
-		$res->bindParam(":to_id", $wallId, PDO::PARAM_INT);
-        $postId = $this->getPostId();
-        $res->bindParam(":local_id", $postId, PDO::PARAM_INT);
-
-		if ($res->execute())
+		if ($res->execute([$this->getText(), $wallId, $this->getPostId()]))
 		{
 			$attachments = '';
 
@@ -342,20 +320,15 @@ class Post extends Attachment
 					$attachments .= ',';
 			}
 
-			$res = $this->currentConnection->uncache('Post_' . $wallId . '_' . $this->getPostId())->prepare("UPDATE wall.posts SET attachments = :attachments WHERE to_id = :to_id AND local_id = :local_id LIMIT 1;");
+			$res = $this->currentConnection->prepare("UPDATE wall.posts SET attachments = ? WHERE to_id = ? AND local_id = ? LIMIT 1;");
 
-			$res->bindParam(":attachments", $attachments,       PDO::PARAM_STR);
-			$res->bindParam(":to_id", $wallId, PDO::PARAM_INT);
-            $postId1 = $this->getPostId();
-            $res->bindParam(":local_id", $postId1, PDO::PARAM_INT);
-
-			return $res->execute();
+			return $res->execute([$attachments, $wallId, $this->getPostId()]);
 		}
 
 		return false;
 	}
 
-	public function getComments ($count = 50, $offset = 0): array
+	public function getComments (int $count = 50, int $offset = 0): array
 	{
 		$result = [];
 
@@ -363,18 +336,15 @@ class Post extends Attachment
 		{
 			$attachment = $this->getCredentials();
 
-			$res = $this->currentConnection->prepare('SELECT owner_id, local_id FROM wall.comments WHERE attachment = :attachment AND is_deleted = 0 ORDER BY time LIMIT '.intval($offset).','.intval($count).';');
-
-			$res->bindParam(":attachment", $attachment, PDO::PARAM_STR);
-			if ($res->execute())
+			$res = $this->currentConnection->prepare('SELECT owner_id, local_id FROM wall.comments WHERE attachment = ? AND is_deleted = 0 ORDER BY time LIMIT '. $offset .','. $count);
+			if ($res->execute([$attachment]))
 			{
-				$data_items = $res->fetchAll(PDO::FETCH_ASSOC);
+				$data_items = $res->fetchAll(\PDO::FETCH_ASSOC);
 				if ($data_items)
 				{
-					foreach ($data_items as $index => $data)
+					foreach ($data_items as $data)
 					{
-						$owner_id = intval($data['owner_id']);
-						$local_id = intval($data['local_id']);
+                        $local_id = intval($data['local_id']);
 
 						$comment = new Comment($this, $local_id);
 						if ($comment->valid())
@@ -416,13 +386,11 @@ class Post extends Attachment
 
 		if (count($this->getAttachmentsList()) !== 0)
 		{
-			$result['attachments'] = [];
-
 			$attachments = $this->getAttachmentsList();
 
-			foreach ($attachments as $index => $attachment) {
-				$result['attachments'][] = $attachment->toArray();	
-			}
+            $result['attachments'] = array_map(function ($attachment) {
+                return $attachment->toArray();
+            }, $attachments);
 		}
 
 		return $result;
@@ -437,7 +405,7 @@ class Post extends Attachment
 		return $comment;
 	}
 
-	public function createComment (string $text = '', $attachments = ''): ?Comment
+	public function createComment (string $text = '', string $attachments = ''): ?Comment
 	{
 		if (!$this->canComment()) return NULL;
 
@@ -445,36 +413,25 @@ class Post extends Attachment
 
 		$attachments_string = [];
 		$objects = (new AttachmentsParser())->getObjects($attachments);
-		foreach ($objects as $index => $attachment) 
+		foreach ($objects as $attachment)
 		{
 			$attachments_string[] = $attachment->getCredentials();
 		}
 
-		if (unt\functions\is_empty($text) && count($attachments_string) <= 0) return NULL;
+		if (\unt\functions\is_empty($text) && count($attachments_string) <= 0) return NULL;
 		if (strlen($text) > 64000) return NULL;
 
 		$attachments  = implode(',', $attachments_string);
 		$dest_attachm = $this->getCredentials();
 
-		$res = $this->currentConnection->prepare("SELECT COUNT(DISTINCT local_id) FROM wall.comments WHERE attachment = :attachment;");
-		$res->bindParam(":attachment", $dest_attachm, PDO::PARAM_STR);
-
-		if ($res->execute())
+		$res = $this->currentConnection->prepare("SELECT COUNT(DISTINCT local_id) FROM wall.comments WHERE attachment = ?;");
+		if ($res->execute([$dest_attachm]))
 		{
-			$new_local_id = intval($res->fetch(PDO::FETCH_ASSOC)['COUNT(DISTINCT local_id)']) + 1;
-			$time         = time();
+			$new_local_id = intval($res->fetch(\PDO::FETCH_ASSOC)['COUNT(DISTINCT local_id)']) + 1;
 
-			$res = $this->currentConnection->prepare("INSERT INTO wall.comments (owner_id, local_id, text, time, attachments, attachment) VALUES (:owner_id, :local_id, :text, :time, :attachments, :attachment);");
+			$res = $this->currentConnection->prepare("INSERT INTO wall.comments (owner_id, local_id, text, time, attachments, attachment) VALUES (?, ?, ?, ?, ?, ?);");
 
-            $user_id = intval($_SESSION['user_id']);
-            $res->bindParam(":owner_id",    $user_id,      PDO::PARAM_INT);
-			$res->bindParam(":local_id",    $new_local_id, PDO::PARAM_INT);
-			$res->bindParam(":text",        $text,         PDO::PARAM_STR);
-			$res->bindParam(":time",        $time,         PDO::PARAM_INT);
-			$res->bindParam(":attachments", $attachments,  PDO::PARAM_STR);
-			$res->bindParam(":attachment",  $dest_attachm, PDO::PARAM_STR);
-
-			if ($res->execute())
+			if ($res->execute([$_SESSION['user_id'], $new_local_id, $text, time(), $attachments, $dest_attachm]))
 			{
 				$comment = new Comment($this, $new_local_id);
 				if ($comment->valid())
@@ -488,7 +445,7 @@ class Post extends Attachment
 	////////////////////////////////////////
 	public static function findById (int $wall_id, int $post_id): ?Post
 	{
-		$post = new Post($wall_id, $post_id);
+		$post = new static($wall_id, $post_id);
 
 		if (!$post->valid()) return NULL;
 
@@ -505,23 +462,23 @@ class Post extends Attachment
 
 		if (!$only_my_posts && $offset === 0)
 		{
-			$res = DataBaseManager::getConnection()->prepare('SELECT local_id FROM wall.posts WHERE to_id = ? AND owner_id = ? AND is_deleted = 0 AND is_pinned = 1 LIMIT 1');
-			if ($res->execute([intval($wall_id), intval($wall_id)]))
+			$res = \unt\platform\DataBaseManager::getConnection()->prepare('SELECT local_id FROM wall.posts WHERE to_id = ? AND owner_id = ? AND is_deleted = 0 AND is_pinned = 1 LIMIT 1');
+			if ($res->execute([$wall_id, $wall_id]))
 			{
-				$data = $res->fetch(PDO::FETCH_ASSOC);
+				$data = $res->fetch(\PDO::FETCH_ASSOC);
 
 				if ($data)
 					$pinned_post[] = $data;
 			}
 		}
 
-		$res = DataBaseManager::getConnection()->prepare('SELECT local_id FROM wall.posts WHERE to_id = ? '.($only_my_posts ? 'AND owner_id = '.intval($wall_id).' ' : '').'AND is_deleted = 0 AND is_pinned = 0 ORDER BY time DESC LIMIT '.intval($offset).','.intval($count).';');
+		$res = \unt\platform\DataBaseManager::getConnection()->prepare('SELECT local_id FROM wall.posts WHERE to_id = ? '.($only_my_posts ? 'AND owner_id = '.intval($wall_id).' ' : '').'AND is_deleted = 0 AND is_pinned = 0 ORDER BY time DESC LIMIT '.intval($offset).','. $count .';');
 
-		if ($res->execute([intval($wall_id)]))
+		if ($res->execute([$wall_id]))
 		{
-			$posts = array_merge($pinned_post, $res->fetchAll(PDO::FETCH_ASSOC));
-			foreach ($posts as $index => $post) {
-				$post = new Post($wall_id, intval($post['local_id']));
+			$posts = array_merge($pinned_post, $res->fetchAll(\PDO::FETCH_ASSOC));
+			foreach ($posts as $post) {
+				$post = new static($wall_id, intval($post['local_id']));
 				if ($post->valid())
 				{
 					$result[] = $post;

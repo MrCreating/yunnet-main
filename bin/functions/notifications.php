@@ -1,13 +1,18 @@
 <?php
 
-require_once __DIR__ . '/../objects/Notification.php';
+namespace unt\functions\notifications;
+
+use unt\objects\Notification;
+use unt\objects\User;
+use unt\platform\DataBaseManager;
 
 /**
  * function for notification creation
  * returns Notificaions class if notifications created
  * or false if error will happen
+ * @deprecated
 */
-function create_notification ($connection, $to_id, $type, $data)
+function create_notification ($connection, $to_id, $type, $data): Notification
 {
 	$res = DataBaseManager::getConnection()->prepare("SELECT DISTINCT local_id FROM users.notes WHERE owner_id = ? ORDER BY local_id DESC LIMIT 1;");
 	$res->execute([intval($to_id)]);
@@ -34,7 +39,7 @@ function create_notification ($connection, $to_id, $type, $data)
 		// emit event if it allow settings.
 		if ($user->getSettings()->getSettingsGroup('push')->isNotificationsEnabled())
 		{
-			$result->sendEvent([$to_id], [0], [
+            (new \unt\platform\EventEmitter())->sendEvent([$to_id], [0], [
 				'event'        => 'new_notification',
 				'notification' => [
 					'id'   => $new_local_id,

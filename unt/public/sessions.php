@@ -1,6 +1,8 @@
 <?php
 
-require_once __DIR__ . '/../../bin/objects/Session.php';
+use unt\objects\Context;
+use unt\objects\Request;
+use unt\objects\Session;
 
 // handle session actions here
 if (isset(Request::get()->data["action"]))

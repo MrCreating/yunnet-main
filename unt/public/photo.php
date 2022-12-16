@@ -1,6 +1,8 @@
 <?php
 
-require_once __DIR__ . '/../../bin/parsers/AttachmentsParser.php';
+use unt\objects\Context;
+use unt\objects\Request;
+use unt\parsers\AttachmentsParser;
 
 $credentials = substr(REQUESTED_PAGE, 1);
 

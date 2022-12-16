@@ -1,8 +1,10 @@
 <?php
 
-require_once __DIR__ . "/../../bin/objects/Post.php";
-require_once __DIR__ . "/../../bin/functions/wall.php";
-require_once __DIR__ . "/../../bin/functions/users.php";
+use unt\objects\Bot;
+use unt\objects\Context;
+use unt\objects\Post;
+use unt\objects\Request;
+use unt\objects\User;
 
 /**
  * Here is the wall post shower.
@@ -16,8 +18,8 @@ $post_id = intval($string[1]);
 
 if (isset(Request::get()->data["action"]))
 {
-	$entity = Entity::findById($wall_id);
-	if ($entity && $entity->getType() === 'user' && ($entity->inBlacklist() || !$entity->canAccessClosed()))
+	$entity = $wall_id > 0 ? User::findById($wall_id) : Bot::findById($wall_id);
+	if ($entity && $entity->getType() === User::ENTITY_TYPE && ($entity->inBlacklist() || !$entity->canAccessClosed()))
 		die(json_encode(array('error' => 1)));
 
 	$post = Post::findById($wall_id, $post_id);
@@ -54,7 +56,7 @@ if (isset(Request::get()->data["action"]))
 		break;
 
 		case 'pin':
-			$result = $post ? $post->pin() : 0;
+			$result = $post->pin();
 
 			if (!$result)
 				die(json_encode(array('error' => 1)));
@@ -88,53 +90,5 @@ if (isset(Request::get()->data["action"]))
 
 	die(json_encode(array('error' => 1)));
 }
-
-// if wall is valid
-/*if ($wall_id !== 0)
-{
-	// if current user is not blacklisted on wall owner
-	if (!in_blacklist($connection, $wall_id, Context::get()->getCurrentUser()->getId()))
-	{	
-		// if current user can not see owner_id wall - redirect
-		$can_access_closed = can_access_closed($connection, Context::get()->getCurrentUser()->getId(), $wall_id);
-		if (!$can_access_closed)
-			die(header("Location: /id".$wall_id));
-
-		// handle actions with post HERE!!!
-		$post = Post::findById($wall_id, $post_id);
-		if ($post)
-		{
-			if (isset(Request::get()->data["action"]))
-			{
-				if (!Context::get()->isLogged()) die(json_encode(array('unauth'=>1)));
-				
-				$action = strtolower(Request::get()->data["action"]);
-				switch ($action) {
-					case 'delete':
-						if (!Context::get()->isLogged()) die(json_encode(array('unauth'=>1)));
-						$result = delete_post($connection, Context::get()->getCurrentUser()->getId(), $wall_id, $post_id);
-
-						if (!$result)
-							die(json_encode(array('error'=>1)));
-
-						die(json_encode(array('result'=>1)));
-					break;
-					case 'save_post':
-						if (!Context::get()->isLogged()) die(json_encode(array('unauth'=>1)));
-
-						$text = strval(Request::get()->data['text']);
-						$attachments = strval(Request::get()->data['attachments']);
-
-						$result = update_post_data($connection, Context::get()->getCurrentUser()->getId(), $wall_id, $post_id, $text, $attachments);
-						if (!$result)
-							die(json_encode(array('error'=>1)));
-
-						die(json_encode(array('result'=>1)));
-					break;
-				}
-			}
-		}
-	}
-}*/
 
 ?>

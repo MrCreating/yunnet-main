@@ -1,18 +1,26 @@
 <?php
 
+namespace unt\platform;
+
+use Memcached;
+use unt\objects\BaseObject;
+use unt\objects\Project;
+
 /**
  * Main cache class
  * May contain users, and other.
 */
 
-class Cache 
+class Cache extends BaseObject
 {
-	private $currentCacheServer = null;
-	private $currentCacheName   = null;
+	private ?Memcached $currentCacheServer;
+	private string $currentCacheName;
 
 	// load cache server. May be different.
-	function __construct ($cacheName = "default")
+	function __construct (string $cacheName = "default")
 	{
+        parent::__construct();
+
 		$this->currentCacheServer = new Memcached();
 		$this->currentCacheServer->addServer(Project::CACHE_IP, Project::CACHE_PORT);
 		$this->currentCacheName = $cacheName;
@@ -23,14 +31,12 @@ class Cache
 		return $this->currentCacheName;
 	}
 
-	public function getItem ($name)
+	public function getItem (string $name): string
 	{
-		$result = $this->currentCacheServer->get($this->currentCacheName . '/' . $name);
-
-		return $result;
+        return $this->currentCacheServer->get($this->currentCacheName . '/' . $name);
 	}
 
-	public function putItem ($name, $value, $aliveTime = 86400): Cache
+	public function putItem (string $name, string $value, int $aliveTime = 86400): Cache
 	{
 		$item = $this->getItem($name);
 		if ($item)
@@ -44,7 +50,7 @@ class Cache
 		return $this;
 	}
 
-	public function removeItem ($name): Cache
+	public function removeItem (string $name): Cache
 	{
 		$this->currentCacheServer->delete($this->currentCacheName . '/' . $name);
 		

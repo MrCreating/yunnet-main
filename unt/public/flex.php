@@ -1,13 +1,14 @@
 <?php
 
-require_once __DIR__ . '/../../bin/functions/management.php';
-require_once __DIR__ . '/../../bin/functions/wall.php';
-require_once __DIR__ . '/../../bin/functions/messages.php';
-require_once __DIR__ . '/../../bin/functions/users.php';
-require_once __DIR__ . '/../../bin/objects/Chat.php';
-require_once __DIR__ . '/../../bin/objects/Dialog.php';
-require_once __DIR__ . '/../../bin/objects/Conversation.php';
-require_once __DIR__ . '/../../bin/objects/Post.php';
+use unt\objects\Bot;
+use unt\objects\Context;
+use unt\objects\Entity;
+use unt\objects\Post;
+use unt\objects\Project;
+use unt\objects\Request;
+use unt\objects\User;
+use unt\parsers\AttachmentsParser;
+use unt\platform\DataBaseManager;
 
 if (isset(Request::get()->data['action']))
 {
@@ -15,7 +16,9 @@ if (isset(Request::get()->data['action']))
 
 	switch ($action) {
 		case 'test':
-			$result = is_project_closed();
+            $this->errors();
+
+			$result = Project::isClosed();
 
 			if (!Context::get()->isLogged() || Context::get()->getCurrentUser()->getAccessLevel() === 4)
 				$result = 0;
@@ -37,7 +40,7 @@ if (isset(Request::get()->data['action']))
 		break;
 		
 		case 'get_user_data':
-			$entity_id = intval(Request::get()->data["id"]);
+            $entity_id = intval(Request::get()->data["id"]);
 			$fields    = strval(Request::get()->data["fields"]);
 
 			if ($entity_id === 0) 
@@ -46,7 +49,7 @@ if (isset(Request::get()->data['action']))
 			if (Context::get()->getCurrentUser() && Context::get()->getCurrentUser()->isBanned()) 
 				$entity_id = Context::get()->getCurrentUser()->getId();
 
-			$user = Entity::findById($entity_id);
+			$user = $entity_id > 0 ? User::findById($entity_id) : Bot::findById($entity_id);
 
 			if (!$user) die(json_encode(array("error" => 1)));
 
@@ -58,7 +61,7 @@ if (isset(Request::get()->data['action']))
 			if (Context::get()->getCurrentUser() && Context::get()->getCurrentUser()->isBanned()) 
 				$screen_name = 'id' . Context::get()->getCurrentUser()->getId();
 
-			if (unt\functions\is_empty($screen_name)) die(json_encode(array("error"=>1)));
+			if (\unt\functions\is_empty($screen_name)) die(json_encode(array("error"=>1)));
 
 			$result = Entity::findByScreenName($screen_name);
 			if (!$result) die(json_encode(array("error"=>1)));
@@ -96,7 +99,7 @@ if (isset(Request::get()->data['action']))
 			$atts = strval(Request::get()->data['attachments']);
 			$wall = intval(Request::get()->data['wall_id']) !== 0 ? intval(Request::get()->data['wall_id']) : Context::get()->getCurrentUser()->getId();
 
-			$result = create_post(DataBaseManager::getConnection()->getClient(), Context::get()->getCurrentUser()->getId(), $wall, $text, $atts);
+			$result = \unt\functions\wall\create_post(DataBaseManager::getConnection()->getClient(), Context::get()->getCurrentUser()->getId(), $wall, $text, $atts);
 
 			// if not post created - show this.
 			if (!$result) die(json_encode(array('error'=>1)));
@@ -119,7 +122,7 @@ if (isset(Request::get()->data['action']))
 			$wall = intval(Request::get()->data['wall_id']);
 			$post = intval(Request::get()->data['post_id']);
 
-			$result = update_post_data(DataBaseManager::getConnection(), Context::get()->getCurrentUser()->getId(), $wall, $post, $text, $atts);
+			$result = \unt\functions\wall\update_post_data(DataBaseManager::getConnection(), Context::get()->getCurrentUser()->getId(), $wall, $post, $text, $atts);
 
 			// if not post updated - show this.
 			if (!$result) die(json_encode(array('error' => 1)));
@@ -134,51 +137,33 @@ if (isset(Request::get()->data['action']))
 			die(json_encode(array('response' => $post->toArray())));
 		break;
 
-		case 'get_chat_by_peer':
-			$dialog = Chat::findById(Request::get()->data['peer_id']);
-
-			if (!$dialog) die(json_encode(array('error' => 1)));
-
-			die(json_encode($dialog->toArray()));
+        case 'get_chat_permissions':
+        case 'get_my_permissions_level':
+        case 'get_chat_by_peer':
+            die(json_encode(array('error' => 1)));
 		break;
 
-		case 'get_chat_permissions':
-			if (Context::get()->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
-
-			$chat = new Conversation(Request::get()->data['peer_id']);
-
-			if (!$chat->valid() || $chat->isKicked())
-				die(json_encode(array('error' => 1)));
-
-			die(json_encode($chat->getPermissions()->toArray()));
-		break;
-
-		case 'get_my_permissions_level':
-			$chat = new Conversation(Request::get()->data['peer_id']);
-
-			if (!$chat->valid() || $chat->isKicked())
-				die(json_encode(array('error' => 1)));
-
-			die(json_encode(array('level' => $chat->getAccessLevel())));
-		break;
-
-		case 'get_friends':
-			if (Context::get()->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
+        case 'get_friends':
+            if (Context::get()->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
 
 			$user_id = intval(Request::get()->data['user_id']);
 
-			if (!Entity::findById($user_id) == NULL || !can_access_closed(DataBaseManager::getConnection()->getClient(), Context::get()->getCurrentUser()->getId(), $user_id) || in_blacklist($connection, $user_id, Context::get()->getCurrentUser()->getId()))
-				die(json_encode(array('error'=>1)));
+            $entity = Entity::findById($user_id);
+
+			if ($entity == NULL || !$entity->canAccessClosed() || $entity->inBlacklist())
+				die(json_encode(array('error' => 1)));
 
 			$section = strval(Request::get()->data['section']);
-			if (!in_array($section, ['friends', 'subscribers', 'outcoming'])) $section = 'friends';
+			if (!in_array($section, [
+                User::FRIENDS_SECTION_MAIN,
+                User::FRIENDS_SECTION_SUBSCRIBERS,
+                User::FRIENDS_SECTION_OUTCOMING]
+            )) $section = User::FRIENDS_SECTION_MAIN;
 
-			$friends_list = get_friends_list($connection, $user_id, $section, true);
-			$result = [];
-
-			foreach ($friends_list as $key => $friend) {
-				$result[] = $friend->toArray('*');
-			}
+			$friends_list = $entity->getFriendsList($section, true);
+			$result = array_map(function ($friend) {
+                return $friend->toArray('*');
+            }, $friends_list);
 
 			die(json_encode($result));
 		break;
@@ -186,7 +171,11 @@ if (isset(Request::get()->data['action']))
 		case 'get_counters':
 			if (Context::get()->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
 
-			$result = get_counters(DataBaseManager::getConnection()->getClient(), Context::get()->getCurrentUser()->getId());
+			$result = [
+                'messages'      => 0,
+                'notifications' => 0,
+                'friends'       => 0
+            ];
 
 			die(json_encode($result));
 		break;

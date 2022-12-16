@@ -4,7 +4,6 @@ error_reporting(0);
 echo "[+] Including API..." . PHP_EOL;
 
 require __DIR__ . '/bin/base_functions.php';
-require __DIR__ . '/bin/functions/messages.php';
 
 $maxUserId = 50;
 $connection = DataBaseManager::getConnection();

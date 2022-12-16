@@ -1,4 +1,9 @@
 <?php
+
+use unt\objects\Context;
+use unt\objects\Poll;
+use unt\objects\Request;
+
 $origin = unt\functions\get_page_origin();
 
 header("Content-Type: application/json");
@@ -6,7 +11,6 @@ header('Access-Control-Allow-Origin: ' . $origin);
 header('Access-Control-Allow-Credentials: true');
 
 require_once __DIR__ . '/../../bin/functions/uploads.php';
-require_once __DIR__ . '/../../bin/objects/Poll.php';
 
 if (isset(Request::get()->data['action']))
 {
@@ -23,7 +27,7 @@ if (isset(Request::get()->data['action']))
 
 				if ($attachmentType === 'theme' || $attachmentType === 'image')
 				{
-					$data = get_upload_link($connection, Context::get()->getCurrentUser()->getId(), $origin, $attachmentType);
+					$data = get_upload_link(\unt\platform\DataBaseManager::getConnection(), Context::get()->getCurrentUser()->getId(), $origin, $attachmentType);
 					if ($data)
 						die(json_encode($data));
 				}
@@ -60,7 +64,7 @@ if (isset(Request::get()->data['action']))
 		break;
 
 		case "upload":
-			$objects = fetch_upload($connection, Request::get()->data['query'], Context::get()->getCurrentUser()->getId());
+			$objects = fetch_upload(\unt\platform\DataBaseManager::getConnection(), Request::get()->data['query'], Context::get()->getCurrentUser()->getId());
 			if ($objects)
 				die(json_encode($objects->toArray()));
 		break;

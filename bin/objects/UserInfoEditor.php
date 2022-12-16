@@ -1,5 +1,7 @@
 <?php
 
+namespace unt\objects;
+
 require_once __DIR__ . '/InfoEditor.php';
 
 /**
@@ -8,11 +10,11 @@ require_once __DIR__ . '/InfoEditor.php';
 
 class UserInfoEditor extends InfoEditor 
 {
-	private $firstName     = NULL;
-	private $lastName      = NULL;
-	private $screenName    = NULL;
-	private $currentPhoto  = NULL;
-	private $currentGender = NULL;
+	private string $firstName;
+	private string $lastName;
+	private string $screenName;
+	private ?Photo $currentPhoto;
+	private int $currentGender;
 
 	public function __construct (User $user)
 	{
@@ -29,14 +31,14 @@ class UserInfoEditor extends InfoEditor
 	{
 		if (!$this->getBoundEntity()->valid() || $this->getBoundEntity()->isBanned()) return false;
 
-		if (!$newStatus || unt\functions\is_empty($newStatus))
+		if (!$newStatus || \unt\functions\is_empty($newStatus))
 		{
-			return $this->currentConnection->uncache('User_' . $this->getBoundEntity()->getId())->prepare("UPDATE users.info SET status = NULL WHERE id = ? AND is_deleted = 0 AND is_banned = 0 LIMIT 1")->execute([$this->getBoundEntity()->getId()]);
+			return $this->currentConnection->prepare("UPDATE users.info SET status = NULL WHERE id = ? AND is_deleted = 0 AND is_banned = 0 LIMIT 1")->execute([$this->getBoundEntity()->getId()]);
 		} else
 		{
 			if (strlen($newStatus) < 128)
 			{
-				return $this->currentConnection->uncache('User_' . $this->getBoundEntity()->getId())->prepare("UPDATE users.info SET status = ? WHERE id = ? AND is_deleted = 0 AND is_banned = 0 LIMIT 1;")->execute([trim($newStatus), $this->getBoundEntity()->getId()]);
+				return $this->currentConnection->prepare("UPDATE users.info SET status = ? WHERE id = ? AND is_deleted = 0 AND is_banned = 0 LIMIT 1;")->execute([trim($newStatus), $this->getBoundEntity()->getId()]);
 			}
 		}
 
@@ -58,7 +60,7 @@ class UserInfoEditor extends InfoEditor
 				return false;
 		}
 
-		$res = $this->currentConnection->uncache('User_' . $this->getBoundEntity()->getId())->prepare("UPDATE users.info SET photo_path = " . ($this->currentPhoto ? "?" : "NULL") . " WHERE id = ? AND is_deleted = 0 AND is_banned = 0 LIMIT 1;");
+		$res = $this->currentConnection->prepare("UPDATE users.info SET photo_path = " . ($this->currentPhoto ? "?" : "NULL") . " WHERE id = ? AND is_deleted = 0 AND is_banned = 0 LIMIT 1;");
 
 		$result = $this->currentPhoto ? 
 									 $res->execute([$this->currentPhoto->getQuery(), $this->getBoundEntity()->getId()])
@@ -67,7 +69,7 @@ class UserInfoEditor extends InfoEditor
 
 		if ($result)
 		{
-			return $this->currentPhoto ? $this->currentPhoto : true;
+			return $this->currentPhoto ?: true;
 		} else
 			return false;
 	}
@@ -76,26 +78,26 @@ class UserInfoEditor extends InfoEditor
 	{
 		if (!$this->getBoundEntity()->valid() || $this->getBoundEntity()->isBanned()) return false;
 
-		if (unt\functions\is_empty($firstName)) return -3;
+		if (\unt\functions\is_empty($firstName)) return -3;
 		if (strlen($firstName) < 2 || strlen($firstName) > 32) return -2;
 		if (preg_match("/[^a-zA-Zа-яА-ЯёЁ'-]/ui", $firstName)) return -1;
 
-		$this->firstName = unt\functions\capitalize($firstName);
+		$this->firstName = \unt\functions\capitalize($firstName);
 
-		return (int) $this->currentConnection->uncache('User_' . $this->getBoundEntity()->getId())->prepare("UPDATE users.info SET first_name = ? WHERE id = ? AND is_deleted = 0 AND is_banned = 0 LIMIT 1;")->execute([$this->firstName, $this->getBoundEntity()->getId()]);
+		return (int) $this->currentConnection->prepare("UPDATE users.info SET first_name = ? WHERE id = ? AND is_deleted = 0 AND is_banned = 0 LIMIT 1;")->execute([$this->firstName, $this->getBoundEntity()->getId()]);
 	}
 
 	public function setLastName (string $lastName): int
 	{
 		if (!$this->getBoundEntity()->valid() || $this->getBoundEntity()->isBanned()) return false;
 
-		if (unt\functions\is_empty($lastName)) return -3;
+		if (\unt\functions\is_empty($lastName)) return -3;
 		if (strlen($lastName) < 2 || strlen($lastName) > 32) return -2;
 		if (preg_match("/[^a-zA-Zа-яА-ЯёЁ'-]/ui", $lastName)) return -1;
 
-		$this->lastName = unt\functions\capitalize($lastName);
+		$this->lastName = \unt\functions\capitalize($lastName);
 
-		return (int) $this->currentConnection->uncache('User_' . $this->getBoundEntity()->getId())->prepare("UPDATE users.info SET last_name = ? WHERE id = ? AND is_deleted = 0 AND is_banned = 0 LIMIT 1;")->execute([$this->lastName, $this->getBoundEntity()->getId()]);
+		return (int) $this->currentConnection->prepare("UPDATE users.info SET last_name = ? WHERE id = ? AND is_deleted = 0 AND is_banned = 0 LIMIT 1;")->execute([$this->lastName, $this->getBoundEntity()->getId()]);
 	}
 
 	public function setScreenName (?string $screenName = NULL): int
@@ -107,7 +109,7 @@ class UserInfoEditor extends InfoEditor
 			$this->screenName = $screenName;
 		} else
 		{
-			if (unt\functions\is_empty($screenName) || strlen($screenName) < 6 || strlen($screenName) > 64) return 0;
+			if (\unt\functions\is_empty($screenName) || strlen($screenName) < 6 || strlen($screenName) > 64) return 0;
 
 			if (!preg_match("/^[a-z]{1}[a-z_\d\s]*[a-z_\s\d]{1}$/i", $screenName)) return 0;
 
@@ -116,7 +118,7 @@ class UserInfoEditor extends InfoEditor
 			$this->screenName = $screenName;
 		}
 
-		$res = $this->currentConnection->uncache('User_' . $this->getBoundEntity()->getId())->prepare("UPDATE users.info SET screen_name = " . ($this->screenName ? "?" : "NULL") . " WHERE id = ? AND is_deleted = 0 AND is_banned = 0 LIMIT 1;");
+		$res = $this->currentConnection->prepare("UPDATE users.info SET screen_name = " . ($this->screenName ? "?" : "NULL") . " WHERE id = ? AND is_deleted = 0 AND is_banned = 0 LIMIT 1;");
 
 		return $this->screenName ? 
 									$res->execute([$this->screenName, $this->getBoundEntity()->getId()])
@@ -132,7 +134,7 @@ class UserInfoEditor extends InfoEditor
 
 		$this->currentGender = $gender;
 
-		return $this->currentConnection->uncache('User_' . $this->getBoundEntity()->getId())->prepare("UPDATE users.info SET gender = ? WHERE id = ? LIMIT 1")->execute([$this->currentGender, $this->getBoundEntity()->getId()]);
+		return $this->currentConnection->prepare("UPDATE users.info SET gender = ? WHERE id = ? LIMIT 1")->execute([$this->currentGender, $this->getBoundEntity()->getId()]);
 	}
 }
 

@@ -4,6 +4,9 @@
  * This is a current portfolio
 */
 
+use unt\objects\Request;
+use unt\platform\DataBaseManager;
+
 if (isset(Request::get()->data['action']))
 {
 	$action = strtolower(Request::get()->data['action']);

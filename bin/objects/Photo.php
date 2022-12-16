@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/Attachment.php';
+namespace unt\objects;
 
 /**
  * Photo class
@@ -8,65 +8,67 @@ require_once __DIR__ . '/Attachment.php';
 
 class Photo extends Attachment
 {
-	private $owner_id   = 0;
-	private $id         = 0;
-	private $access_key = "";
+    ///////////////////////////////////////
+    const ATTACHMENT_TYPE = 'photo';
+    ///////////////////////////////////////
 
-	private $width  = 0;
-	private $height = 0;
+	private int $owner_id;
+	private int $id;
+	private string $access_key;
 
-	private $url   = NULL;
-	private $query = '';
+	private int $width;
+	private int $height;
 
-	private $path  = '';
+	private string $url;
+	private string $query;
 
-	private $likes = 0;
-	private $liked = 0;
+	private string $path;
 
-	private $currentConnection = false;
+	private int $likes = 0;
 
-	function __construct ($owner_id, $id, $access_key)
+	private bool $liked = false;
+
+	function __construct (int $owner_id, int $id, string $access_key)
 	{
+        parent::__construct();
+
 		$this->url = Project::getDevDomain() . '/images/default.png';
 
-		$this->currentConnection = DataBaseManager::getConnection();
-
-		$res = $this->currentConnection/*->cache("Photo_" . $owner_id . "_" . $id . "_" . $access_key)*/->prepare("SELECT path, query, width, height FROM attachments.d_1 WHERE owner_id = ? AND id = ? AND access_key = ? LIMIT 1;");
+		$res = $this->currentConnection->prepare("SELECT path, query, width, height FROM attachments.d_1 WHERE owner_id = ? AND id = ? AND access_key = ? LIMIT 1;");
 
 		if ($res->execute([strval($owner_id), strval($id), strval($access_key)]))
 		{
-			$attachment = $res->fetch(PDO::FETCH_ASSOC);
+			$attachment = $res->fetch(\PDO::FETCH_ASSOC);
 			if ($attachment)
 			{
-				$this->owner_id   = intval($owner_id);
-				$this->id         = intval($id);
-				$this->access_key = strval($access_key);
+				$this->owner_id   = $owner_id;
+				$this->id         = $id;
+				$this->access_key = $access_key;
 
 				$this->url        = Project::getAttachmentsDomain() . '/' . $attachment["query"];
 				$this->query      = $attachment["query"];
 
-				$this->path       = __DIR__."/../".$attachment["path"];
+				$this->path       = __DIR__ . "/../" . $attachment["path"];
+
 				$this->width      = intval($attachment["width"]);
 				$this->height     = intval($attachment["height"]);
+
 				$this->isValid    = true;
 
 				$credentials_info = $this->getCredentials();
 			
-				$res = $this->currentConnection->prepare("SELECT COUNT(DISTINCT user_id) FROM users.likes WHERE attachment = :attachment AND is_liked = 1;");
-				$res->bindParam(":attachment", $credentials_info, PDO::PARAM_STR);		
-				if ($res->execute())
+				$res = $this->currentConnection->prepare("SELECT COUNT(DISTINCT user_id) FROM users.likes WHERE attachment = ? AND is_liked = 1;");
+				if ($res->execute([$credentials_info]))
 				{
-					$this->likes = intval($res->fetch(PDO::FETCH_ASSOC)["COUNT(DISTINCT user_id)"]);
+					$this->likes = intval($res->fetch(\PDO::FETCH_ASSOC)["COUNT(DISTINCT user_id)"]);
 				}
 
 				$user_id = intval($_SESSION['user_id']);
-				$res = $this->currentConnection/*->cache("Liked_" . $user_id)*/->prepare("SELECT COUNT(DISTINCT user_id) FROM users.likes WHERE attachment = :attachment AND is_liked = 1 AND user_id = :user_id LIMIT 1;");
+				$res = $this->currentConnection->prepare("SELECT COUNT(DISTINCT user_id) FROM users.likes WHERE attachment = ? AND is_liked = 1 AND user_id = ? LIMIT 1;");
 
-				$res->bindParam(":attachment", $credentials_info, PDO::PARAM_STR);
-				$res->bindParam(":user_id",    $user_id,          PDO::PARAM_INT);
-				if ($res->execute())
+				if ($res->execute([$credentials_info, $user_id]))
 				{
-					$this->liked = boolval($res->fetch(PDO::FETCH_ASSOC)["COUNT(DISTINCT user_id)"]);
+					$this->liked = boolval($res->fetch(\PDO::FETCH_ASSOC)["COUNT(DISTINCT user_id)"]);
 				}
 			}
 		}
@@ -84,7 +86,7 @@ class Photo extends Attachment
 
 	public function isLiked (): bool
 	{
-		return boolval($this->liked);
+		return $this->liked;
 	}
 
 	public function getLink (): string
@@ -119,7 +121,7 @@ class Photo extends Attachment
 
 	public function getType (): string
 	{
-		return "photo";
+		return self::ATTACHMENT_TYPE;
 	}
 
 	public function getAccessKey (): string
@@ -130,7 +132,7 @@ class Photo extends Attachment
 	public function toArray(): array
 	{
 		return [
-			'type'  => 'photo',
+			'type'  => self::ATTACHMENT_TYPE,
 			'photo' => [
 				'owner_id'   => $this->getOwnerId(),
 				'id'         => $this->getId(),
@@ -150,11 +152,11 @@ class Photo extends Attachment
 		];
 	}
 
-	public function like ()
+	public function like (): ?array
 	{
-		if (!$this->valid()) return false;
+		if (!$this->valid()) return NULL;
 
-		$user_id    = intval($_SESSION['user_id']);
+		$user_id = (int) $_SESSION['user_id'];
 
 		if (!function_exists('create_notification'))
 			require __DIR__ . '/../functions/notifications.php';
@@ -166,23 +168,18 @@ class Photo extends Attachment
 
 		$credentials = $this->getCredentials();
 
-		$res = $this->currentConnection/*->cache("Liked_" . $user_id)*/->prepare("SELECT is_liked FROM users.likes WHERE attachment = :attachment AND user_id = :user_id LIMIT 1;");
-		$res->bindParam(":attachment", $credentials, PDO::PARAM_STR);
-		$res->bindParam(":user_id",    $user_id,     PDO::PARAM_INT);
-
-		if ($res->execute())
+		$res = $this->currentConnection->prepare("SELECT is_liked FROM users.likes WHERE attachment = ? AND user_id = ? LIMIT 1;");
+		if ($res->execute([$credentials, $user_id]))
 		{
-			$data = $res->fetch(PDO::FETCH_ASSOC);
+			$data = $res->fetch(\PDO::FETCH_ASSOC);
 			if (!$data)
 			{
-				$res = $this->currentConnection->uncache("Liked_" . $user_id)->prepare("INSERT INTO users.likes (user_id, is_liked, attachment) VALUES (:user_id, 1, :attachment);");
-				$res->bindParam(":attachment", $credentials, PDO::PARAM_STR);
-				$res->bindParam(":user_id",    $user_id,     PDO::PARAM_INT);
-				if ($res->execute())
+				$res = $this->currentConnection->prepare("INSERT INTO users.likes (user_id, is_liked, attachment) VALUES (?, 1, ?);");
+				if ($res->execute([$credentials, $user_id]))
 				{
 					if ($this->owner_id !== $user_id)
 					{
-						create_notification($connection, $this->owner_id, "photo_like", [
+						create_notification($this->currentConnection, $this->owner_id, "photo_like", [
 							'user_id' => intval($user_id),
 							'data'    => $this->toArray()
 						]);
@@ -195,36 +192,30 @@ class Photo extends Attachment
 			$is_liked = intval($data["is_liked"]);
 			if ($is_liked)
 			{
-				$res = $this->currentConnection->uncache("Liked_" . $user_id)->prepare("UPDATE users.likes SET is_liked = 0 WHERE attachment = :attachment AND user_id = :user_id LIMIT 1;");
-				$res->bindParam(":attachment", $credentials, PDO::PARAM_STR);
-				$res->bindParam(":user_id",    $user_id,     PDO::PARAM_INT);
-				if ($res->execute())
+				$res = $this->currentConnection->prepare("UPDATE users.likes SET is_liked = 0 WHERE attachment = ? AND user_id = ? LIMIT 1;");
+				if ($res->execute([$credentials, $user_id]))
 				{
 					$result['state'] = 0;
 				}
-			} else if (!$is_liked && $data)
+			} else if ($data)
 			{
-				$res = $this->currentConnection->uncache("Liked_" . $user_id)->prepare("UPDATE users.likes SET is_liked = 1 WHERE attachment = :attachment AND user_id = :user_id LIMIT 1;");
-				$res->bindParam(":attachment", $credentials, PDO::PARAM_STR);
-				$res->bindParam(":user_id",    $user_id,     PDO::PARAM_INT);
-				if ($res->execute())
+				$res = $this->currentConnection->prepare("UPDATE users.likes SET is_liked = 1 WHERE attachment = ? AND user_id = ? LIMIT 1;");
+				if ($res->execute([$credentials, $user_id]))
 				{
 					$result['state'] = 1;
 				}
 			}
 
-			$res = $this->currentConnection->prepare("SELECT COUNT(DISTINCT user_id) FROM users.likes WHERE attachment = :attachment AND is_liked = 1;");
-			$res->bindParam(":attachment", $credentials, PDO::PARAM_STR);
-			
-			if ($res->execute())
+			$res = $this->currentConnection->prepare("SELECT COUNT(DISTINCT user_id) FROM users.likes WHERE attachment = ? AND is_liked = 1;");
+			if ($res->execute([$credentials]))
 			{
-				$result['new_count'] = intval($res->fetch(PDO::FETCH_ASSOC)["COUNT(DISTINCT user_id)"]);
+				$result['new_count'] = intval($res->fetch(\PDO::FETCH_ASSOC)["COUNT(DISTINCT user_id)"]);
 			}
 
 			return $result;
 		}
 
-		return false;
+		return NULL;
 	}
 }
 

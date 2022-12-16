@@ -1,5 +1,9 @@
 <?php
 
+use unt\objects\Context;
+use unt\objects\Request;
+use unt\objects\Session;
+
 require_once __DIR__ . '/../../bin/functions/users.php';
 require_once __DIR__ . '/../../bin/functions/accounts.php';
 
@@ -99,7 +103,7 @@ if (isset(Request::get()->data["action"]))
 			$oldPassword = strval(Request::get()->data['old_password']);
 			$newPassword = strval(Request::get()->data['new_password']);
 
-			if (!Context::get()->getSettings()->getSettingsGroup('security')->isPasswordCorrect($oldPassword))
+			if (!Context::get()->getCurrentUser()->getSettings()->getSettingsGroup('security')->isPasswordCorrect($oldPassword))
 				die(json_encode(array('error' => 1)));
 
 			$result = Context::get()->getCurrentUser()->getSettings()->getSettingsGroup('security')->setPassword($newPassword);

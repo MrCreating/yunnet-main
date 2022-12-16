@@ -1,13 +1,11 @@
 version: '3'
 
 services:
-    # веб-сервер. Тут все по окружению
     nginx:
         build:
             context: $PWD/docker/context/nginx
             dockerfile: $PWD/docker/build/nginx
         restart: always
-
         hostname: yunnet_nginx
         tty: true
         ports:

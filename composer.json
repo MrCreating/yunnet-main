@@ -3,12 +3,18 @@
     "type": "project",
     "require": {
       "ext-json": "*",
-        "ext-pdo": "*",
-        "ext-curl": "*",
+      "ext-pdo": "*",
+      "ext-curl": "*",
       "ext-openssl": "*",
-      "ext-imagick": "*"
+      "ext-imagick": "*",
+      "ext-iconv": "*",
+      "sabberworm/php-css-parser": "dev-master",
+      "mck89/peast": "1.15.0.x-dev",
+      "ext-memcached": "*",
+      "ext-mbstring": "*",
+      "ext-gd": "*",
+      "matthiasmullie/minify": "dev-master"
     },
-    "require-dev": {},
     "license": "ISC",
     "authors": [
         {

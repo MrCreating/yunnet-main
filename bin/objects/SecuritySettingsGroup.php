@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/SettingsGroup.php';
+namespace unt\objects;
 
 /**
  * Class for Security settings
@@ -8,29 +8,26 @@ require_once __DIR__ . '/SettingsGroup.php';
 
 class SecuritySettingsGroup extends SettingsGroup
 {
-	protected $currentConnection = NULL;
-
-	public function __construct (Entity $user, DataBaseManager $connection, array $params = [])
+	public function __construct (Entity $user, array $params = [])
 	{
-		$this->currentEntity     = $user;
-		$this->currentConnection = DataBaseManager::getConnection();
+        parent::__construct($user, Settings::SECURITY_GROUP, $params);
 	}
 
 	public function setPassword (string $newPassword): bool
 	{
 		$passwordHash = password_hash($newPassword, PASSWORD_DEFAULT);
 
-		$result = $this->currentConnection->uncache('User_' . $this->currentEntity->getId())->prepare("UPDATE users.info SET password = ? WHERE id = ? LIMIT 1")->execute([
+		$result = $this->currentConnection->prepare("UPDATE users.info SET password = ? WHERE id = ? LIMIT 1")->execute([
 			$passwordHash,
-			$this->currentEntity->getId()
+			$this->entity->getId()
 		]);
 
 		if ($result)
 		{
-			if ($this->currentConnection->uncache('User_' . $this->currentEntity->getId())->prepare("UPDATE apps.tokens SET is_deleted = 1 WHERE user_id = ?")->execute([$this->currentEntity->getId()]))
+			if ($this->currentConnection->prepare("UPDATE apps.tokens SET is_deleted = 1 WHERE user_id = ?")->execute([$this->entity->getId()]))
 			{
 				$sessions = Session::getList();
-				foreach ($sessions as $index => $session) {
+				foreach ($sessions as $session) {
 					$session->end();
 				}
 			}
@@ -41,12 +38,12 @@ class SecuritySettingsGroup extends SettingsGroup
 
 	public function isPasswordCorrect (string $password): bool
 	{
-		if (unt\functions\is_empty($password) || strlen($password) < 6 || strlen($password) > 64) return false;
+		if (\unt\functions\is_empty($password) || strlen($password) < 6 || strlen($password) > 64) return false;
 
 		$res = $this->currentConnection->prepare("SELECT password FROM users.info WHERE id = ? LIMIT 1");
-		if ($res->execute([$this->currentEntity->getId()]))
+		if ($res->execute([$this->entity->getId()]))
 		{
-			$passwordHash = $res->fetch(PDO::FETCH_ASSOC)['password'];
+			$passwordHash = $res->fetch(\PDO::FETCH_ASSOC)['password'];
 			if (!$passwordHash)
 				return false;
 

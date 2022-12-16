@@ -1,7 +1,9 @@
 <?php
 
+use unt\objects\Context;
+use unt\objects\Request;
+
 require_once __DIR__ . '/../../bin/functions/theming.php';
-require_once __DIR__ . '/../../bin/objects/Theme.php';
 
 if (isset(Request::get()->data["action"]))
 {
@@ -11,7 +13,7 @@ if (isset(Request::get()->data["action"]))
 
 	switch ($action) {
 		case 'get_themes':
-			$themes = get_themes($connection, Context::get()->getCurrentUser()->getId(), intval(Request::get()->data['count']), intval(Request::get()->data['offset']));
+			$themes = get_themes(\unt\platform\DataBaseManager::getConnection(), Context::get()->getCurrentUser()->getId(), intval(Request::get()->data['count']), intval(Request::get()->data['offset']));
 			$result = [];
 
 			foreach ($themes as $index => $theme) {
@@ -22,11 +24,11 @@ if (isset(Request::get()->data["action"]))
 		break;
 
 		case 'apply_theme':
-			die(json_encode(array('success'=>intval(apply_theme($connection, Context::get()->getCurrentUser()->getId(), (new AttachmentsParser())->getObject(Request::get()->data['credentials']))))));
+			die(json_encode(array('success'=>intval(apply_theme(\unt\platform\DataBaseManager::getConnection(), Context::get()->getCurrentUser()->getId(), (new AttachmentsParser())->getObject(Request::get()->data['credentials']))))));
 		break;
 
 		case 'reset_theme':
-			die(json_encode(array('success'=>intval(apply_theme($connection, Context::get()->getCurrentUser()->getId())))));
+			die(json_encode(array('success'=>intval(apply_theme(\unt\platform\DataBaseManager::getConnection(), Context::get()->getCurrentUser()->getId())))));
 		break;
 
 		case 'create_theme':
@@ -34,7 +36,7 @@ if (isset(Request::get()->data["action"]))
 			$desc  = trim(strval(Request::get()->data['theme_description']));
 			$is_private = intval(boolval(intval(Request::get()->data['is_private'])));
 
-			$result = create_theme($connection, Context::get()->getCurrentUser()->getId(), $title, $desc, $is_private);
+			$result = create_theme(\unt\platform\DataBaseManager::getConnection(), Context::get()->getCurrentUser()->getId(), $title, $desc, $is_private);
 			if (!$result)
 				die(json_encode(array('error'=>1)));
 
@@ -44,7 +46,7 @@ if (isset(Request::get()->data["action"]))
 		case 'delete_theme':
 			$theme_id = intval(Request::get()->data['theme_id']);
 
-			$result = delete_theme($connection, Context::get()->getCurrentUser()->getId(), intval($_SESSION['user_id']), $theme_id);
+			$result = delete_theme(\unt\platform\DataBaseManager::getConnection(), Context::get()->getCurrentUser()->getId(), intval($_SESSION['user_id']), $theme_id);
 			if (!$result)
 				die(json_encode(array('error'=>1)));
 
@@ -56,7 +58,7 @@ if (isset(Request::get()->data["action"]))
 			if (!$theme->valid())
 				die(json_encode(array('error'=>1)));
 
-			$result = update_theme($connection, $theme, Context::get()->getCurrentUser()->getId(), strval(Request::get()->data["new_title"]), strval(Request::get()->data["new_description"]), intval(Request::get()->data["private_mode"]));
+			$result = update_theme(\unt\platform\DataBaseManager::getConnection(), $theme, Context::get()->getCurrentUser()->getId(), strval(Request::get()->data["new_title"]), strval(Request::get()->data["new_description"]), intval(Request::get()->data["private_mode"]));
 			
 			if (!$result)
 				die(json_encode(array('error'=>1)));

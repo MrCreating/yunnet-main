@@ -1,32 +1,36 @@
 <?php
 
-require_once __DIR__ . '/Session.php';
+namespace unt\objects;
+
+use unt\platform\Cache;
+use unt\platform\Data;
 
 /**
  * Context class. Have a DataBase connection, current user account, e.t.c
 */
 
-class Context 
+class Context extends BaseObject
 {
-	private $current_session    = NULL;
-	private $current_connection = NULL;
+	private ?Session $currentSession;
 
 	public function __construct ()
 	{
-		$this->current_connection = DataBaseManager::getConnection();
+		parent::__construct();
 
 		$user_id = intval($_SESSION['user_id']);
 		$session = new Session(strval($_SESSION['session_id']));
 
 		if ($session->valid() && $session->isLogged())
 		{
-			$this->current_session = $session;
+			$this->currentSession = $session;
 
 			if ($this->getCurrentSession()->isLogged())
 			{
-				unt\functions\update_online_time($this->current_connection, intval($this->getCurrentUser()->getOnline()->lastOnlineTime), $this->getCurrentUser()->getId());
+				\unt\functions\update_online_time($this->currentConnection, intval($this->getCurrentUser()->getOnline()->lastOnlineTime), $this->getCurrentUser()->getId());
 			}
-		}
+		} else {
+            $this->currentSession = NULL;
+        }
 	}
 
 	public function allowToUseUnt (): bool
@@ -64,14 +68,9 @@ class Context
 			) || substr($_SERVER['HTTP_HOST'], 0, 2) === 'm.';
 	}
 
-	public function getSessions (): array
-	{
-		return Session::getList();
-	}
-
 	public function getCurrentSession (): ?Session
 	{
-		return $this->current_session;
+		return $this->currentSession;
 	}
 
 	public function getLanguage (): Data
@@ -84,7 +83,7 @@ class Context
 
 		if ($current_user)
 		{
-			$languageCode = $current_user->getSettings()->getSettingsGroup('account')->getLanguageId();
+			$languageCode = $current_user->getSettings()->getSettingsGroup(Settings::ACCOUNT_GROUP)->getLanguageId();
 		} else
 		{
 			$langCode = strtolower(substr(trim($_SERVER['HTTP_ACCEPT_LANGUAGE']), 0, 2));
@@ -99,18 +98,13 @@ class Context
 
 		if (!$lang)
 		{
-			$language_json = file_get_contents(__DIR__ . '/../languages/' . $languageCode);
+			$language_json = file_get_contents(PROJECT_ROOT . '/bin/languages/' . $languageCode);
 
 			$cache->set('lang_' . $languageCode, $language_json);
 			$lang = json_decode($language_json, true);
 		}
 
 		return new Data($lang);
-	}
-
-	public function getConnection ()
-	{
-		return $this->current_connection;
 	}
 
 	public function Logout (): bool
@@ -127,11 +121,11 @@ class Context
 	////////////////////////////////////////
 	public static function get (): Context
 	{
-		return isset($_SERVER['context']) ? $_SERVER['context'] : (function () {
-			$_SERVER['context'] = new Context();
+		static $lastContext;
+        if (!isset($lastContext))
+            $lastContext = new self();
 
-			return $_SERVER['context'];
-		})();
+        return $lastContext;
 	}
 }
 

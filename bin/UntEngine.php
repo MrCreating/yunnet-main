@@ -2,6 +2,8 @@
 
 namespace unt;
 
+use unt\objects\Request;
+
 /**
  * Класс ядра
  */
@@ -14,6 +16,7 @@ class UntEngine
     public function __construct ()
     {
         //$this->errors();
+        require_once __DIR__ . '/../vendor/autoload.php';
 
         if (getenv('UNT_PRODUCTION') !== '1')
         {
@@ -33,7 +36,7 @@ class UntEngine
             {
                 $path = __DIR__ . '/objects/' . $path_templates[0] . '.php';
                 if (!file_exists($path))
-                    $path = __DIR__ . '/platform-tools/' . $path_templates[0] . '.php';
+                    $path = __DIR__ . '/platform/' . $path_templates[0] . '.php';
                 if (!file_exists($path))
                     $path = __DIR__ . '/parsers/' . $path_templates[0] . '.php';
             }
@@ -64,7 +67,7 @@ class UntEngine
                 die(require_once __DIR__ . '/../api/index.php');
             case "dev":
                 // https://dev.yunnet.ru - доки для разработчиков
-                die(require_once __DIR__ . '/../pages/dev/index.php');
+                die(require_once __DIR__ . '/../dev/index.php');
             case "d-1":
                 // https://d-1.yunnet.ru - сервер вложений
                 die(require_once __DIR__ . '/../attachments/index.php');
@@ -79,7 +82,7 @@ class UntEngine
                 die(require_once __DIR__ . '/../pages/widgets/auth/index.php');
             case "test":
                 // https://test.yunnet.ru - GitHub WenHook панель управления + обработка событий разработки
-                die(require_once __DIR__ . '/../dev/tester/index.php');
+                die(require_once __DIR__ . '/../test/index.php');
         }
 
         // https://yunnet.ru все остальное

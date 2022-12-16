@@ -1,28 +1,19 @@
 <?php
+
+namespace unt\functions\users;
+
+
 // connecting modules.
-require_once __DIR__ . "/notifications.php";
+use unt\objects\Bot;
+use unt\objects\Context;
+use unt\objects\Entity;
+use unt\objects\User;
+use unt\platform\DataBaseManager;
+use unt\platform\EventEmitter;
 
 /**
  * This file contains a user's functions
 */
-
-// checks $user_id in the $owner_id's blacklist and returns true or false
-function in_blacklist ($connection, $owner_id, $user_id)
-{
-	return (new User($owner_id))->inBlacklist();
-}
-
-// checks if $user_id is friend with a $owner_id, and returns a true, 
-function is_friends ($connection, $owner_id, $user_id)
-{
-	return (new User($owner_id))->isFriends();
-}
-
-// add $user_id to $owner_id's blacklist or remove it.
-function block_user ($connection, $owner_id, $user_id)
-{
-	return Context::get()->getCurrentUser()->block($user_id);
-}
 
 // sends a friendship request to $user_id from $owner_id
 function create_friendship ($connection, $owner_id, $user_id)
@@ -105,7 +96,7 @@ function create_friendship ($connection, $owner_id, $user_id)
  * $owner_id  - from wh list must be deleted friend
  * $user_id - who must be deleted?
  */
-function delete_friendship ($connection, $owner_id, $user_id)
+function delete_friendship ($connection, $owner_id, $user_id): bool
 {
 	if ($owner_id === $user_id)
 		return false;
@@ -145,49 +136,13 @@ function delete_friendship ($connection, $owner_id, $user_id)
 }
 
 // getting friends or subscribers or outcoming requests list.
-function get_friends_list ($connection, $user_id, $section = "friends", $extended = 1)
+function get_friends_list ($connection, $user_id, $section = "friends", $extended = 1): array
 {
-	$res = [];
-	switch ($section)
-	{
-		case "subscribers":
-			$res = DataBaseManager::getConnection()->prepare("SELECT user1, user2, state FROM users.relationships WHERE user2 = ? AND state = 1 AND user1 != user2 LIMIT 50;");
-			$res->execute([intval($user_id)]);
-		break;
-		case "outcoming":
-			$res = DataBaseManager::getConnection()->prepare("SELECT user1, user2, state FROM users.relationships WHERE user1 = ? AND state = 1 AND user1 != user2 LIMIT 50;");
-			$res->execute([intval($user_id)]);
-		break;
-		default:
-			$res = DataBaseManager::getConnection()->prepare("SELECT user1, user2, state FROM users.relationships WHERE (user1 = ? OR user2 = ?) AND state = 2 AND user1 != user2 LIMIT 50;");
-			$res->execute([intval($user_id), intval($user_id)]);
-		break;
-	}
-
-	$result      = [];
-	$identifiers = $res->fetchAll(PDO::FETCH_ASSOC);
-	foreach ($identifiers as $index => $userdata)
-	{
-		$user_current = intval($userdata["user1"]);
-		if ($user_current === $user_id)
-			$user_current = intval($userdata["user2"]);
-
-		if ($extended)
-		{
-			$user = new User($user_current);
-			if (!$user->valid()) continue;
-
-			$result[] = $user;
-		}
-		else
-			$result[] = $user_current;
-	}
-
-	return $result;
+	return User::findById($user_id)->getFriendsList($section, $extended);
 }
 
 // get cunters for come user
-function get_counters ($connection, $user_id)
+function get_counters ($connection, $user_id): array
 {
 	$res = DataBaseManager::getConnection()->prepare("SELECT DISTINCT COUNT(local_id) FROM users.notes WHERE is_read = 0 AND is_hidden = 0 AND owner_id = ?;");
 	$res->execute([$user_id]);
@@ -201,13 +156,11 @@ function get_counters ($connection, $user_id)
 	$res->execute([$user_id]);
 	$friends_count = intval($res->fetch(PDO::FETCH_ASSOC)["COUNT(id)"]);
 
-	$result = [
-		'messages'      => $messages_count,
-		'notifications' => $notes_count,
-		'friends'       => $friends_count
-	];
-
-	return $result;
+    return [
+        'messages'      => $messages_count,
+        'notifications' => $notes_count,
+        'friends'       => $friends_count
+    ];
 }
 
 /** 
@@ -219,12 +172,12 @@ function search_users ($connection, $query, $additional_params = [
 	"search_bots" => false,
 	"offset"      => 0,
 	"count"       => 50
-])
+]): array
 
 {
 	$result = [];
 
-	$query = explode(' ', unt\functions\capitalize(trim($query)));
+	$query = explode(' ', \unt\functions\capitalize(trim($query)));
 	if (count($query) > 20 || count($query) < 1)
 		return $result;
 
@@ -233,7 +186,7 @@ function search_users ($connection, $query, $additional_params = [
 		$query_call = "SELECT DISTINCT id FROM bots.info WHERE ";
 
 	foreach ($query as $index => $word) {
-		if (unt\functions\is_empty($word))
+		if (\unt\functions\is_empty($word))
 			continue;
 
 		if (!$additional_params['only_bots'])
@@ -260,7 +213,7 @@ function search_users ($connection, $query, $additional_params = [
 	// preparing requests
 	$res = DataBaseManager::getConnection()->prepare($query_call);
 	foreach ($query as $index => $word) {
-		if (unt\functions\is_empty($word))
+		if (\unt\functions\is_empty($word))
 			continue;
 
 		if (!$additional_params['only_bots'])
@@ -281,10 +234,10 @@ function search_users ($connection, $query, $additional_params = [
 		$data = $res->fetchAll(PDO::FETCH_ASSOC);
 		$temp = [];
 
-		foreach ($data as $index => $user_id) {
+		foreach ($data as $user_id) {
 			$user_id = $user_id["id"];
 
-			if (!in_array($temp, intval($user_id)))
+			if (!in_array(intval($user_id), $temp))
 			{
 				$temp[] = intval($user_id);
 
@@ -322,7 +275,7 @@ function get_friendship_state ($connection, $user_id, $check_id)
 	$res->execute([intval($user_id), intval($check_id), intval($check_id), intval($user_id)]);
 
 	// result of.
-	$data = $res->fetch(PDO::FETCH_ASSOC);
+	$data = $res->fetch(\PDO::FETCH_ASSOC);
 
 	// return array with state;
 	$result = [
@@ -350,36 +303,6 @@ function can_access_closed ($connection, $user_id, $select_id)
 	$user = new User(intval($select_id));
 
 	return $user->canAccessClosed();
-}
-
-/**
- * Check can you invite this user to a new chat or not
- * @return true/false
- *
- * Parameters:
- * $user_id - current user id.
- * $check_profile - User object with checking profile
-*/
-function can_invite_to_chat ($connection, $user_id, $check_profile) 
-{
-	if (!$check_profile->valid()) return false;
-
-	if ($check_profile->type === 'bot') {
-		if ($user_id === $check_profile->getOwnerId()) return true;
-
-		$can_inv = $check_profile->getSettings()->getSettingsGroup('privacy')->getGroupValue('can_invite_to_chats');
-
-		if ($can_inv === 0 || $can_inv === 1 || $can_inv === NULL) return true;
-	}
-
-	if (is_friends($connection, $user_id, $check_profile->getId()))
-	{
-		$can_inv = $check_profile->getSettings()->getSettingsGroup('privacy')->getGroupValue('can_invite_to_chats');
-
-		if ($can_inv === 0 || $can_inv === NULL) return true;
-	}
-
-	return false;
 }
 
 /**

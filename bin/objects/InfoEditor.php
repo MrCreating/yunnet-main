@@ -1,23 +1,25 @@
 <?php
 
+namespace unt\objects;
+
 /**
  * This class has only setters
  * and used for edit ENTITY editing
 */
 
-abstract class InfoEditor
+abstract class InfoEditor extends BaseObject
 {
 	// current editable user
-	protected $boundedEntity     = NULL;
-	protected $currentConnection = NULL;
+	protected Entity $boundedEntity;
 
 	// do not change this constructor...
 	public function __construct (Entity $boundedEntity)
 	{
+        parent::__construct();
+
 		if (!$boundedEntity->valid()) return;
 
-		$this->currentConnection = DataBaseManager::getConnection();
-		$this->boundedEntity     = $boundedEntity;
+		$this->boundedEntity = $boundedEntity;
 	}
 
 	public function getBoundEntity (): Entity

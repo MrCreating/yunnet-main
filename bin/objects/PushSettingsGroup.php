@@ -1,26 +1,25 @@
 <?php
 
-require_once __DIR__ . '/SettingsGroup.php';
+namespace unt\objects;
+
+use unt\platform\EventEmitter;
 
 /**
- * Class for Psuh settings
+ * Class for Push settings
 */
 
 class PushSettingsGroup extends SettingsGroup
 {
-	protected $currentConnection = NULL;
-	protected $eventEmitter      = NULL;
+	protected EventEmitter $eventEmitter;
 
 	private bool $notificationsEnabled;
 	private bool $soundEnabled;
 
-	public function __construct (Entity $user, DataBaseManager $connection, array $params = [])
+	public function __construct (Entity $user, array $params = [])
 	{
-		$this->currentEntity     = $user;
+		parent::__construct($user, Settings::PUSH_GROUP, $params);
 
-		$this->type              = "push";
-		$this->currentConnection = DataBaseManager::getConnection();
-		$this->eventEmitter      = new EventEmitter();
+		$this->eventEmitter = new EventEmitter();
 
 		$this->notificationsEnabled = $params['notifications'];
 		$this->soundEnabled         = $params['sound'];
@@ -33,9 +32,9 @@ class PushSettingsGroup extends SettingsGroup
 
 	public function setNotificationsEnabled (bool $enabled): PushSettingsGroup
 	{
-		if ($this->currentConnection->uncache('User_' . $this->currentEntity->getId())->prepare("UPDATE users.info SET settings_push_notifications = ? WHERE id = ? LIMIT 1;")->execute([intval(boolval($enabled)), intval($this->currentEntity->getId())]))
+		if ($this->currentConnection->prepare("UPDATE users.info SET settings_push_notifications = ? WHERE id = ? LIMIT 1;")->execute([intval($enabled), $this->entity->getId()]))
 		{
-			$this->notificationsEnabled = boolval($enabled);
+			$this->notificationsEnabled = $enabled;
 
 			$event = [
 				'event' => 'interface_event',
@@ -58,9 +57,9 @@ class PushSettingsGroup extends SettingsGroup
 
 	public function setSoundEnabled (bool $enabled): PushSettingsGroup
 	{
-		if ($this->currentConnection->uncache('User_' . $this->currentEntity->getId())->prepare("UPDATE users.info SET settings_push_sound = ? WHERE id = ? LIMIT 1;")->execute([intval(boolval($enabled)), intval($this->currentEntity->getId())]))
+		if ($this->currentConnection->prepare("UPDATE users.info SET settings_push_sound = ? WHERE id = ? LIMIT 1;")->execute([intval($enabled), intval($this->entity->getId())]))
 		{
-			$this->soundEnabled = boolval($enabled);
+			$this->soundEnabled = $enabled;
 
 			$event = [
 				'event' => 'interface_event',

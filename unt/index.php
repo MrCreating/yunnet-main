@@ -1,5 +1,8 @@
 <?php
 
+use unt\objects\Context;
+use unt\objects\Project;
+
 require_once PROJECT_ROOT . '/pages/page_templates.php';
 
 if (Context::get()->isMobile() && explode('.', strtolower($_SERVER['HTTP_HOST']))[0] !== 'm')

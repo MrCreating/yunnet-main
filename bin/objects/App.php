@@ -1,66 +1,63 @@
 <?php
 
-require_once __DIR__ . '/Token.php';
+namespace unt\objects;
 
 /**
  * Declares App object
 */
 
-class App
+class App extends BaseObject
 {
-	protected $id            = 0;
-	protected $creation_time = 0;
+	protected int $id;
+	protected int $creation_time;
 
-	private $owner_id          = NULL;
-	private $isValid           = NULL;
-	private $directAuthEnabled = NULL;
+	private int $owner_id;
+	private bool $isValid;
+	private bool $directAuthEnabled;
 
-	private $title       = NULL;
-	private $photo       = NULL;
-	private $description = NULL;
-
-	private $currentConnection = NULL;
+	private string $title;
+	private ?Photo $photo;
+	private string $description;
 
 	function __construct (int $app_id)
 	{
-		$this->currentConnection = DataBaseManager::getConnection();
+        parent::__construct();
 
-		$res = $this->currentConnection/*->cache("App_" . $app_id)*/->prepare("SELECT id, title, owner_id, description, photo_path, direct_auth, creation_time FROM apps.info WHERE id = ? AND is_deleted != 1 LIMIT 1");
+		$res = $this->currentConnection->prepare("SELECT id, title, owner_id, description, photo_path, direct_auth, creation_time FROM apps.info WHERE id = ? AND is_deleted != 1 LIMIT 1");
 		if ($res->execute([$app_id]))
 		{
-			$data = $res->fetch(PDO::FETCH_ASSOC);
+			$data = $res->fetch(\PDO::FETCH_ASSOC);
 
 			if ($data)
 			{
 				$this->isValid           = true;
-				$this->id                = intval($data["id"]);
-				$this->title             = strval($data["title"]);
-				$this->directAuthEnabled = boolval($data['direct_auth']);
-				$this->creation_time     = intval($data['creation_time']);
-				$this->description       = strval($data["description"]);
-
-				$this->owner_id = intval($data['owner_id']);
-				$this->photo    = $data['photo_path'] !== '' ? (new AttachmentsParser())->resolveFromQuery($data['photo_path']) : NULL;
+				$this->id                = (int) $data["id"];
+				$this->title             = (string) $data["title"];
+				$this->directAuthEnabled = (bool) $data['direct_auth'];
+				$this->creation_time     = (int) $data['creation_time'];
+				$this->description       = (string) $data["description"];
+                $this->owner_id          = (int) $data['owner_id'];
+				$this->photo             = $data['photo_path'] !== '' ? (new \unt\parsers\AttachmentsParser())->resolveFromQuery($data['photo_path']) : NULL;
 			}
 		}
 	}
 
 	public function valid (): bool
 	{
-		return boolval($this->isValid);
+		return $this->isValid;
 	}
 
 	public function getId (): int
 	{
-		return intval($this->id);
+		return $this->id;
 	}
 
 	public function getCreationTime (): int
 	{
-		return intval($this->creation_time);
+		return $this->creation_time;
 	}
 
-	public function getTokens (int $count = 100, int $offset = 0): array
+	public function getTokensList (int $count = 100, int $offset = 0): array
 	{
 		if ($count < 0)	$count = 0;
 		if ($count > 100) $count = 100;
@@ -71,13 +68,13 @@ class App
 		if (!$this->valid())
 			return $result;
 
-		$res = $this->currentConnection->prepare("SELECT id FROM apps.tokens WHERE is_deleted != 1 AND owner_id = ? AND app_id = ? LIMIT ".intval($offset).",".intval($count).";");
-		if ($res->execute([intval($_SESSION['user_id']), $this->getId()]))
+		$res = $this->currentConnection->prepare("SELECT id FROM apps.tokens WHERE is_deleted != 1 AND owner_id = ? AND app_id = ? LIMIT ".$offset.",".$count.";");
+		if ($res->execute([$_SESSION['user_id'], $this->getId()]))
 		{
-			$data = $res->fetchAll(PDO::FETCH_ASSOC);
-			foreach ($data as $index => $token_info)
+			$data = $res->fetchAll(\PDO::FETCH_ASSOC);
+			foreach ($data as $token_info)
 			{
-				$token = new Token($this, intval($token_info['id']));
+				$token = new Token($this, $token_info['id']);
 
 				if ($token->valid())
 					$result[] = $token;
@@ -89,9 +86,6 @@ class App
 
 	/**
 	 * Creates a token
-	 * @return Tokn instamce or NULL if creation has failed.
-	 *
-	 * Parameters:
 	 * @param $permissions - array of the permissions for the token.
 	 *
 	 * Permissions:
@@ -99,33 +93,32 @@ class App
 	 * 2 - messages
 	 * 3 - settings
 	 * 4 - management (create tokens, sessions, etc)
-	*/
+	 * @return Token instamce or NULL if creation has failed.
+	 *
+	 * Parameters:
+	 */
 	public function createToken (array $permissions = [1, 2, 3, 4]): ?Token
-	{
+    {
 		if (!$this->valid()) return NULL;
 
-		$token = substr(str_shuffle('abcdefghijklmnopqrstuvwxyz'.rand(100000, 999999).'abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz'.rand(1000, 9999999)), 0, 75);
+		$token = substr(str_shuffle('abcdefghij'.rand(100000, 999999).'klmnopqrstuvwxyz'.rand(100000, 999999).'abcdefghijklmnopqrstuvwxyz'.rand(100000, 999999).'abcdefghijklmnopqrstuvwxyz'.rand(1000, 9999999)), 0, 75);
 	
-		$res = $this->currentConnection->prepare("INSERT INTO apps.tokens (app_id, owner_id, token, permissions) VALUES (:app_id, :owner_id, :token, :permissions)");
+		$res = $this->currentConnection->prepare("INSERT INTO apps.tokens (app_id, owner_id, token, permissions) VALUES (?, ?, ?, ?)");
 
-		$res->bindParam(":app_id",      $this->getId(),       PDO::PARAM_INT);
-		$res->bindParam(":owner_id",    $_SESSION['user_id'], PDO::PARAM_INT);
-		$res->bindParam(":token",       $token,               PDO::PARAM_STR);
-		$res->bindParam(":permissions", implode('', $permissions), PDO::PARAM_STR);
-
-		if ($res->execute())
+		if ($res->execute([$this->getId(), $_SESSION['user_id'], $token, implode('', $permissions)]))
 		{
 			// if OK - resolves an id and return a token with id.
 			$res = $this->currentConnection->prepare("SELECT LAST_INSERT_ID() AS id");
 			if ($res->execute())
 			{
-                $token_id = intval($res->fetch(PDO::FETCH_ASSOC)["id"]);
+                $token_id = intval($res->fetch(\PDO::FETCH_ASSOC)["id"]);
 
 				$token = new Token($this, $token_id);
 
 				if (!$token->valid()) return NULL;
 
-				if ($token->setPermissions($permissions)->apply()) return $token;
+				if ($token->setPermissions($permissions)->apply())
+                    return $token;
 			}
 		}
 
@@ -134,7 +127,7 @@ class App
 
 	public function isDirectAuthAllowed (): bool
 	{
-		return boolval($this->directAuthEnabled);
+		return $this->directAuthEnabled;
 	}
 
 	public function getTitle (): string
@@ -164,7 +157,7 @@ class App
 		return $this->photo;
 	}
 
-	public function setPhoto (?Photo $photo): App
+	public function setPhoto (?Photo $photo = NULL): App
 	{
 		if ($photo && $photo->valid())
 			$this->photo = $photo;
@@ -188,8 +181,8 @@ class App
 
 	public function apply (): bool
 	{
-		$current_user_id  = intval($_SESSION['user_id']);
-		$current_owner_id = intval($this->getOwnerId());
+		$current_user_id  = $_SESSION['user_id'];
+		$current_owner_id = $this->getOwnerId();
 
 		if ($current_user_id !== $current_owner_id)
 			return false;
@@ -197,21 +190,18 @@ class App
 		$new_title  = $this->getTitle();
 		$current_id = $this->getId();
 
-		if (unt\functions\is_empty($new_title) || strlen($new_title) > 32)
+		if (\unt\functions\is_empty($new_title) || strlen($new_title) > 32)
 			return false;
 
-		$res = $this->currentConnection->uncache("App_" . $This->getId())->prepare("UPDATE apps.info SET title = :new_title WHERE id = :id LIMIT 1");
-		$res->bindParam(":new_title", $new_title, PDO::PARAM_STR);
-		$res->bindParam(":id",        $current_id,  PDO::PARAM_INT);
-
-		if ($res->execute())
+		$res = $this->currentConnection->prepare("UPDATE apps.info SET title = ? WHERE id = ? LIMIT 1");
+		if ($res->execute([$new_title, $current_id]))
 		{
 			$photo = $this->getPhoto();
 			if (!$photo)
 			{
-				$res = $this->currentConnection->uncache("App_" . $This->getId())->prepare("UPDATE apps.info SET photo_path = NULL WHERE id = :id LIMIT 1");
-				$res->bindParam(":id", $current_id, PDO::PARAM_INT);
-				$res->execute();
+				$res = $this->currentConnection->prepare("UPDATE apps.info SET photo_path = NULL WHERE id = ? LIMIT 1");
+
+                return $res->execute([$current_id]);
 			} else
 			{
 				if (!$photo->valid())
@@ -221,13 +211,10 @@ class App
 				if (!$query)
 					return false;
 
-				$res = $this->currentConnection->uncache("App_" . $This->getId())->prepare("UPDATE apps.info SET photo_path = :new_path WHERE id = :id LIMIT 1");
-				$res->bindParam(":new_path",  $query,      PDO::PARAM_STR);
-				$res->bindParam(":id",        $current_id, PDO::PARAM_INT);
-				$res->execute();
-			}
+				$res = $this->currentConnection->prepare("UPDATE apps.info SET photo_path = ? WHERE id = ? LIMIT 1");
 
-			return true;
+				return $res->execute([$query, $current_id]);
+			}
 		}
 
 		return false;
@@ -235,19 +222,19 @@ class App
 
 	public function delete (): bool
 	{
-		$current_user_id  = intval($_SESSION['user_id']);
-		$current_owner_id = intval($this->getOwnerId());
+		$current_user_id  = $_SESSION['user_id'];
+		$current_owner_id = $this->getOwnerId();
 
 		if ($current_user_id !== $current_owner_id)
 			return false;
 
 		$this->isValid = false;
 
-		return $this->currentConnection->uncache("App_" . $This->getId())->prepare("UPDATE apps.info SET is_deleted = 1 WHERE id = ? LIMIT 1;")->execute([$this->getId()]);
+		return $this->currentConnection->prepare("UPDATE apps.info SET is_deleted = 1 WHERE id = ? LIMIT 1;")->execute([$this->getId()]);
 	}
 
 	//////////////////////////////////////////
-	public static function create ($title): ?App
+	public static function create (string $title): ?App
 	{
 		$title    = trim($title);
 		$owner_id = intval($_SESSION['user_id']);
@@ -256,31 +243,24 @@ class App
 		if ($owner_id == 0) return NULL;
 
 		// checking title for empty and long-length.
-		if (unt\functions\is_empty($title) || strlen($title) > 64) return false;
+		if (\unt\functions\is_empty($title) || strlen($title) > 64) return NULL;
 
 		// inserting into DB and getting ID for app.
-		$res = DataBaseManager::getConnection()->prepare("INSERT INTO apps.info (owner_id, title, creation_time) VALUES (:owner_id, :title, :creation_time);");
-
-		$new_time = time();
-
-		$res->bindParam(":owner_id",      $owner_id, PDO::PARAM_INT);
-		$res->bindParam(":title",         $title,    PDO::PARAM_STR);
-		$res->bindParam(":creation_time", $new_time, PDO::PARAM_INT);
+		$res = \unt\platform\DataBaseManager::getConnection()->prepare("INSERT INTO apps.info (owner_id, title, creation_time) VALUES (?, ?, ?);");
 
 		// if created.
-		if ($res->execute())
+		if ($res->execute([$owner_id, $title, time()]))
 		{
-			$res = DataBaseManager::getConnection()->prepare("SELECT LAST_INSERT_ID();");
+			$res = \unt\platform\DataBaseManager::getConnection()->prepare("SELECT LAST_INSERT_ID();");
 			$res->execute();
 
-			$app_id = intval($res->fetch(PDO::FETCH_ASSOC)["LAST_INSERT_ID()"]);
+			$app_id = intval($res->fetch(\PDO::FETCH_ASSOC)["LAST_INSERT_ID()"]);
 
 			// return App instance.
 			if ($app_id > 0)
 			{
 				$app = new App($app_id);
-				if ($app->valid())
-					return $app;
+				if ($app->valid()) return $app;
 			}
 		}
 

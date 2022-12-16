@@ -1,13 +1,19 @@
 <?php
 
+namespace unt\functions\uploads;
+
 /**
  * This file contains all functions for 
  * working with the filsystem (upload etc)
 */
 
 // secret data.
-define('SERVER_KEY', 'hblgbeulniudnkvjneiudelkkeluhlifneoindlkmd');
-define('SERVER_IV', 984859739795879033);
+use unt\objects\Attachment;
+use unt\objects\Photo;
+use unt\platform\DataBaseManager;
+
+const SERVER_KEY = 'hblgbeulniudnkvjneiudelkkeluhlifneoindlkmd';
+const SERVER_IV = 984859739795879033;
 
 /**
  * Receives a dynamical expression coefficient
@@ -96,10 +102,10 @@ function fetch_upload ($connection, $query, $user_id)
 				if (!function_exists('create_theme'))
 					require __DIR__ . '/theming.php';
 
-				$theme = create_theme($connection, $user_id, $themeTitle, $themeDescription, intval($isPrivate));
+				$theme = \unt\functions\create_theme($connection, $user_id, $themeTitle, $themeDescription, intval($isPrivate));
 
-				update_theme_code($theme, $user_id, 'css', $oldCSSCode);
-				update_theme_code($theme, $user_id, 'js', $oldJSCode);
+				\unt\functions\update_theme_code($theme, $user_id, 'css', $oldCSSCode);
+				\unt\functions\update_theme_code($theme, $user_id, 'js', $oldJSCode);
 				break;
 			}
 

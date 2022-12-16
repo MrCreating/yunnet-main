@@ -2,30 +2,20 @@
 
 namespace unt\functions;
 
-use Context;
-use DataBaseManager;
+use unt\objects\Context;
+use unt\objects\Project;
+use unt\platform\Cache;
+use unt\platform\DataBaseManager;
 use PDO;
 
 /**
  * Initial and most used functions and operations
  */
 
-// connect the default modules
-require_once __DIR__ . '/objects/Request.php';
-require_once __DIR__ . '/objects/Context.php';
-require_once __DIR__ . '/objects/Letter.php';
-require_once __DIR__ . '/platform-tools/Cache.php';
-require_once __DIR__ . '/platform-tools/DataBaseManager.php';
-require_once __DIR__ . '/platform-tools/Data.php';
-require_once __DIR__ . '/platform-tools/event_manager.php';
-require_once __DIR__ . '/objects/User.php';
-require_once __DIR__ . '/objects/Bot.php';
-require_once __DIR__ . '/parsers/AttachmentsParser.php';
-
 // returns a page origin for CORS.
 function get_page_origin () 
 {
-	$link_without_params = (getenv('UNT_PRODUCTION') === '1' ? 'https://' : 'http://') . explode('/', explode('?', $_SERVER['HTTP_REFERER'])[0])[2];
+	$link_without_params = (Project::isProduction() ? 'https://' : 'http://') . explode('/', explode('?', $_SERVER['HTTP_REFERER'])[0])[2];
 	return substr($link_without_params, 0, strlen($link_without_params));
 }
 
@@ -211,7 +201,7 @@ function capitalize ($str, $encoding = "UTF-8"): string
 }
 
 // update online time
-function update_online_time ($connection, $old_time, $user_id)
+function update_online_time ($connection, $old_time, $user_id): bool
 {
 	$old_time = $old_time > 0 ? intval($old_time) : 0;
 

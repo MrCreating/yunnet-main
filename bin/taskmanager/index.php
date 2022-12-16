@@ -4,8 +4,6 @@
  * This is the monitor of errors
 */
 register_shutdown_function("handle_fatal_errors");
-if (!function_exists('send_message'))
-	require __DIR__ . '/../functions/messages.php';
 
 function handle_fatal_errors ()
 {

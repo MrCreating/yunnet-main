@@ -1,7 +1,12 @@
 <?php
-session_start();
 
-require_once __DIR__ . '/../../bin/objects/Session.php';
+use unt\objects\Context;
+use unt\objects\Letter;
+use unt\objects\Request;
+use unt\objects\Session;
+use unt\objects\User;
+
+session_start();
 
 // restore actions!
 if (isset(Request::get()->data['action']))

@@ -1,13 +1,15 @@
 <?php
 
+namespace unt\objects;
+
 /**
  * Class with request data.
- * It contain diffeent data from request to request/\
+ * It contain different data from request to request/\
 */
 
 class Request
 {
-	public $data = [];
+	public array $data = [];
 
 	public function __construct ()
 	{

@@ -1,12 +1,16 @@
 <?php
 
-class Letter
+namespace unt\objects;
+
+class Letter extends BaseObject
 {
 	private string $subject = '';
 	private string $text    = '';
 
 	public function __construct (string $subject = '', string $text = '')
 	{
+        parent::__construct();
+
 		$this->setSubject($subject)->setText($text);
 	}
 

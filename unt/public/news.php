@@ -1,6 +1,7 @@
 <?php
 
-require_once __DIR__ . "/../../bin/functions/wall.php";
+use unt\objects\Context;
+use unt\objects\Request;
 
 if (isset(Request::get()->data['action']))
 {
@@ -10,8 +11,7 @@ if (isset(Request::get()->data['action']))
 
 	switch ($action) {
 		case 'get_posts':
-			$posts = get_news($connection, Context::get()->getCurrentUser()->getId(), Context::get()->getCurrentUser()->getId());
-
+			$posts = Context::get()->getCurrentUser()->getNewsList();
 			die(json_encode($posts));
 		break;
 		

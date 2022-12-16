@@ -4,6 +4,11 @@
  * Profile editing page and actions.
 */
 
+use unt\objects\Context;
+use unt\objects\Photo;
+use unt\objects\Request;
+use unt\parsers\AttachmentsParser;
+
 if (isset(Request::get()->data['action']))
 {
 	$action = strtolower(Request::get()->data['action']);
@@ -19,10 +24,8 @@ if (isset(Request::get()->data['action']))
 				{
 					switch ($changed)
 					{
-						case -1:
-							die(json_encode(array('error'=>1, 'message'=>Context::get()->getLanguage()->bad_data_fn)));
-						break;
 						case -2:
+						case -1:
 							die(json_encode(array('error'=>1, 'message'=>Context::get()->getLanguage()->bad_data_fn)));
 						break;
 						case -3:
@@ -40,10 +43,8 @@ if (isset(Request::get()->data['action']))
 				{
 					switch ($changed)
 					{
-						case -1:
-							die(json_encode(array('error'=>1, 'message'=>Context::get()->getLanguage()->bad_data_ln)));
-						break;
 						case -2:
+						case -1:
 							die(json_encode(array('error'=>1, 'message'=>Context::get()->getLanguage()->bad_data_ln)));
 						break;
 						case -3:

@@ -1,7 +1,8 @@
 <?php
 
-require_once __DIR__ . '/SettingsGroup.php';
-require_once __DIR__ . '/CookieManager.php';
+namespace unt\objects;
+
+use Cassandra\Set;
 
 /**
  * Class for Account settings
@@ -9,22 +10,17 @@ require_once __DIR__ . '/CookieManager.php';
 
 class AccountSettingsGroup extends SettingsGroup
 {
-	protected $currentConnection = NULL;
-
-	private $balance;
+	private CookieManager $balance;
 
 	private bool   $closedProfile;
 	private string $currentLangId;
 
-	public function __construct (Entity $user, DataBaseManager $connection, array $params = [])
+    public function __construct (Entity $user, array $params = [])
 	{
-		$this->currentEntity     = $user;
-		
-		$this->type              = "account";
-		$this->currentConnection = DataBaseManager::getConnection();
+        parent::__construct($user, Settings::ACCOUNT_GROUP, $params);
 
-		$this->currentLangId = $params['lang_id'];
-		$this->closedProfile = $params['is_closed'];
+		$this->currentLangId = (string) $params['lang_id'];
+		$this->closedProfile = (bool) (int) $params['is_closed'];
 
 		$this->balance = new CookieManager($user, $params['cookies'], $params['half_cookies']);
 	}
@@ -36,14 +32,14 @@ class AccountSettingsGroup extends SettingsGroup
 
 	public function isProfileClosed (): bool
 	{
-		return boolval($this->closedProfile);
+		return $this->closedProfile;
 	}
 
 	public function setProfileClosed (bool $is_closed): AccountSettingsGroup
 	{
-		if ($this->currentConnection->uncache('User_' . $this->currentEntity->getId())->prepare("UPDATE users.info SET settings_account_is_closed = ? WHERE id = ? LIMIT 1;")->execute([intval(boolval($is_closed)), intval($_SESSION['user_id'])]))
+		if ($this->currentConnection->prepare("UPDATE users.info SET settings_account_is_closed = ? WHERE id = ? LIMIT 1;")->execute([$is_closed, $_SESSION['user_id']]))
 		{
-			$this->closedProfile = boolval($is_closed);
+			$this->closedProfile = $is_closed;
 		}
 
 		return $this;
@@ -51,16 +47,16 @@ class AccountSettingsGroup extends SettingsGroup
 
 	public function getLanguageId (): string
 	{
-		return strval($this->currentLangId);
+		return $this->currentLangId;
 	}
 
 	public function setLanguageId (string $newLangId): AccountSettingsGroup
 	{
-		$langs = ["ru", "en"];
+		$languages_list = ["ru", "en"];
 
-		if (in_array($newLangId, $langs))
+		if (in_array($newLangId, $languages_list))
 		{
-			if ($this->currentConnection->uncache('User_' . $this->currentEntity->getId())->prepare("UPDATE users.info SET settings_account_language = ? WHERE id = ? LIMIT 1;")->execute([$newLangId, intval($_SESSION['user_id'])]))
+			if ($this->currentConnection->prepare("UPDATE users.info SET settings_account_language = ? WHERE id = ? LIMIT 1;")->execute([$newLangId, $_SESSION['user_id']]))
 			{
 				$this->currentLangId = $newLangId;
 			}
@@ -76,8 +72,8 @@ class AccountSettingsGroup extends SettingsGroup
 				'cookies'      => $this->getBalance()->getCookiesCount(),
 				'half_cookies' => $this->getBalance()->getBiteCookiesCount()
 			],
-			'is_closed' => intval($this->isProfileClosed()),
-			'language'  => strval($this->getLanguageId())
+			'is_closed' => (int) $this->isProfileClosed(),
+			'language'  => $this->getLanguageId()
 		];
 	}
 }

@@ -1,54 +1,56 @@
 <?php
 
-require_once __DIR__ . '/Entity.php';
-require_once __DIR__ . '/Settings.php';
-require_once __DIR__ . '/Dialog.php';
+namespace unt\objects;
+
+/**
+ * Bot entity object
+ */
 
 class Bot extends Entity 
 {
-	private $currentConnection = NULL;
-	private $settings          = NULL;
+    ////////////////////////////
+    const ENTITY_TYPE = 'bot';
+    ////////////////////////////
 
-	private $screenName = NULL;
+	private ?Settings $settings;
 
-	private $name     = NULL;
-	private $owner_id = NULL;
-	private $photo    = NULL;
+	private ?string $screenName = NULL;
+
+	private string $name;
+	private int $owner_id;
+	private ?Photo $photo;
 
 	function __construct (int $bot_id)
 	{
-		$this->currentConnection = DataBaseManager::getConnection();
+        parent::__construct($bot_id);
 
-		if ($user_id === 0) return;
+		if ($bot_id === 0) return;
 
-		$res = $this->currentConnection/*->cache("Bot_" . $bot_id)*/->prepare("SELECT id, name, owner_id, screen_name, photo_path, settings, is_verified, is_banned FROM bots.info WHERE id = ? AND is_deleted = 0 LIMIT 1");
+		$res = $this->currentConnection->prepare("SELECT id, name, owner_id, screen_name, photo_path, settings, is_verified, is_banned FROM bots.info WHERE id = ? AND is_deleted = 0 LIMIT 1");
 
 		if ($res->execute([$bot_id]))
 		{
-			$user_info = $res->fetch(PDO::FETCH_ASSOC);
+			$user_info = $res->fetch(\PDO::FETCH_ASSOC);
 			if ($user_info)
 			{
-				$user_info = new Data($user_info);
-
 				$this->isValid  = true;
-				$this->id = intval($user_info->id);
 
-				if ($user_info->screen_name !== "")
-					$this->screenName = strval($user_info->screen_name);
+				$this->id = (int) $user_info['id'];
+                $this->name = (string) $user_info['name'];
+                $this->settings = new \unt\objects\Settings($this, $user_info);
 
-				$this->name = strval($user_info->name);
+				if ($user_info['screen_name'] !== "")
+					$this->screenName = (string) $user_info['screen_name'];
 
-				$this->settings = new Settings($this, $user_info);
-
-				$this->isBanned = boolval(intval($user_info->is_banned));
-				$this->isVerified = boolval(intval($user_info->is_verified));
+				$this->isBanned = (int) $user_info['is_banned'];
+				$this->isVerified = (int) $user_info['is_verified'];
 
 				$this->owner_id = intval($user_info->owner_id);
 
-				if ($user_info->photo_path !== "")
+				if ($user_info['photo_path'] !== "")
 				{
-					$photo = (new attachmentsParser())->resolveFromQuery($user_info->photo_path);
-					if ($photo)
+					$photo = (new \unt\parsers\AttachmentsParser())->resolveFromQuery($user_info['photo_path']);
+					if ($photo && $photo->getType() === Photo::ATTACHMENT_TYPE)
 						$this->photo = $photo;
 				}
 			}
@@ -61,19 +63,19 @@ class Bot extends Entity
 
 		if (intval($_SESSION['user_id']) === $this->getOwnerId()) return true;
 
-		$invitation = $this->getSettings()->getSettingsGroup('privacy')->getGroupValue('can_invite_to_chats');
-		if (!$invitation || $invitation === 0 || $invitation === 1) return true;
+		$invitation = $this->getSettings()->getSettingsGroup(Settings::PRIVACY_GROUP)->getGroupValue('can_invite_to_chats');
+		if (!$invitation || $invitation === 1) return true;
 
 		return false;
 	}
 
-	public function getCurrentPhoto ()
-	{
+	public function getCurrentPhoto (): ?Photo
+    {
 		return $this->photo;
 	}
 
-	public function getScreenName ()
-	{
+	public function getScreenName (): ?string
+    {
 		return $this->screenName;
 	}
 
@@ -89,7 +91,7 @@ class Bot extends Entity
 
 	public function getType (): string
 	{
-		return "bot";
+		return self::ENTITY_TYPE;
 	}
 
 	public function setName (string $name): Bot
@@ -101,6 +103,8 @@ class Bot extends Entity
 
 	public function setPhoto (?Photo $photo = NULL): Bot
 	{
+        if ($photo && !$photo->valid()) return $this;
+
 		$this->photo = $photo;
 
 		return $this;
@@ -110,25 +114,19 @@ class Bot extends Entity
 	{
 		$new_name = trim($this->name);
 
-		if (unt\functions\is_empty($new_name) || strlen($new_name) > 64) return false;
+		if (\unt\functions\is_empty($new_name) || strlen($new_name) > 64) return false;
 		if (preg_match("/[^a-zA-Zа-яА-ЯёЁ'-@$*#!%\d ]/ui", $new_name)) return false;
 
-		$res = $this->currentConnection->prepare("UPDATE bots.info SET name = :new_name WHERE id = :id AND is_deleted = 0 LIMIT 1");
+		$res = $this->currentConnection->prepare("UPDATE bots.info SET name = ? WHERE id = ? AND is_deleted = 0 LIMIT 1");
 
-		$res->bindParam(":new_name", $new_name,      PDO::PARAM_STR);
-		$res->bindParam(":id",       $this->getId(), PDO::PARAM_INT);
-
-		if ($res->execute())
+		if ($res->execute([$new_name, $this->getId()]))
 		{
 			if ($this->photo && !$this->photo->valid()) return false;
 
 			$query = $this->photo->getQuery();
-			$res = DataBaseManager::getConnection()->prepare("UPDATE bots.info SET photo_path = :query WHERE id = :id AND is_deleted = 0 LIMIT 1;");
+			$res = \unt\platform\DataBaseManager::getConnection()->prepare("UPDATE bots.info SET photo_path = ? WHERE id = ? AND is_deleted = 0 LIMIT 1;");
 
-			$res->bindParam(":query", $query,         PDO::PARAM_STR);
-			$res->bindParam(":id",    $this->getId(), PDO::PARAM_INT);
-
-			if ($res->execute()) return true;
+			if ($res->execute([$query, $this->getId()])) return true;
 		}
 
 		return false;
@@ -136,10 +134,10 @@ class Bot extends Entity
 
 	public function getRelationsState (int $send_id = 0): int
 	{
-		$res = $this->currentConnection/*->cache("Bot_relations_" . $send_id)*/->prepare("SELECT state FROM users.bot_relations WHERE user_id = ? AND bot_id = ? LIMIT 1");
+		$res = $this->currentConnection->prepare("SELECT state FROM users.bot_relations WHERE user_id = ? AND bot_id = ? LIMIT 1");
 		if ($res->execute([$send_id, $this->getId()]))
 		{
-			return intval($res->fetch(PDO::FETCH_ASSOC)["state"]);
+			return intval($res->fetch(\PDO::FETCH_ASSOC)["state"]);
 		}
 
 		return 0;
@@ -199,24 +197,23 @@ class Bot extends Entity
 
 		if (in_array("can_write_messages", $resultedFields)) 
 		{
-			$dialog = new Dialog('b' . $this->getId());
+			//$dialog = new Dialog('b' . $this->getId());
 
-			$result['can_write_messages'] = $dialog->canWrite();
+			$result['can_write_messages'] = false;//$dialog->canWrite();
 		}
 		if (in_array("can_write_on_wall", $resultedFields))
 		{
-			if (!function_exists('can_write_posts')) require __DIR__ . '/../functions/wall.php';
+			if (!function_exists('can_write_posts'))
+                require __DIR__ . '/../functions/wall.php';
 
-			$objectId = $this->type === "bot" ? ($this->getId() * -1) : $this->getId();
+			$objectId = $this->getType() === Bot::ENTITY_TYPE ? ($this->getId() * -1) : $this->getId();
 
 			$result['can_write_on_wall'] = can_write_posts($this->currentConnection, intval($_SESSION['user_id']), $objectId);
 		}
 		if (in_array("can_invite_to_chat", $resultedFields))
 		{
-			if (!function_exists('can_invite_to_chat')) require __DIR__ . '/../functions/users.php';
-
-			$result['can_invite_to_chat'] = can_invite_to_chat($this->currentConnection, intval($_SESSION['user_id']), $this);
-		}
+			$result['can_invite_to_chat'] = false;
+        }
 		if (in_array('main_photo_as_object', $resultedFields))
 		{
 			if ($this->getCurrentPhoto() !== NULL)
@@ -224,9 +221,7 @@ class Bot extends Entity
 		}
 		if (in_array("bot_can_write_messages", $resultedFields))
 		{
-			if (!function_exists('is_chat_allowed')) require __DIR__ . '/../functions/messages.php';
-
-			$result['bot_can_write_messages'] = is_chat_allowed($this->currentConnection, intval($_SESSION['user_id']), $this->getId());
+			$result['bot_can_write_messages'] = false; //is_chat_allowed($this->currentConnection, intval($_SESSION['user_id']), $this->getId());
 		}
 
 		if (!$this->valid())
@@ -252,12 +247,12 @@ class Bot extends Entity
 	{
 		$result = [];
 
-		$connection = DataBaseManager::getConnection();
+		$connection = \unt\platform\DataBaseManager::getConnection();
 
-		$res = DataBaseManager::getConnection()->prepare("SELECT DISTINCT id FROM bots.info WHERE owner_id = ? AND is_deleted = 0 LIMIT 30");
+		$res = \unt\platform\DataBaseManager::getConnection()->prepare("SELECT DISTINCT id FROM bots.info WHERE owner_id = ? AND is_deleted = 0 LIMIT 30");
 		if ($res->execute([intval($_SESSION['user_id'])]))
 		{
-			$data = $res->fetchAll(PDO::FETCH_ASSOC);
+			$data = $res->fetchAll(\PDO::FETCH_ASSOC);
 			foreach ($data as $info) {
 				$bot_id = intval($info['id']);
 
@@ -276,7 +271,7 @@ class Bot extends Entity
 
 		$bot_name = trim($name);
 
-		if (unt\functions\is_empty($bot_name) || strlen($bot_name) > 64) return NULL;
+		if (\unt\functions\is_empty($bot_name) || strlen($bot_name) > 64) return NULL;
 
 		// only allowed letters and digits, space, and some symbols.
 		if (preg_match("/[^a-zA-Zа-яА-ЯёЁ'-@$*#!%\d ]/ui", $bot_name)) return NULL;
@@ -290,20 +285,15 @@ class Bot extends Entity
 			]
 		];
 
-		$res = DataBaseManager::getConnection()->prepare("INSERT INTO bots.info (name, owner_id, creation_time, settings) VALUES (:name, :owner_id, :cr_time, :settings)");
+		$res = \unt\platform\DataBaseManager::getConnection()->prepare("INSERT INTO bots.info (name, owner_id, creation_time, settings) VALUES (?, ?, ?, ?)");
 
-		$res->bindParam(":name",     $bot_name,              PDO::PARAM_STR);
-		$res->bindParam(":owner_id", $owner_id,              PDO::PARAM_INT);
-		$res->bindParam(":cr_time",  time(),                 PDO::PARAM_INT);
-		$res->bindParam(":settings", json_encode($settings), PDO::PARAM_STR);
-
-		if ($res->execute())
+		if ($res->execute([$bot_name, intval($_SESSION['user_id']), time(), json_encode($settings)]))
 		{
-			$res = DataBaseManager::getConnection()->prepare("SELECT LAST_INSERT_ID()");
+			$res = \unt\platform\DataBaseManager::getConnection()->prepare("SELECT LAST_INSERT_ID()");
 
 			if ($res->execute())
 			{
-				$bot_id = intval($res->fetch(PDO::FETCH_ASSOC)["LAST_INSERT_ID()"]);
+				$bot_id = intval($res->fetch(\PDO::FETCH_ASSOC)["LAST_INSERT_ID()"]);
 
 				$bot = new Bot($bot_id);
 				if ($bot->valid())

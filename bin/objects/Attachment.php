@@ -1,16 +1,18 @@
 <?php
 
+namespace unt\objects;
+
 /**
  * Main attachment class
 */
 
-abstract class Attachment
+abstract class Attachment extends BaseObject
 {
-	protected $isValid = false;
+	protected bool $isValid = false;
 
 	public function valid (): bool
 	{
-		return boolval($this->isValid);
+		return $this->isValid;
 	}
 
 	abstract public function toArray (): array;

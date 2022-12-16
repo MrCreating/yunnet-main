@@ -1,20 +1,25 @@
 <?php
 
+namespace unt\objects;
+
 /**
  * Main entity class
 */
-abstract class Entity 
+abstract class Entity extends BaseObject
 {
-	protected $id          = 0;
-	protected $accessLevel = 0;
-	protected $localRating = 0;
+	protected int $id          = 0;
+	protected int $accessLevel = 0;
+	protected int $localRating = 0;
 
-	protected $isBanned   = false;
-	protected $isVerified = false;
-	protected $isValid    = false;
+	protected bool $isBanned   = false;
+	protected bool $isVerified = false;
+	protected bool $isValid    = false;
 
 	// only int constructor
-	abstract function __construct (int $user_id);
+	public function __construct (int $user_id)
+    {
+        parent::__construct();
+    }
 
 	// this method must return a string with entity type.
 	abstract public function getType (): string;
@@ -54,27 +59,25 @@ abstract class Entity
 
 	///////////////////////////////////////////////////
 	public static function findById (int $user_id): ?Entity
-	{
-		$entity = $user_id < 0 ? new Bot($user_id * -1) : new User($user_id);
+    {
+		$entity = $user_id > 0 ? new User($user_id) : new Bot($user_id);
 
-		if (!$entity->valid()) $entity = NULL;
-
-		return $entity;
+		return $entity->valid() ? $entity : NULL;
 	}
 
 	public static function runAs (int $user_id, callable $callback): bool
 	{
-		if (Entity::findById($user_id) === NULL) return false;
+		if (static::findById($user_id) === NULL) return false;
 
 		$oldContext = Context::get();
-		$oldSession = $oldContext->getCurrentSession();
+		//$oldSession = Context::get()->getCurrentSession();
 
 		$session = Session::start($user_id)->setAsCurrent();
 
 		try 
 		{
 			$callback(Context::get());
-		} catch (Exception $e)
+		} catch (\Exception $e)
 		{
 		}
 
@@ -91,28 +94,23 @@ abstract class Entity
 
 		if (substr($screen_name, 0, 2) === "id")
 		{
-			$entity_id = intval(substr($screen_name, 2, strlen($screen_name)));
+			$entity_id = (int) substr($screen_name, 2, strlen($screen_name));
 		}
 		if (substr($screen_name, 0, 3) === "bot")
 		{
-			$entity_id = intval(substr($screen_name, 3, strlen($screen_name))) * -1;
+			$entity_id = ((int) substr($screen_name, 3, strlen($screen_name))) * -1;
 		}
 
 		if ($entity_id === 0)
 		{
-			$res = DataBaseManager::getConnection()->prepare('SELECT id FROM users.info WHERE screen_name = ? UNION SELECT IF(id != "", id * -1, NULL) FROM bots.info WHERE screen_name = ? LIMIT 1');
-
+			$res = \unt\platform\DataBaseManager::getConnection()->prepare('SELECT id FROM users.info WHERE screen_name = ? UNION SELECT IF(id != "", id * -1, NULL) FROM bots.info WHERE screen_name = ? LIMIT 1');
 			if ($res->execute([$screen_name, $screen_name]))
 			{
-				$entity_id = intval($res->fetch(PDO::FETCH_ASSOC)['id']);
+				$entity_id = intval($res->fetch(\PDO::FETCH_ASSOC)['id']);
 			}
 		}
 
-		$entity = Entity::findById($entity_id);
-
-		if ($entity) return $entity;
-
-		return NULL;
+		return $entity_id > 0 ? User::findById($entity_id) : Bot::findById($entity_id);
 	}
 }
 

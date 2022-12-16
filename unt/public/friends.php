@@ -1,8 +1,9 @@
 <?php
-require_once __DIR__ . "/../../bin/functions/users.php";
-require_once __DIR__ . '/../../bin/functions/users.php';
 
 // large actions handle here.
+use unt\objects\Context;
+use unt\objects\Request;
+
 if (isset(Request::get()->data["action"]))
 {
 	$action = strtolower(Request::get()->data["action"]);

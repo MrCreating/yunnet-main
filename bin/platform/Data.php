@@ -1,9 +1,13 @@
 <?php
 
-class Data
+namespace unt\platform;
+
+class Data extends \unt\objects\BaseObject
 {
-	function __construct ($fields = [])
+	function __construct (array $fields = [])
 	{
+        parent::__construct();
+
 		foreach ($fields as $index => $value)
 		{
 			if (is_array($value))

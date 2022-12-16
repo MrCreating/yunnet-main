@@ -3,7 +3,6 @@ ini_set("display_errors", 0);
 error_reporting(0);
 
 require __DIR__ . '/bin/base_functions.php';
-require __DIR__ . '/bin/functions/messages.php';
 
 $connection = DataBaseManager::getConnection();
 

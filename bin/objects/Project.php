@@ -1,76 +1,91 @@
 <?php
 
+namespace unt\objects;
+
+use Exception;
+use Memcached;
+use unt\platform\Cache;
+
 /**
  * THIS IS A CONFIG CLASS
  * IT CONTROLS ALL PROJECT INFO
  * DO NOT CONSTRUCT IT WITHOUT NEEDED
 */
 
-class Project
+class Project extends BaseObject
 {
-	// current yunNet. version
-	public const VERSION = 6;
+    // current yunNet. version
+    public const VERSION = 6;
 
-	// memcached IP
-	public const CACHE_IP = "memcached";
+    // memcached IP
+    public const CACHE_IP = "memcached";
 
-	// memcached PORT
-	public const CACHE_PORT = 11211;
+    // memcached PORT
+    public const CACHE_PORT = 11211;
 
-	// default DB username
-	//public const DB_USERNAME = "root";
+    public static function getConnectionHead(): string
+    {
+        return (getenv('UNT_PRODUCTION') === '1' ? 'https://' : 'http://');
+    }
 
-	// default DB password
-	//public const DB_PASSWORD = "default-prod-unt-user-iA22021981_";
+    public static function getProjectDomain(): string
+    {
+        if (getenv("UNT_PRODUCTION") === '1') return 'yunnet.ru';
 
-	// test DB password
-	//public const DB_TEST_PASSWORD = "unt-user-test-pc2021_die";
+        return 'localhost';
+    }
 
-	public static function getConnectionHead ()
-	{
-		return (getenv('UNT_PRODUCTION') === '1' ? 'https://' : 'http://');
-	}
+    public static function getDefaultDomain(): string
+    {
+        return self::getConnectionHead() . self::getProjectDomain();
+    }
 
-	public static function getProjectDomain () 
-	{
-		if (getenv("UNT_PRODUCTION") === '1') return 'yunnet.ru';
+    public static function getMobileDomain(): string
+    {
+        return self::getConnectionHead() . "m." . self::getProjectDomain();
+    }
 
-		return 'localhost';
-	}
+    public static function getAttachmentsDomain(): string
+    {
+        return "https://d-1.yunnet.ru";
+    }
 
-	public static function getDefaultDomain ()
-	{
-		return self::getConnectionHead() . self::getProjectDomain();
-	}
+    public static function getDevDomain(): string
+    {
+        return self::getConnectionHead() . "dev." . self::getProjectDomain();
+    }
 
-	public static function getMobileDomain ()
-	{
-		return self::getConnectionHead() . "m." . self::getProjectDomain();
-	}
+    public static function getThemesDomain(): string
+    {
+        return self::getConnectionHead() . "themes." . self::getProjectDomain();
+    }
 
-	public static function getAttachmentsDomain ()
-	{
-		return "https://d-1.yunnet.ru";
-	}
+    public static function toggleClose(): bool
+    {
+        $result = self::isClosed();
 
-	public static function getDevDomain ()
-	{
-		return self::getConnectionHead() . "dev." . self::getProjectDomain();
-	}
+        Cache::getCacheServer()->set('closed_project', strval(intval(!$result)));
 
-	public static function getThemesDomain ()
-	{
-		return self::getConnectionHead() . "themes." . self::getProjectDomain();
-	}
+        return !$result;
+    }
+
+    public static function toggleRegistrationClose(): bool
+    {
+        $result = Project::isRegisterClosed();
+
+        Cache::getCacheServer()->set('closed_register', strval(intval(!$result)));
+
+        return !$result;
+    }
 
 	public static function isClosed (): bool
 	{
-		return false;
+        return intval(Cache::getCacheServer()->get('closed_project'));
 	}
 
 	public static function isRegisterClosed (): bool
 	{
-		return false;
+        return intval(Cache::getCacheServer()->get('closed_register'));
 	}
 
 	public static function getRegisteredUsersCount (): int
@@ -88,7 +103,7 @@ class Project
 		return 0;
 	}
 
-	public static function isDefaultLink ($url): bool
+	public static function isDefaultLink (string $url): bool
 	{
 		return in_array($url, [
 			'/',         '/notifications', '/friends',
@@ -116,9 +131,44 @@ class Project
 		return Entity::findByScreenName($link) != NULL;
 	}
 
+    public static function isProduction (): bool
+    {
+        return getenv('UNT_PRODUCTION') == '1';
+    }
+
+    public static function getFiles (string $filePath = PROJECT_ROOT): array
+    {
+        $directory = opendir($filePath);
+        $result = [];
+
+        $i = 0;
+        while (false !== ($file = readdir($directory)))
+        {
+            if ($file === '.' || $file === '..') continue;
+
+            $i++;
+
+            $result[] = [
+                'name' => $file,
+                'type' => is_dir($filePath . $file) ? "directory" : "file",
+                'id'   => $i
+            ];
+        }
+
+        closedir($directory);
+
+        return $result;
+    }
+
 	/////////////////////////////////////////////////////////
-	public function __construct ()
+
+    /**
+     * @throws Exception
+     */
+    public function __construct ()
 	{
+        parent::__construct();
+
 		throw new Exception('Unable to create STATIC class');
 	}
 }

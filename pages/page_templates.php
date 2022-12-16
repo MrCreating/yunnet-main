@@ -1,5 +1,7 @@
 <?php
 
+use unt\objects\Project;
+
 function default_page_template ($is_mobile, $lang = "en", $user): string
 {
 	$userlevel  = $user ? $user->getAccessLevel() : 0;

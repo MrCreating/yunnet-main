@@ -1,6 +1,8 @@
 <?php
 
-require_once __DIR__ . '/SettingsGroup.php';
+namespace unt\objects;
+
+use unt\parsers\AttachmentsParser;
 
 /**
  * Class for Theming settings
@@ -8,20 +10,15 @@ require_once __DIR__ . '/SettingsGroup.php';
 
 class ThemingSettingsGroup extends SettingsGroup
 {
-	protected $currentConnection = NULL;
-
-	private $currentTheme;
+	private ?Theme $currentTheme;
 
 	private bool  $JSAllowed;
 	private bool  $newDesignUsed;
 	private array $menuItemIds;
 
-	public function __construct (Entity $user, DataBaseManager $connection, array $params = [])
+	public function __construct (Entity $user, array $params = [])
 	{
-		$this->currentEntity     = $user;
-
-		$this->type              = "theming";
-		$this->currentConnection = DataBaseManager::getConnection();
+		parent::__construct($user, Settings::THEMING_GROUP, $params);
 
 		$this->newDesignUsed = $params['new_design'];
 		$this->JSAllowed     = $params['js_allowed'];
@@ -38,15 +35,15 @@ class ThemingSettingsGroup extends SettingsGroup
 		{
 			$item = intval($menu_ids[$index]);
 			if (!$item)
-				$item = intval($menu_id);
+				$item = $menu_id;
 
-			if (!in_array(intval($item), $item_ids))
-				$item_ids[] = intval($item);
+			if (!in_array($item, $item_ids))
+				$item_ids[] = $item;
 		}
 
 		if (count($menu_ids) != count($default_item_ids))
 		{
-			foreach ($default_item_ids as $index => $menu_id) {
+			foreach ($default_item_ids as $menu_id) {
 				if (!in_array($menu_id, $item_ids))
 					$item_ids[] = $menu_id;
 			}
@@ -67,9 +64,9 @@ class ThemingSettingsGroup extends SettingsGroup
 
 	public function setJSAllowance (bool $jsAllowed): ThemingSettingsGroup
 	{
-		if ($this->currentConnection->uncache('User_' . $this->currentEntity->getId())->prepare("UPDATE users.info SET settings_theming_js_allowed = ? WHERE id = ? LIMIT 1;")->execute([intval(boolval($jsAllowed)), intval($_SESSION['user_id'])]))
+		if ($this->currentConnection->prepare("UPDATE users.info SET settings_theming_js_allowed = ? WHERE id = ? LIMIT 1;")->execute([intval($jsAllowed), intval($_SESSION['user_id'])]))
 		{
-			$this->JSAllowed = boolval($jsAllowed);
+			$this->JSAllowed = $jsAllowed;
 		}
 
 		return $this;
@@ -92,7 +89,7 @@ class ThemingSettingsGroup extends SettingsGroup
 		{
 			$item = intval($menuItemIds[$index]);
 			if (!$item)
-				$item = intval($menu_id);
+				$item = $menu_id;
 
 			if (!in_array($item, $item_ids))
 				$item_ids[] = $item;
@@ -100,13 +97,13 @@ class ThemingSettingsGroup extends SettingsGroup
 
 		if (count($menuItemIds) != count($default_item_ids))
 		{
-			foreach ($default_item_ids as $index => $menu_id) {
+			foreach ($default_item_ids as $menu_id) {
 				if (!in_array($menu_id, $item_ids))
 					$item_ids[] = $menu_id;
 			}
 		}
 
-		if ($this->currentConnection->uncache('User_' . $this->currentEntity->getId())->prepare("UPDATE users.info SET settings_theming_menu_items = ? WHERE id = ? LIMIT 1;")->execute([implode(',', $item_ids), intval($_SESSION['user_id'])]))
+		if ($this->currentConnection->prepare("UPDATE users.info SET settings_theming_menu_items = ? WHERE id = ? LIMIT 1;")->execute([implode(',', $item_ids), intval($_SESSION['user_id'])]))
 		{
 			$this->menuItemIds = $item_ids;
 
@@ -123,9 +120,9 @@ class ThemingSettingsGroup extends SettingsGroup
 
 	public function useNewDesign (bool $use): ThemingSettingsGroup
 	{
-		if ($this->currentConnection->uncache('User_' . $this->currentEntity->getId())->prepare("UPDATE users.info SET settings_theming_new_design = ? WHERE id = ? LIMIT 1;")->execute([intval(boolval($use)), intval($_SESSION['user_id'])]))
+		if ($this->currentConnection->prepare("UPDATE users.info SET settings_theming_new_design = ? WHERE id = ? LIMIT 1;")->execute([intval($use), intval($_SESSION['user_id'])]))
 		{
-			$this->newDesignUsed = boolval($use);
+			$this->newDesignUsed = $use;
 		}
 
 		return $this;

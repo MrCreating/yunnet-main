@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/Attachment.php';
+namespace unt\objects;
 
 /**
  * Poll class
@@ -8,40 +8,35 @@ require_once __DIR__ . '/Attachment.php';
 
 class Poll extends Attachment
 {
-	private $owner_id   = 0;
-	private $poll_id    = 0;
-	private $access_key = 0;
+    ///////////////////////////////////////
+    const ATTACHMENT_TYPE = 'poll';
+    ///////////////////////////////////////
 
-	private $can_revote       = false;
-	private $can_multi_select = false;
-	private $is_anonymous     = false;
-	private $poll_title       = '';
+	private int $owner_id;
+	private int $poll_id;
+	private string $access_key;
 
-	private $creation_time    = 0;
-	private $end_time         = 0;
-	private $voted_count      = 0;
+	private bool $can_re_vote      = false;
+	private bool $can_multi_select = false;
+	private bool $is_anonymous     = false;
 
-	private $currentConnection = false;
+	private bool $poll_title;
 
-	private $currentVariants   = [];
+	private int $creation_time;
+	private int $end_time;
+	private int $voted_count = 0;
 
-	function __construct ($owner_id, $poll_id, $access_key)
+	private array $currentVariants = [];
+
+	function __construct (int $owner_id, int $poll_id, string $access_key)
 	{
-		$this->currentConnection = DataBaseManager::getConnection();
+        parent::__construct();
 
-		$res = $this->currentConnection->prepare("SELECT polls.info.id, owner_id, access_key, title, isAnonymous, canRevote, canMultiSelect, endTime, creationTime, COUNT(DISTINCT user_id) AS voted FROM polls.info JOIN polls.users ON polls.info.id = polls.users.poll_id WHERE polls.info.id = :id AND owner_id = :owner_id AND access_key = :access_key AND is_cancelled = 0 LIMIT 1");
+		$res = $this->currentConnection->prepare("SELECT polls.info.id, owner_id, access_key, title, isAnonymous, canRevote, canMultiSelect, endTime, creationTime, COUNT(DISTINCT user_id) AS voted FROM polls.info JOIN polls.users ON polls.info.id = polls.users.poll_id WHERE polls.info.id = ? AND owner_id = ? AND access_key = ? AND is_cancelled = 0 LIMIT 1");
 
-		$p_owner_id   = intval($owner_id);
-		$p_poll_id    = intval($poll_id);
-		$p_access_key = strval($access_key);
-
-		$res->bindParam(":id",         $p_poll_id,    PDO::PARAM_INT);
-		$res->bindParam(":owner_id",   $p_owner_id,   PDO::PARAM_INT);
-		$res->bindParam(":access_key", $p_access_key, PDO::PARAM_STR);
-
-		if ($res->execute())
+		if ($res->execute([$poll_id, $owner_id, $access_key]))
 		{
-			$poll_data = $res->fetch(PDO::FETCH_ASSOC);
+			$poll_data = $res->fetch(\PDO::FETCH_ASSOC);
 			if ($poll_data)
 			{
 				$this->isValid = true;
@@ -52,7 +47,7 @@ class Poll extends Attachment
 				$this->poll_title  = strval($poll_data['title']);
 				$this->voted_count = intval($poll_data['voted']);
 
-				$this->can_revote       = boolval(intval($poll_data['canRevote']));
+				$this->can_re_vote       = boolval(intval($poll_data['canRevote']));
 				$this->can_multi_select = boolval(intval($poll_data['canMultiSelect']));
 				$this->is_anonymous     = boolval(intval($poll_data['isAnonymous']));
 
@@ -66,12 +61,12 @@ class Poll extends Attachment
 
 	public function getType (): string
 	{
-		return "poll";
+		return self::ATTACHMENT_TYPE;
 	}
 
 	public function getVotedCount (): int
 	{
-		return intval($this->voted_count);
+		return $this->voted_count;
 	}
 
 	public function getOwnerId (): int
@@ -94,29 +89,29 @@ class Poll extends Attachment
 		return $this->poll_title;
 	}
 
-	public function canRevote (): bool
+	public function canReVote (): bool
 	{
-		return boolval($this->can_revote);
+		return $this->can_re_vote;
 	}
 
 	public function canMultiSelect (): bool
 	{
-		return boolval($this->can_multi_select);
+		return $this->can_multi_select;
 	}
 
 	public function isAnonymous (): bool
 	{
-		return boolval($this->is_anonymous);
+		return $this->is_anonymous;
 	}
 
 	public function getEndTime (): int
 	{
-		return intval($this->end_time);
+		return $this->end_time;
 	}
 
 	public function getCreationTime (): int
 	{
-		return intval($this->creation_time);
+		return $this->creation_time;
 	}
 
 	public function isVoted (): bool
@@ -126,17 +121,17 @@ class Poll extends Attachment
 
 	public function getVoters (int $variant_id, int $offset = 0, int $count = 30): array
 	{
-		$res = $this->currentConnection->prepare("SELECT DISTINCT user_id FROM polls.users WHERE poll_id = ? AND var_id = ? AND is_cancelled = 0 LIMIT 30");
+		$res = $this->currentConnection->prepare("SELECT DISTINCT user_id FROM polls.users WHERE poll_id = ? AND var_id = ? AND is_cancelled = 0 LIMIT ".$offset.",".$count);
 		if ($res->execute([$this->getId(), $variant_id]))
 		{
-			$data = $res->fetchAll(PDO::FETCH_ASSOC);
+			$data = $res->fetchAll(\PDO::FETCH_ASSOC);
 
 			$result = [];
 			foreach ($data as $info) 
 			{
 				$user_id = intval($info['user_id']);
 
-				$entity = Entity::findById($user_id);
+				$entity = User::findById($user_id);
 
 				if ($entity)
 					$result[] = $entity;
@@ -151,14 +146,14 @@ class Poll extends Attachment
 	public function toArray (): array
 	{
 		return [
-			'type' => 'poll',
+			'type' => self::ATTACHMENT_TYPE,
 			'poll' => [
 				'id'         => $this->getId(),
 				'owner_id'   => $this->getOwnerId(),
 				'access_key' => $this->getAccessKey(),
 				'data'       => [
 					'title'            => $this->getTitle(),
-					'can_revote'       => $this->canRevote(),
+					'can_revote'       => $this->canReVote(),
 					'can_multi_select' => $this->canMultiSelect(),
 					'is_anonymous'     => $this->isAnonymous(),
 					'end_time'         => $this->getEndTime(),
@@ -173,10 +168,11 @@ class Poll extends Attachment
 
 	public function getAnswers (): array
 	{
-		if (!$this->valid()) return false;
+		if (!$this->valid()) return [];
 
 		$variants_selected = $this->getSelectedAnswers();
 
+        $stats = NULL;
 		if (count($variants_selected) > 0)
 		{
 			$stats = $this->getStats();
@@ -188,8 +184,8 @@ class Poll extends Attachment
 			
 			if ($res->execute([$this->poll_id]))
 			{
-				$answers_list = $res->fetchAll(PDO::FETCH_ASSOC);
-				foreach ($answers_list as $index => $answer)
+				$answers_list = $res->fetchAll(\PDO::FETCH_ASSOC);
+				foreach ($answers_list as $answer)
 				{
 					$var_info = [
 						'id'       => intval($answer['var_id']),
@@ -208,7 +204,7 @@ class Poll extends Attachment
 		return $this->currentVariants;
 	}
 
-	public function addAnswer ($answer_text): bool
+	public function addAnswer (string $answer_text): bool
 	{
 		if (!$this->valid()) return false;
 
@@ -217,13 +213,9 @@ class Poll extends Attachment
 		if ($answer_id > 10)
 			return false;
 
-		$res = $this->currentConnection->prepare("INSERT INTO polls.variants (poll_id, title, var_id) VALUES (:poll_id, :title, :var_id);");
+		$res = $this->currentConnection->prepare("INSERT INTO polls.variants (poll_id, title, var_id) VALUES (?, ?, ?);");
 
-		$res->bindParam(":poll_id", $poll_id,     PDO::PARAM_INT);
-		$res->bindParam(":title",   $answer_text, PDO::PARAM_STR);
-		$res->bindParam(":var_id",  $answer_id,   PDO::PARAM_INT);
-
-		if ($res->execute())
+		if ($res->execute([$poll_id, $answer_text, $answer_id]))
 		{
 			$this->currentVariants[] = [
 				'id'    => $answer_id,
@@ -236,25 +228,25 @@ class Poll extends Attachment
 		return false;
 	}
 
-	public function editAnswer ($answer_id): bool
+	public function editAnswer (int $answer_id): bool
 	{
 		return false;
 	}
 
-	public function removeAnswer ($answer_id): bool
+	public function removeAnswer (int $answer_id): bool
 	{
 		return false;
 	}
 
 	public function getSelectedAnswers (): array
 	{
-		if ($this->variants_selected)
+		if (isset($this->variants_selected) && is_array($this->variants_selected))
 			return $this->variants_selected;
 
 		$res = $this->currentConnection->prepare("SELECT DISTINCT var_id FROM polls.users WHERE poll_id = ? AND user_id = ? AND is_cancelled = 0 LIMIT 10");
 		if ($res->execute([$this->getId(), intval($_SESSION['user_id'])]))
 		{
-			$data = $res->fetchAll(PDO::FETCH_ASSOC);
+			$data = $res->fetchAll(\PDO::FETCH_ASSOC);
 
 			$result = [];
 
@@ -276,7 +268,7 @@ class Poll extends Attachment
 
 		if ($res->execute([$this->getId(), $this->getId()]))
 		{
-			$data = $res->fetchAll(PDO::FETCH_ASSOC);
+			$data = $res->fetchAll(\PDO::FETCH_ASSOC);
 
 			$result = [];
 			foreach ($data as $stat) 
@@ -294,12 +286,12 @@ class Poll extends Attachment
 		return NULL;
 	}
 
-	public function vote ($answer_id): bool
+	public function vote (int $answer_id): bool
 	{
 		$vars = $this->getAnswers();
 		foreach ($vars as $variant) 
 		{
-			if ($variant['id'] === intval($answer_id))
+			if ($variant['id'] === $answer_id)
 			{
 				if ($variant['selected']) return true;
 
@@ -308,7 +300,7 @@ class Poll extends Attachment
 				$res = $this->currentConnection->prepare("SELECT is_cancelled FROM polls.users WHERE poll_id = ? AND user_id = ? AND var_id = ? LIMIT 1");
 				if ($res->execute([$this->getId(), intval($_SESSION['user_id']), intval($answer_id)]))
 				{
-					$is_cancelled = boolval(intval($res->fetch(PDO::FETCH_ASSOC)['is_cancelled']));
+					$is_cancelled = boolval(intval($res->fetch(\PDO::FETCH_ASSOC)['is_cancelled']));
 					if ($is_cancelled)
 					{
 						return $this->currentConnection->prepare("UPDATE polls.users SET is_cancelled = 0 WHERE poll_id = ? AND user_id = ? AND var_id = ? LIMIT 1")->execute([$this->getId(), intval($_SESSION['user_id']), intval($answer_id)]);
@@ -331,48 +323,31 @@ class Poll extends Attachment
 	//////////////////////////////////////////
 	public static function create (string $poll_title, array $variants_list, int $end_time = 0, bool $is_anonymous = false, bool $multi_selection = false, bool $can_revote = true): ?Poll
 	{
-		if (unt\functions\is_empty($poll_title)) return NULL;
-		if (strlen($title) > 64)   return NULL;
+		if (\unt\functions\is_empty($poll_title)) return NULL;
+		if (strlen($poll_title) > 64) return NULL;
 
 		$owner_id = intval($_SESSION['user_id']);
 
 		if (count($variants_list) > 10 || count($variants_list) < 1) return NULL;
 
-		$res = DataBaseManager::getConnection()->prepare("
+		$res = \unt\platform\DataBaseManager::getConnection()->prepare("
 			INSERT INTO 
 				polls.info (owner_id, access_key, title, isAnonymous, endTIme, canMultiSelect, canRevote, creationTime) 
-			VALUES (:owner_id, :access_key, :title, :isAnonymous, :endTime, :canMultiSelect, :canRevote, :creationTime);
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?);
 		");
 
 		$new_access_key = substr(str_shuffle('0123456789abcdefghijklmnopqrstuvwxyz'), 0, 10);
 
-		$p_owner_id        = intval($owner_id);
-		$p_poll_title      = strval($poll_title);
-		$p_is_anonymous    = intval(boolval($is_anonymous));
-		$p_end_time        = intval($end_time);
-		$p_multi_selection = intval(boolval($multi_selection));
-		$p_can_revote      = intval(boolval($can_revote));
-		$p_creation_time   = intval(time());
-
-		$res->bindParam(":owner_id",       $p_owner_id,        PDO::PARAM_INT);
-		$res->bindParam(":access_key",     $new_access_key,    PDO::PARAM_STR);
-		$res->bindParam(":title",          $p_poll_title,      PDO::PARAM_STR);
-		$res->bindParam(":isAnonymous",    $p_is_anonymous,    PDO::PARAM_INT);
-		$res->bindParam(":endTime",        $p_end_time,        PDO::PARAM_INT);
-		$res->bindParam(":canMultiSelect", $p_multi_selection, PDO::PARAM_INT);
-		$res->bindParam(":canRevote",      $p_can_revote,      PDO::PARAM_INT);
-		$res->bindParam(":creationTime",   $p_creation_time,   PDO::PARAM_INT);
-
-		if ($res->execute())
+		if ($res->execute([$owner_id, $poll_title, $is_anonymous, $end_time, $multi_selection, $can_revote, time()]))
 		{
-			$res = DataBaseManager::getConnection()->prepare("SELECT LAST_INSERT_ID();");
+			$res = \unt\platform\DataBaseManager::getConnection()->prepare("SELECT LAST_INSERT_ID();");
 			
 			if ($res->execute())
 			{
-				$created_poll_id = intval($res->fetch(PDO::FETCH_ASSOC)["LAST_INSERT_ID()"]);
+				$created_poll_id = intval($res->fetch(\PDO::FETCH_ASSOC)["LAST_INSERT_ID()"]);
 
-				$poll = new Poll($p_owner_id, $created_poll_id, $new_access_key);
-				foreach ($variants_list as $index => $variantTitle) 
+				$poll = new Poll($owner_id, $created_poll_id, $new_access_key);
+				foreach ($variants_list as $variantTitle)
 				{
 					$poll->addAnswer($variantTitle);
 				}

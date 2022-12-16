@@ -1,23 +1,18 @@
 <?php
 
-require_once __DIR__ . '/SettingsGroup.php';
+namespace unt\objects;
 
 /**
  * Class for Bot Account settings
 */
 
-class BotAccountSettingsGroup extends SettingsGroup 
+class BotAccountSettingsGroup extends SettingsGroup
 {
-	protected $currentConnection = NULL;
+    private string $currentLangId;
 
-	private string $currentLangId;
-
-	public function __construct (Entity $user, DataBaseManager $connection, array $params = [])
+	public function __construct (Entity $user, array $params = [])
 	{
-		$this->currentEntity     = $user;
-		
-		$this->type              = "account";
-		$this->currentConnection = DataBaseManager::getConnection();
+        parent::__construct($user, Settings::ACCOUNT_GROUP, $params);
 
 		$this->currentLangId = $params['lang_id'];
 	}
@@ -27,8 +22,9 @@ class BotAccountSettingsGroup extends SettingsGroup
 		return strval($this->currentLangId);
 	}
 
-	public function setLanguageId (string $newLangId): AccountSettingsGroup
+	public function setLanguageId (string $newLangId): SettingsGroup
 	{
+        $this->currentLangId = $newLangId;
 		return $this;
 	}
 

@@ -1,5 +1,7 @@
 <?php
 
+use unt\objects\Request;
+
 if (isset(Request::get()->data['action']))
 {
 	$action = strtolower(trim(Request::get()->data['action']));
