@@ -8,6 +8,8 @@ use unt\platform\SourcesManager;
 
 header('Access-Control-Allow-Origin: ' . \unt\functions\get_page_origin());
 
+$this->errors();
+
 $requested_path = explode('/', strval(explode('?', $_SERVER['REQUEST_URI'])[0]));
 
 $folder_name = $requested_path[1];
