@@ -50,7 +50,7 @@
 	          		</label>															<!--														-->
 	          	</div>																	<!--														-->
 	          	<div class="input-field" style="margin-left: 0">						<!--														-->
-	          		<input type="text" id="reg-password" class="validate"><!--------------------------Тут ввод пароля, id элемента reg-password		-->
+	          		<input type="password" id="reg-password" class="validate"><!--------------------------Тут ввод пароля, id элемента reg-password		-->
 		    		<label>																<!--														-->
 	            		Пароль															<!--														-->
 	          		</label>															<!--														-->

@@ -56,13 +56,13 @@
 
                       <a id="lk-account-name">
                 <span class="white-text name"><!----------------- Тут имя пользователя, id элемента lk-account-name -->
-                 Пользователь
+                  <?php echo $_SESSION['first_name'] . ' ' . $_SESSION['last_name']; ?>
                 </span>
                       </a>
 
                       <a id="lk-account-email">
                 <span class="white-text email"><!-------------- Тут эл. почта, id элемента lk-account-email -->
-                    example@gmail.com
+                    <?php echo $_SESSION['email'] ?>
                 </span>
                       </a>
                   </div>
