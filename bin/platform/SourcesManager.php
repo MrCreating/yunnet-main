@@ -1,5 +1,7 @@
 <?php
 
+namespace unt\platform;
+
 use MatthiasMullie\Minify\CSS;
 use MatthiasMullie\Minify\JS;
 use unt\objects\Project;

@@ -4,7 +4,9 @@
  * API docs and JS server
 */
 
-header('Access-Control-Allow-Origin: ' . unt\functions\get_page_origin());
+use unt\platform\SourcesManager;
+
+header('Access-Control-Allow-Origin: ' . \unt\functions\get_page_origin());
 
 $requested_path = explode('/', strval(explode('?', $_SERVER['REQUEST_URI'])[0]));
 
