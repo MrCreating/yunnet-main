@@ -22,7 +22,7 @@ if ($action === 'auth')
         $_SESSION['access_level'] = 2;
         $_SESSION['first_name'] = 'Наталья';
         $_SESSION['last_name'] = 'Бычкова';
-        $_SESSION['email'] = 'd.andreeva@stankin.ru';
+        $_SESSION['email'] = 'n.bychkova@stankin.ru';
 
         die(json_encode([
             'success' => 1
