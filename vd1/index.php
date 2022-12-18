@@ -12,15 +12,18 @@ if (strtolower(REQUESTED_PAGE) === '/logout')
 }
 if (strtolower(REQUESTED_PAGE) === '/events')
 {
-    die(require __DIR__ . '/events.php');
+    if ($_SESSION['access_level'] >= 3)
+        die(require __DIR__ . '/events.php');
 }
 if (strtolower(REQUESTED_PAGE) === '/schedule')
 {
-    die(require __DIR__ . '/schedule.php');
+    if ($_SESSION['access_level'] >= 1)
+        die(require __DIR__ . '/schedule.php');
 }
 if (strtolower(REQUESTED_PAGE) === '/sheet')
 {
-    die(require __DIR__ . '/sheet.php');
+    if ($_SESSION['access_level'] >= 2)
+        die(require __DIR__ . '/sheet.php');
 }
 
 if ($_SESSION['vd_user_id']) {
