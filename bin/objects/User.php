@@ -620,7 +620,7 @@ class User extends Entity
 			$entity = User::findById($user_id);
 			if (!$entity) return NULL;
 
-			create_notification($connection, $user_id, "account_login", [
+			Notification::create($user_id, "account_login", [
 				'ip'   => $_SERVER['REMOTE_ADDR'],
 				'time' => time()
 			]);
