@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/actions/auth.php';
+
 $action = isset($_POST['action']) ? strtolower($_POST['action']) : NULL;
 
 if ($action) {
@@ -14,6 +16,11 @@ if (strtolower(REQUESTED_PAGE) === '/events')
 {
     if ($_SESSION['access_level'] >= 3)
         die(require __DIR__ . '/events.php');
+}
+if (strtolower(REQUESTED_PAGE) === '/groups')
+{
+    if ($_SESSION['access_level'] >= 3)
+        die(require __DIR__ . '/groups.php');
 }
 if (strtolower(REQUESTED_PAGE) === '/schedule')
 {

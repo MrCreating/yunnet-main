@@ -77,9 +77,16 @@
 
     <?php if ($_SESSION['access_level'] >= 3): ?>
         <li><a href="/events">
-            <i class="material-icons">group</i>
+            <i class="material-icons">assessment</i>
             Мероприятия
         </a></li>
+    <?php endif; ?>
+
+    <?php if ($_SESSION['access_level'] >= 3): ?>
+        <li><a href="/groups">
+                <i class="material-icons">group</i>
+                Группы
+            </a></li>
     <?php endif; ?>
 
     <li>

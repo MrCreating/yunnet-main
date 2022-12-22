@@ -28,6 +28,10 @@
 
       <div>                                                                 <!--      Белая панелька сверху           -->
           <?php require __DIR__ . '/components/sidenav.php'; ?>
-      </div>                                                                        <!--                                      -->
+      </div>
+
+      <?php
+      die(var_dump(\unt\platform\DataBaseManager::getConnection()));
+      ?>
     </body>
   </html>
