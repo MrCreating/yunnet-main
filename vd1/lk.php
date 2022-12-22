@@ -28,6 +28,53 @@
 
       <div>                                                                 <!--      Белая панелька сверху           -->
           <?php require __DIR__ . '/components/sidenav.php'; ?>
-      </div>                                                                           <!--                                      -->
+      </div>
+
+      <div style="width: 90%; margin: 5%;">
+          <span style="font-size: 200%;"><b>Добро пожаловать, <?php echo htmlspecialchars($_SESSION['last_name']); ?>!</b></span>
+          <div class="valign-wrapper">
+              <div class="halign-wrapper">
+                  <div class="card-panel white">
+                      <span style="color: #7F1E2F; font-size: 150%" class="card-title">Уведомления</span>
+                      <p>
+                          Перейдите по ссылке для получения последних уведомлений
+                      </p>
+                      <div class="divider"></div>
+                      <div class="card-action">
+                          <a href="https://edu.stankin.ru/">Перейти в ЭОС</a>
+                      </div>
+                  </div>
+              </div>
+              <?php if ($_SESSION['access_level'] >= 2): ?>
+                  <div class="halign-wrapper" style="margin-left: 15px">
+                      <div class="card-panel white">
+                          <span style="color: #7F1E2F; font-size: 150%" class="card-title">Ведомости</span>
+                          <p>
+                              Перейдите по ссылке для просмотра вашего списка ведомостей
+                          </p>
+                          <div class="divider"></div>
+                          <div class="card-action">
+                              <a href="/sheet">Перейти к Ведомостям</a>
+                          </div>
+                      </div>
+                  </div>
+              <?php endif; ?>
+
+              <?php if ($_SESSION['access_level'] >= 1): ?>
+                  <div class="halign-wrapper" style="margin-left: 15px">
+                      <div class="card-panel white">
+                          <span style="color: #7F1E2F; font-size: 150%" class="card-title">Расписание</span>
+                          <p>
+                              Перейдите по ссылке для просмотра информации о вашем расписании
+                          </p>
+                          <div class="divider"></div>
+                          <div class="card-action">
+                              <a href="/schedule">Перейти к Расписанию</a>
+                          </div>
+                      </div>
+                  </div>
+              <?php endif; ?>
+          </div>
+      </div>
     </body>
   </html>

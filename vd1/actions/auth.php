@@ -2,11 +2,7 @@
 
 function auth (string $login, string $password): ?array
 {
-    $connection = \unt\platform\DataBaseManager::getConnection();
-
-    $connection->prepare('SET NAMES utf8')->execute();
-
-    $req = $connection->prepare('SELECT id, account_id, access_level FROM dekanat.student_accounts WHERE login = ? AND `password` = ? LIMIT 1');
+    $req = db()->prepare('SELECT id, account_id, access_level FROM dekanat.student_accounts WHERE login = ? AND `password` = ? LIMIT 1');
     if ($req->execute([$login, $password]))
     {
         $res = $req->fetch(PDO::FETCH_ASSOC);
@@ -22,20 +18,19 @@ function auth (string $login, string $password): ?array
 
 function get_user (int $id, int $access_level): ?array
 {
-    $connection = \unt\platform\DataBaseManager::getConnection();
     $req = null;
 
     // студент
     if ($access_level === 1)
-        $req = $connection->prepare('SELECT first_name, last_name FROM dekanat.students WHERE id = ? LIMIT 1;');
+        $req = db()->prepare('SELECT first_name, last_name FROM dekanat.students WHERE id = ? LIMIT 1;');
 
     // преподаватель
     if ($access_level === 2)
-        $req = $connection->prepare('SELECT first_name, last_name FROM dekanat.professors WHERE id = ? LIMIT 1;');
+        $req = db()->prepare('SELECT first_name, last_name FROM dekanat.professors WHERE id = ? LIMIT 1;');
 
     // работник деканата
     if ($access_level === 3)
-        $req = $connection->prepare('SELECT first_name, last_name FROM dekanat.employees WHERE id = ? LIMIT 1;');
+        $req = db()->prepare('SELECT first_name, last_name FROM dekanat.employees WHERE id = ? LIMIT 1;');
 
     if ($req !== NULL && $req->execute([$id]))
     {

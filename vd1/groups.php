@@ -28,6 +28,50 @@
 
 <div>                                                                 <!--      Белая панелька сверху           -->
     <?php require __DIR__ . '/components/sidenav.php'; ?>
-</div>                                                                           <!--                                      -->
+</div>
+
+<?php $group_id = (int) \unt\objects\Request::get()->data['id']; ?>
+
+<?php if ($group_id <= 0): ?>
+    <div>
+        <ul class="card collection with-header" style="width: 100%">
+            <li style="padding-left: 30px !important;" class="collection-header">
+                <h6><b>Список групп</b></h6>
+            </li>
+
+            <?php $subjects = get_groups_list(); ?>
+            <?php if (count($subjects) <= 0): ?>
+                <div style="padding: 20px">Список групп пуст.</div>
+            <?php else: ?>
+                <?php foreach ($subjects as $subject): ?>
+                    <li class="collection-item">
+                        <a style="color: black" href="/groups?id=<?php echo $subject['id'] ?>"><?php echo htmlspecialchars($subject['title']); ?><div class="secondary-content"><i class="material-icons" style="color: #7F1E2F">arrow_forward</i></div></a>
+                    </li>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </ul>
+    </div>
+<?php else: ?>
+    <div>
+        <ul class="card collection with-header" style="width: 100%">
+            <li class="collection-header valign-wrapper">
+                <a href="/groups" style="width: 20px; height: 20px; margin-right: 15px"><i class="material-icons" style="color: #7F1E2F">arrow_backward</i></a>
+                <h6><b>Группа: <?php echo get_group_info($group_id)['title']; ?></b></h6>
+            </li>
+
+            <?php $students = get_group_students($group_id); ?>
+            <?php if (count($students) <= 0): ?>
+                <div style="padding: 20px">Список студентов пуст.</div>
+            <?php else: ?>
+                <?php foreach ($students as $student): ?>
+                    <li class="collection-item">
+                        <a style="color: black; padding-left: 25px" href=""><?php echo htmlspecialchars($student['student_id'] . ': ' . $student['first_name'] . ' ' . $student['last_name']); ?><div class="secondary-content"><i class="material-icons" style="color: #7F1E2F">arrow_forward</i></div></a>
+                    </li>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </ul>
+    </div>
+<?php endif; ?>
+
 </body>
 </html>

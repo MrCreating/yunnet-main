@@ -1,6 +1,9 @@
 <?php
 
+require_once __DIR__ . '/actions/db.php';
 require_once __DIR__ . '/actions/auth.php';
+require_once __DIR__ . '/actions/sheets.php';
+require_once __DIR__ . '/actions/groups.php';
 
 $action = isset($_POST['action']) ? strtolower($_POST['action']) : NULL;
 

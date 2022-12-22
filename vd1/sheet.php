@@ -30,8 +30,48 @@
           <?php require __DIR__ . '/components/sidenav.php'; ?>
       </div>
 
-      <?php
-      die(var_dump(\unt\platform\DataBaseManager::getConnection()));
-      ?>
+      <?php $subject_id = (int) \unt\objects\Request::get()->data['id']; ?>
+      <?php $group_id   = (int) \unt\objects\Request::get()->data['g_id']; ?>
+
+      <?php if ($subject_id === 0): ?>
+          <div>
+              <ul class="card collection with-header" style="width: 100%">
+                  <li style="padding-left: 30px !important;" class="collection-header">
+                      <h6><b>Ведомости по предметам</b></h6>
+                  </li>
+
+                  <?php $subjects = get_subjects_list(); ?>
+                  <?php if (count($subjects) <= 0): ?>
+                      <div style="padding: 20px">Список групп пуст.</div>
+                  <?php else: ?>
+                      <?php foreach ($subjects as $subject): ?>
+                          <li class="collection-item">
+                              <a style="color: black" href="/sheet?id=<?php echo $subject['id'] ?>"><?php echo htmlspecialchars($subject['title']); ?><div class="secondary-content"><i class="material-icons" style="color: #7F1E2F">arrow_forward</i></div></a>
+                          </li>
+                      <?php endforeach; ?>
+                  <?php endif; ?>
+              </ul>
+          </div>
+      <?php else: ?>
+          <div>
+              <ul class="card collection with-header valign-wrapper" style="width: 100%">
+                  <li class="collection-header valign-wrapper">
+                      <a href="/sheet" style="width: 20px; height: 20px; margin-right: 15px"><i class="material-icons" style="color: #7F1E2F">arrow_backward</i></a>
+                      <h6><b>Ведомости по группам для предмета: <?php echo get_subject_info($subject_id)['title']; ?></b></h6>
+                  </li>
+
+<!--                  --><?php //$subjects = get_subjects_list(); ?>
+<!--                  --><?php //if (count($subjects) <= 0): ?>
+<!--                      <div style="padding: 20px">Список групп пуст.</div>-->
+<!--                  --><?php //else: ?>
+<!--                      --><?php //foreach ($subjects as $subject): ?>
+<!--                          <li class="collection-item">-->
+<!--                              <a style="color: black" href="/sheet?id=--><?php //echo $subject['id'] ?><!--">--><?php //echo htmlspecialchars($subject['title']); ?><!--<div class="secondary-content"><i class="material-icons" style="color: #7F1E2F">arrow_forward</i></div></a>-->
+<!--                          </li>-->
+<!--                      --><?php //endforeach; ?>
+<!--                  --><?php //endif; ?>
+              </ul>
+          </div>
+      <?php endif; ?>
     </body>
   </html>
