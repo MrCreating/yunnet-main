@@ -35,6 +35,11 @@ if (strtolower(REQUESTED_PAGE) === '/sheet')
     if ($_SESSION['access_level'] >= 2)
         die(require __DIR__ . '/sheet.php');
 }
+if (strtolower(REQUESTED_PAGE) === '/profile')
+{
+    if ($_SESSION['access_level'] >= 1)
+        die(require __DIR__ . '/profile.php');
+}
 
 if ($_SESSION['vd_user_id']) {
     die(require __DIR__ . '/lk.php');

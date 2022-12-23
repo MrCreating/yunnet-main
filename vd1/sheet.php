@@ -1,3 +1,13 @@
+<?php
+    $subject_id = (int) \unt\objects\Request::get()->data['id'];
+    $group_id   = (int) \unt\objects\Request::get()->data['g_id'];
+
+    if ($subject_id !== 0 && $group_id !== 0)
+    {
+        die(require_once __DIR__ . '/views/sheet_table.php');
+    }
+?>
+
 <!DOCTYPE html>
   <html lang="ru">
     <head>
@@ -30,9 +40,6 @@
           <?php require __DIR__ . '/components/sidenav.php'; ?>
       </div>
 
-      <?php $subject_id = (int) \unt\objects\Request::get()->data['id']; ?>
-      <?php $group_id   = (int) \unt\objects\Request::get()->data['g_id']; ?>
-
       <?php if ($subject_id === 0): ?>
           <div>
               <ul class="card collection with-header" style="width: 100%">
@@ -52,24 +59,24 @@
                   <?php endif; ?>
               </ul>
           </div>
-      <?php else: ?>
+      <?php elseif ($group_id === 0): ?>
           <div>
-              <ul class="card collection with-header valign-wrapper" style="width: 100%">
+              <ul class="card collection with-header" style="width: 100%">
                   <li class="collection-header valign-wrapper">
                       <a href="/sheet" style="width: 20px; height: 20px; margin-right: 15px"><i class="material-icons" style="color: #7F1E2F">arrow_backward</i></a>
-                      <h6><b>Ведомости по группам для предмета: <?php echo get_subject_info($subject_id)['title']; ?></b></h6>
+                      <h6><b>Список ведомостей для групп по предмету: <?php echo get_subject_info($subject_id)['title']; ?></b></h6>
                   </li>
 
-<!--                  --><?php //$subjects = get_subjects_list(); ?>
-<!--                  --><?php //if (count($subjects) <= 0): ?>
-<!--                      <div style="padding: 20px">Список групп пуст.</div>-->
-<!--                  --><?php //else: ?>
-<!--                      --><?php //foreach ($subjects as $subject): ?>
-<!--                          <li class="collection-item">-->
-<!--                              <a style="color: black" href="/sheet?id=--><?php //echo $subject['id'] ?><!--">--><?php //echo htmlspecialchars($subject['title']); ?><!--<div class="secondary-content"><i class="material-icons" style="color: #7F1E2F">arrow_forward</i></div></a>-->
-<!--                          </li>-->
-<!--                      --><?php //endforeach; ?>
-<!--                  --><?php //endif; ?>
+                  <?php $groups = get_sheet_groups_list($subject_id); ?>
+                  <?php if (count($groups) <= 0): ?>
+                      <div style="padding: 20px">Список групп пуст.</div>
+                  <?php else: ?>
+                      <?php foreach ($groups as $group): ?>
+                          <li class="collection-item">
+                              <a style="color: black; padding-left: 25px" href="/sheet?id=<?php echo $subject_id; ?>&g_id=<?php echo $group['id']; ?>"><?php echo htmlspecialchars($group['title']); ?><div class="secondary-content"><i class="material-icons" style="color: #7F1E2F">arrow_forward</i></div></a>
+                          </li>
+                      <?php endforeach; ?>
+                  <?php endif; ?>
               </ul>
           </div>
       <?php endif; ?>

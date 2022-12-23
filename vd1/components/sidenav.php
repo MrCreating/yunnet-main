@@ -5,7 +5,7 @@
         <a href="#" data-target="slide-out" class="sidenav-trigger show-on-large">
             <i style="color: #7F1E2F !important" class="material-icons">menu</i>
         </a>
-        <a class="brand-logo center">
+        <a class="brand-logo center" href="/">
             <!--                                      -->
             <font color=#7F1E2F>
                 <!--                                      -->
@@ -32,16 +32,16 @@
                 <img src="/vd_sources/img/stankin_foto.jpg">
             </div>
 
-            <a id="lk-account-icon" href="/lk">
+            <a id="lk-account-icon" href="/profile">
                 <!----------------------------------------------- Тут аватарка пользователя, id элемента lk-account-icon -->
                 <img class="circle" src="/vd_sources/img/material-icon-account.png">
             </a>
 
-            <a id="lk-account-name" href="/lk"><span class="white-text name"><!----------------- Тут имя пользователя, id элемента lk-account-name -->
+            <a id="lk-account-name" href="/profile"><span class="white-text name"><!----------------- Тут имя пользователя, id элемента lk-account-name -->
               <?php echo $_SESSION['first_name'] . ' ' . $_SESSION['last_name']; ?>
             </span></a>
 
-            <a id="lk-account-email" href="/lk"><span class="white-text email"><!-------------- Тут эл. почта, id элемента lk-account-email -->
+            <a id="lk-account-email" href="/profile"><span class="white-text email"><!-------------- Тут эл. почта, id элемента lk-account-email -->
               <?php
                 $status_string = 'Студент';
                 switch ($_SESSION['access_level']) {

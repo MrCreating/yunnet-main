@@ -65,7 +65,7 @@
             <?php else: ?>
                 <?php foreach ($students as $student): ?>
                     <li class="collection-item">
-                        <a style="color: black; padding-left: 25px" href=""><?php echo htmlspecialchars($student['student_id'] . ': ' . $student['first_name'] . ' ' . $student['last_name']); ?><div class="secondary-content"><i class="material-icons" style="color: #7F1E2F">arrow_forward</i></div></a>
+                        <a style="color: black; padding-left: 25px" href="/profile?id=<?php echo $student['student_id']; ?>&ent_m=1"><?php echo htmlspecialchars($student['student_id'] . ': ' . $student['first_name'] . ' ' . $student['last_name']); ?><div class="secondary-content"><i class="material-icons" style="color: #7F1E2F">arrow_forward</i></div></a>
                     </li>
                 <?php endforeach; ?>
             <?php endif; ?>

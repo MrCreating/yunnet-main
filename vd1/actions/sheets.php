@@ -43,4 +43,14 @@ function get_groups_list ()
     return [];
 }
 
+function get_sheet_groups_list ($subject_id): array
+{
+    return [
+        [
+            'id' => 1,
+            'title' => 'ИДБ-20-10'
+        ]
+    ];
+}
+
 ?>
