@@ -33,7 +33,7 @@ function get_subject_info (int $id): ?array
 function get_groups_list ()
 {
     if ($_SESSION['access_level'] >= 3) {
-        $res = db()->prepare('SELECT id, title FROM dekanat.groups_list;');
+        $res = db()->prepare('SELECT id, title FROM dekanat.groups;');
 
         if ($res && $res->execute()) {
             return $res->fetchAll(PDO::FETCH_ASSOC);
@@ -47,7 +47,7 @@ function get_sheet_groups_list ($subject_id): array
 {
     return [
         [
-            'id' => 1,
+            'id' => 26,
             'title' => 'ИДБ-20-10'
         ]
     ];

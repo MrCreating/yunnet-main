@@ -13,7 +13,7 @@
 	    <script type="text/javascript" src="/vd_sources/js/table.js"></script>
     </head>
 
-    <div data-items='<?php echo json_encode(get_group_students($group_id)) ?>' style="display: none" id="table-data"></div>
+    <div data-items='<?php echo json_encode(get_group_students($group_id)); ?>' style="display: none" id="table-data"></div>
 
     <body>
     	<style>
@@ -57,13 +57,13 @@
 			                <td class='edit' data-type='textbox' data-field='score'>
                                 <div class="input-field">
                                     <input value="{{score}}" id="score" type="text" class="validate">
-                                    <label for="last_name">Оценка</label>
+                                    <label for="last_name">Балл</label>
                                 </div>
                             </td>
 			                <td class='edit' data-type='textbox' data-field='grade'>
                                 <div class="input-field">
                                     <input value="{{grade}}" id="grade" type="text" class="validate">
-                                    <label for="grade">Балл</label>
+                                    <label for="grade">Оценка</label>
                                 </div>
                             </td>
 			                <td class='edit' data-type='textbox' data-field='date'>{{date}}</td>

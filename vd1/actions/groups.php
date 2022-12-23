@@ -2,7 +2,7 @@
 
 function get_group_info (int $id): ?array
 {
-    $res = db()->prepare('SELECT id, title FROM dekanat.groups_list WHERE id = ?;');
+    $res = db()->prepare('SELECT id, title FROM dekanat.groups WHERE id = ?;');
 
     if ($res->execute([$id]))
     {
@@ -18,18 +18,17 @@ function get_group_students (int $id): array
     {
         $res = db()->prepare('
             SELECT 
-                gl.title AS group_name,
-                g.student_id AS student_id,
+                g.title AS group_name,
+                gc.student_id AS student_id,
                 s.first_name AS first_name,
-                s.last_name AS last_name 
+                s.last_name AS last_name
             FROM 
-                dekanat.`groups` AS g
-            JOIN
-                dekanat.students AS s ON g.student_id = s.id
-            JOIN
-                dekanat.groups_list AS gl ON g.group_id = gl.id
-            WHERE 
-                group_id = ?;
+                dekanat.group_containing AS gc
+            JOIN dekanat.`groups` AS g 
+                ON g.id = gc.group_id
+            JOIN dekanat.students AS s 
+                ON gc.student_id = s.id
+            WHERE gc.group_id = ?
         ');
 
         if ($res->execute([$id]))
