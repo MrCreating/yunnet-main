@@ -22,3 +22,53 @@ if ($action === 'auth')
         'error' => 1
     ]));
 }
+
+if ($action === 'create_group')
+{
+    if ($_SESSION['access_level'] >= 3)
+    {
+        if (empty(\unt\objects\Request::get()->data['group_name']))
+            die(json_encode([
+                'error' => 1
+            ]));
+
+        $result = create_group(\unt\objects\Request::get()->data['group_name']);
+        if (!$result)
+            die(json_encode([
+                'error' => 1
+            ]));
+
+        die(json_encode([
+            'success' => 1
+        ]));
+    }
+
+    die(json_encode([
+        'error' => 1
+    ]));
+}
+
+if ($action === 'delete_group')
+{
+    if ($_SESSION['access_level'] >= 3)
+    {
+        if (intval(\unt\objects\Request::get()->data['group_id']) <= 0)
+            die(json_encode([
+                'error' => 1
+            ]));
+
+        $result = delete_group(\unt\objects\Request::get()->data['group_id']);
+        if (!$result)
+            die(json_encode([
+                'error' => 1
+            ]));
+
+        die(json_encode([
+            'success' => 1
+        ]));
+    }
+
+    die(json_encode([
+        'error' => 1
+    ]));
+}

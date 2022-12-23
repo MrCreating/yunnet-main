@@ -40,4 +40,40 @@ function get_group_students (int $id): array
     return [];
 }
 
+function create_group (string $name): bool
+{
+    $connection = db();
+    $connection->setAttribute(PDO::ERRMODE_EXCEPTION, 1);
+
+    try {
+        $res = $connection->prepare('INSERT INTO dekanat.`groups` (education_form_id, title) VALUES (1, ?);');
+        if ($res->execute([$name]))
+        {
+            return true;
+        }
+    } catch (Exception $e) {
+        return false;
+    }
+
+    return false;
+}
+
+function delete_group (int $id): bool
+{
+    $connection = db();
+    $connection->setAttribute(PDO::ERRMODE_EXCEPTION, 1);
+
+    try {
+        $res = $connection->prepare('DELETE FROM dekanat.`groups` WHERE id = ? LIMIT 1');
+        if ($res->execute([$id]))
+        {
+            return true;
+        }
+    } catch (Exception $e) {
+        return false;
+    }
+
+    return false;
+}
+
 ?>

@@ -9,6 +9,7 @@
     <link type="text/css" rel="stylesheet" href="/vd_sources/css/materialize.css" media="screen,projection"/>
     <script type="text/javascript" src="/vd_sources/js/materialize.js"></script>
     <script type="text/javascript" src="/vd_sources/js/lk.js"></script>
+    <script type="text/javascript" src="/vd_sources/js/groups.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
 </head>
 
@@ -45,11 +46,25 @@
             <?php else: ?>
                 <?php foreach ($subjects as $subject): ?>
                     <li class="collection-item">
-                        <a style="color: black" href="/groups?id=<?php echo $subject['id'] ?>"><?php echo htmlspecialchars($subject['title']); ?><div class="secondary-content"><i class="material-icons" style="color: #7F1E2F">arrow_forward</i></div></a>
+                        <div style="color: black"><?php echo htmlspecialchars($subject['title']); ?>
+                            <div class="secondary-content">
+                                <a style="cursor: pointer" onclick="delete_group(false, <?php echo $subject['id'] ?>, `<?php echo $subject['title']; ?>`)">
+                                    <i class="material-icons" style="color: #7F1E2F">delete</i>
+                                </a>
+                                <a href="/groups?id=<?php echo $subject['id'] ?>">
+                                    <i class="material-icons" style="color: #7F1E2F">arrow_forward</i>
+                                </a>
+                            </div>
+                        </div>
                     </li>
                 <?php endforeach; ?>
             <?php endif; ?>
         </ul>
+        <div class="fixed-action-btn">
+            <a onclick="create_new_group(false);" class="btn-floating btn-large red tooltipped" data-position="left" data-tooltip="Добавить группу">
+                <i class="large material-icons">add</i>
+            </a>
+        </div>
     </div>
 <?php else: ?>
     <div>
