@@ -41,7 +41,7 @@
                       </p>
                       <div class="divider"></div>
                       <div class="card-action">
-                          <a href="https://edu.stankin.ru/">Перейти в ЭОС</a>
+                          <a href="https://edu.stankin.ru/">Перейти к Уведомлениям</a>
                       </div>
                   </div>
               </div>

@@ -82,6 +82,9 @@
 			           	<th></th>
 			            <th><button type='button' class='btn btn-floating' data-bind="rem__click:addRow"  data-id='$index' title='Добавить запись'><i class='material-icons'>add</i></button></th>
 			        </tr>
-			    </tfooter>    
-			</table>              
-    	</div>    
+			    </tfooter>
+            </table>
+            <div style="width: 100%" class="center">
+                <button type='button' class='btn btn-large disabled ' title='Добавить запись'><i class='material-icons right'>send</i>Отправить ведомость</button>
+            </div>
+        </div>

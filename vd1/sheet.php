@@ -64,7 +64,7 @@
               <ul class="card collection with-header" style="width: 100%">
                   <li class="collection-header valign-wrapper">
                       <a href="/sheet" style="width: 20px; height: 20px; margin-right: 15px"><i class="material-icons" style="color: #7F1E2F">arrow_backward</i></a>
-                      <h6><b>Список ведомостей для групп по предмету: <?php echo get_subject_info($subject_id)['title']; ?></b></h6>
+                      <h6><b>Выбор группы по предмету: <?php echo get_subject_info($subject_id)['title']; ?></b></h6>
                   </li>
 
                   <?php $groups = get_sheet_groups_list($subject_id); ?>

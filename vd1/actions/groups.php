@@ -29,6 +29,7 @@ function get_group_students (int $id): array
             JOIN dekanat.students AS s 
                 ON gc.student_id = s.id
             WHERE gc.group_id = ?
+            ORDER BY s.first_name ASC;
         ');
 
         if ($res->execute([$id]))
