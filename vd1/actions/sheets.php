@@ -12,7 +12,7 @@ function get_subjects_list (): array
                     title
                 FROM dekanat.subjects AS s
                 JOIN dekanat.going_subjects AS gs ON s.id = gs.subject_id
-                WHERE professor_id = 1;
+                WHERE professor_id = ?;
             ');
         if ($_SESSION['access_level'] === 3)
             $res = db()->prepare('SELECT id, title FROM dekanat.subjects;');
