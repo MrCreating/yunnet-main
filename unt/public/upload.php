@@ -67,9 +67,6 @@ if (isset(Request::get()->data['action']))
 		break;
 
 		case "upload":
-            $this->errors();
-            header('Content-Type: text/html');
-
             try {
                 $upload = new UploadManager(Request::get()->data['query']);
                 if (!isset($upload->getUploadedAttachments()[0]))
