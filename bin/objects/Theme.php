@@ -91,8 +91,8 @@ class Theme extends Attachment
 
 		Theme::reset();
 
-		return $this->currentConnection->prepare('UPDATE users.themes SET is_deleted = 1 WHERE user_id = ? AND is_deleted = 0 AND is_default = 0 LIMIT 1;')
-						  			   ->execute([intval($_SESSION['user_id'])]);
+		return $this->currentConnection->prepare('UPDATE users.themes SET is_deleted = 1 WHERE user_id = ? AND id = ? AND is_deleted = 0 AND is_default = 0 LIMIT 1;')
+						  			   ->execute([intval($_SESSION['user_id']), $this->getId()]);
 	}
 
 	public function getType (): string

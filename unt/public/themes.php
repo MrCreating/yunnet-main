@@ -48,7 +48,7 @@ if (isset(Request::get()->data["action"]))
 
             $theme = new Theme($_SESSION['user_id'], $theme_id);
 
-			$result = $theme->delete();
+            $result = $theme->delete();
             if (!$result)
 				die(json_encode(array('error'=>1)));
 
