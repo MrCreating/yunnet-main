@@ -27,6 +27,25 @@ foreach ($themes as $theme)
     $css_data = file_get_contents($theme_css_path);
     $js_data  = file_get_contents($theme_js_path);
 
-    echo 'Working with theme ' . $theme['id'] . ' and ' . $theme['owner_id'] . '...' . PHP_EOL;
+    echo 'Working with theme ' . $theme['id'] . ' and ' . $theme['owner_id'] . '...';
+
+    if ($db->prepare('
+        UPDATE 
+            users.themes
+        SET
+            js_code = ?,
+            css_code = ?
+        WHERE
+            id = ?
+        AND
+            owner_id = ?
+        LIMIT 1;
+    ')->execute([$js_data, $css_data, $theme['id'], $theme['owner_id']]))
+    {
+        sleep(1);
+        echo ' ok!' . PHP_EOL;
+    } else {
+        echo ' fail.' . PHP_EOL;
+    }
 }
 ?>
