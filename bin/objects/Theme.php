@@ -55,6 +55,8 @@ class Theme extends Attachment
 				$this->defaultTheme = boolval(intval($data['is_default']));
 				$this->privateTheme = boolval(intval($data['is_hidden']));
 
+                var_dump($data);
+
 				$this->cssPath = __DIR__ . "/../../themes/themes" . $data["path_to_css"];
 				$this->jsPath  = __DIR__ . "/../../themes/themes" . $data["path_to_js"];
 
