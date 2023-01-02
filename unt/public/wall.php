@@ -73,6 +73,15 @@ if (isset(Request::get()->data["action"]))
 				die(json_encode($result->toArray()));
 		break;
 
+        case 'delete':
+            // ЛЮБОЙ ПОСТ СО СВОЕЙ СТЕНЫ И ТОЛЬКО СВОЙ ПОСТ С ЧУЖОЙ СТЕНЫ
+            if ($wall_id === intval($_SESSION['user_id']) || $post->getOwnerId() === intval($_SESSION['user_id']))
+            {
+                if ($post->delete())
+                    die(json_encode(array('success' => 1)));
+            }
+        break;
+
 		case 'delete_comment':
 			$comment_id = intval(Request::get()->data['comment_id']);
 

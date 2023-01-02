@@ -22,6 +22,9 @@ class Post extends Attachment
 
 	private string $text;
 
+    /**
+     * @var array<Attachment>
+     */
 	private array $attachments = [];
 
 	private int $comments_count = 0;
@@ -306,23 +309,22 @@ class Post extends Attachment
 	public function apply (): bool
 	{
         $wallId = $this->getWallId();
+
+        if (strlen($this->getText()) > 128000) return false;
+
         $res = $this->currentConnection->prepare("UPDATE wall.posts SET text = ? WHERE to_id = ? AND local_id = ? LIMIT 1;");
 
 		if ($res->execute([$this->getText(), $wallId, $this->getPostId()]))
 		{
-			$attachments = '';
+            if (is_empty($this->getText()) && count($this->getAttachmentsList()) === 0) return false;
 
-			$attachments_list = $this->getAttachmentsList();
-			foreach ($attachments_list as $index => $attachment) {
-				$attachments .= $attachment->getCredentials();
-
-				if ($index !== (count($attachments_list) - 1))
-					$attachments .= ',';
-			}
+			$attachments_string = array_map(function ($attachment) {
+                return $attachment->toArray();
+            }, $this->getAttachmentsList());
 
 			$res = $this->currentConnection->prepare("UPDATE wall.posts SET attachments = ? WHERE to_id = ? AND local_id = ? LIMIT 1;");
 
-			return $res->execute([$attachments, $wallId, $this->getPostId()]);
+			return $res->execute([$attachments_string, $wallId, $this->getPostId()]);
 		}
 
 		return false;
@@ -443,6 +445,8 @@ class Post extends Attachment
 	}
 
 	////////////////////////////////////////
+    const EVENT_PHOTO_UPDATED = 'updated_photo';
+
 	public static function findById (int $wall_id, int $post_id): ?Post
 	{
 		$post = new static($wall_id, $post_id);
@@ -489,9 +493,74 @@ class Post extends Attachment
 		return $result;
 	}
 
-    public static function create (): ?Post
+    /**
+     * Создаёт запись на стене пользователя от имени текущего юзера
+     * @param int $wall_id - айди пользователя, на чьей стене создать пост
+     * @param string $text
+     * @param array<Attachment> $attachments
+     * @param ?string $event
+     */
+    public static function create (int $wall_id, string $text = '', array $attachments = [], ?string $event = NULL): ?Post
     {
+        if ($event && $event !== self::EVENT_PHOTO_UPDATED) $event = NULL;
 
+        $attachments_string = '';
+        foreach ($attachments as $attachment)
+        {
+            $attachments_string .= $attachment->getCredentials();
+        }
+
+        // empty post is not allowed
+        if (is_empty($text) && count($attachments) <= 0) return NULL;
+
+        // too long text is not allowed
+        if (strlen($text) > 128000) return NULL;
+
+        // user exists
+        $entity = Entity::findById($wall_id);
+        if ($entity == NULL) return NULL;
+
+        if (!$entity->canWritePosts()) return NULL;
+
+        $res = DataBaseManager::getConnection()->prepare("SELECT COUNT(DISTINCT local_id) AS last_wall_post_id FROM wall.posts WHERE to_id = ?;");
+        if ($res->execute([$wall_id]))
+        {
+            $time         = time();
+            $owner_id     = $_SESSION['user_id'];
+            $new_local_id = intval($res->fetch(\PDO::FETCH_ASSOC)['last_wall_post_id']) + 1;
+            $event        = (string) $event;
+
+            // creating new post.
+            $res = DataBaseManager::getConnection()->prepare("INSERT INTO wall.posts (owner_id, local_id, text, time, to_id, attachments, event) VALUES (:owner_id, :local_id, :text, :time, :to_id, :attachments, :event);");
+
+            // binding post data.
+            $res->bindParam(":owner_id",    $owner_id,     \PDO::PARAM_INT);
+            $res->bindParam(":local_id",    $new_local_id, \PDO::PARAM_INT);
+            $res->bindParam(":text",        $text,         \PDO::PARAM_STR);
+            $res->bindParam(":time",        $time,         \PDO::PARAM_INT);
+            $res->bindParam(":to_id",       $wall_id,      \PDO::PARAM_INT);
+            $res->bindParam(":attachments",
+                                                $attachments_string,  \PDO::PARAM_STR);
+            $res->bindParam(":event",       $event,        \PDO::PARAM_STR);
+
+            if ($res->execute())
+            {
+                return Post::findById($wall_id, $new_local_id);
+            }
+        }
+
+        return NULL;
+    }
+
+    public function delete (): bool
+    {
+        if (DataBaseManager::getConnection()->prepare('UPDATE wall.posts SET is_deleted = 1 WHERE to_id = ? AND local_id = ? LIMIT 1')->execute([$this->getWallId(), $this->getPostId()]))
+        {
+            $this->isValid = false;
+            return true;
+        }
+
+        return false;
     }
 }
 

@@ -199,16 +199,11 @@ class Bot extends Entity
 		{
 			//$dialog = new Dialog('b' . $this->getId());
 
-			$result['can_write_messages'] = false;//$dialog->canWrite();
+			$result['can_write_messages'] = false;
 		}
 		if (in_array("can_write_on_wall", $resultedFields))
 		{
-			if (!function_exists('can_write_posts'))
-                require __DIR__ . '/../functions/wall.php';
-
-			$objectId = $this->getType() === Bot::ENTITY_TYPE ? ($this->getId() * -1) : $this->getId();
-
-			$result['can_write_on_wall'] = can_write_posts($this->currentConnection, intval($_SESSION['user_id']), $objectId);
+			$result['can_write_on_wall'] = false;
 		}
 		if (in_array("can_invite_to_chat", $resultedFields))
 		{

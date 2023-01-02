@@ -351,6 +351,35 @@ class User extends Entity
 		return false;
 	}
 
+    public function canWritePosts (): bool
+    {
+        if (!Context::get()->isLogged()) return false;
+
+        // current user always can write to itself
+        if (intval($_SESSION['user_id']) === $this->getId()) return true;
+
+        // only exists
+        if (!$this->valid()) return false;
+
+        $can_write_posts = $this->getSettings()->getSettingsGroup(Settings::PRIVACY_GROUP)->getGroupValue('can_write_on_wall');
+
+        // all users can write
+        if ($can_write_posts === 0) return true;
+
+        /**
+         * Here we will to check user friendship.
+         */
+
+        // checking if only friends level set.
+        if ($this->getType() === User::ENTITY_TYPE && $can_write_posts === 1 && $this->isFriends()) return true;
+
+        // only owners can write on bot's wall
+        if ($this->getType() === "bot" && $can_write_posts === 2 && intval($_SESSION['user_id']) === $this->getOwnerId()) return true;
+
+        // another errors is a false for safety
+        return false;
+    }
+
 	public function toArray (string $fields = ''): array
 	{
 		$allFieldsList = [];
@@ -447,13 +476,8 @@ class User extends Entity
 			}
 			if (in_array("can_write_on_wall", $resultedFields))
 			{
-				if (!function_exists('can_write_posts'))
-                    require_once __DIR__ . '/../functions/wall.php';
-
-				$objectId = $this->getType() === Bot::ENTITY_TYPE ? ($this->getId() * -1) : $this->getId();
-
-				$result['can_write_on_wall'] = \unt\functions\wall\can_write_posts($this->currentConnection, intval($_SESSION['user_id']), $objectId);
-			}
+				$result['can_write_on_wall'] = $this->canWritePosts();
+            }
 			if (in_array("can_invite_to_chat", $resultedFields))
 			{
 				$result['can_invite_to_chat'] = $this->canInviteToChat();

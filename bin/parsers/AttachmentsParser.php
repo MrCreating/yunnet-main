@@ -85,6 +85,11 @@ class AttachmentsParser extends BaseObject
 		return NULL;
 	}
 
+    /**
+     * Return attachments array
+     * @param ?string $credentials - списки полей вложений
+     * @return array<Attachment>
+     */
 	public function getObjects (?string $credentials): array
 	{
 		if (!$credentials || is_empty($credentials)) return [];
