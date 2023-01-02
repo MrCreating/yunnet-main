@@ -148,6 +148,7 @@ class UploadManager extends BaseObject
                             $iv    = rand(1, 9999999);
                             $rv    = $iv;
                             $new_q = openssl_encrypt($done_path.'|'.$type_c, 'AES-256-OFB', self::SERVER_KEY, 0, self::SERVER_IV, $iv);
+                            $user_id = intval($_SESSION['user_id']);
 
                             $res = DataBaseManager::getConnection()->prepare('
 							    INSERT INTO attachments.d_1 (path, query, owner_id, access_key, id, width, height, type) VALUES (:path, :query, :owner_id, :access_key, :id, :width, :height, "photo");
@@ -164,8 +165,6 @@ class UploadManager extends BaseObject
                             $res->bindParam(":height",     $height,    \PDO::PARAM_INT);
                             if ($res->execute())
                             {
-                                var_dump('ok!');
-
                                 $result = new Photo($user_id, $attachment_id, $key_of_attachment);
                                 if (!$result->valid())
                                     break;
