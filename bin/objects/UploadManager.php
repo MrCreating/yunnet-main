@@ -125,8 +125,6 @@ class UploadManager extends BaseObject
                             if (!mkdir(__DIR__ . '/../../attachments/d-1/' . $_SESSION['user_id'] . '/audios')) break;
                         }
 
-                        die('bb');
-
                         if (move_uploaded_file($currentFileInfo['tmp_name'], __DIR__ . $done_path))
                         {
                             if ($info['mime'] !== "image/gif")
@@ -166,6 +164,8 @@ class UploadManager extends BaseObject
                             $res->bindParam(":height",     $height,    \PDO::PARAM_INT);
                             if ($res->execute())
                             {
+                                var_dump('ok!');
+
                                 $result = new Photo($user_id, $attachment_id, $key_of_attachment);
                                 if (!$result->valid())
                                     break;
