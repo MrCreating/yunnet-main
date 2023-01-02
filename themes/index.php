@@ -61,6 +61,7 @@ switch ($mode) {
         die($fileData->build());
         break;
     case 'css':
+        die(var_dump($theme));
         $code = $theme->getCSSCode();
 
         if ($code === NULL)
