@@ -58,8 +58,6 @@ class Theme extends Attachment
 				$this->cssPath = __DIR__ . "/../../themes/themes" . $data["path_to_css"];
 				$this->jsPath  = __DIR__ . "/../../themes/themes" . $data["path_to_js"];
 
-                var_export($this->cssPath);
-
 				$this->isValid = true;
 
 				$this->eventManager = new EventEmitter();
@@ -372,8 +370,8 @@ class Theme extends Attachment
 		if (is_empty($description) || strlen($description) > 128) return NULL;
 
 		// creating new user folder if not created.
-		if (!file_exists(__DIR__ . '/../../attachments/themes/' . $owner_id)) 
-			if (!mkdir(__DIR__ . '/../../attachments/themes/' . $owner_id))
+		if (!file_exists(__DIR__ . "/../../themes/themes/" . $owner_id))
+			if (!mkdir(__DIR__ . "/../../themes/themes/" . $owner_id))
 				return NULL;
 
 		// inserting new theme data.
@@ -398,12 +396,12 @@ class Theme extends Attachment
 				*/
 				$new_theme_id = intval($res->fetch(\PDO::FETCH_ASSOC)["LAST_INSERT_ID()"]);
 
-				if (!file_exists(__DIR__ . '/../../attachments/themes/' . $owner_id . "/" . $new_theme_id))
-					if (!mkdir(__DIR__ . '/../../attachments/themes/' . $owner_id . "/" . $new_theme_id))
+				if (!file_exists(__DIR__ . "/../../themes/themes/" . $owner_id . "/" . $new_theme_id))
+					if (!mkdir(__DIR__ . "/../../themes/themes/" . $owner_id . "/" . $new_theme_id))
 						return NULL;
 
 				// CSS code.
-				file_put_contents(__DIR__ . '/../../attachments/themes/' . $owner_id . "/" . $new_theme_id . "/theme.css", "/**
+				file_put_contents(__DIR__ . "/../../themes/themes/" . $owner_id . "/" . $new_theme_id . "/theme.css", "/**
  * Welcome to your theme code! 
  * It is an a CSS code. 
  * You can edit it as you want! 
@@ -496,7 +494,7 @@ class Theme extends Attachment
 ");
 
 				// JS code.
-				file_put_contents(__DIR__ . '/../../attachments/themes/' . $owner_id . "/" . $new_theme_id . "/theme.js", "/**
+				file_put_contents(__DIR__ . "/../../themes/themes/" . $owner_id . "/" . $new_theme_id . "/theme.js", "/**
  * Welcome to your theme code! 
  * It is an a JS code. 
  * You can edit it as you want! 
