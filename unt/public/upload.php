@@ -67,6 +67,7 @@ if (isset(Request::get()->data['action']))
 		break;
 
 		case "upload":
+            $this->errors();
             header('Content-Type: text/html');
 
             try {
