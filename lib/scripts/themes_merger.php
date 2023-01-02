@@ -15,6 +15,8 @@ $themes = $res->fetchAll(PDO::FETCH_ASSOC);
 
 foreach ($themes as $theme)
 {
+    var_dump($theme);
+
     $theme_css_path = __DIR__ . '/../../attachments/themes' . $theme['path_to_css'];
     $theme_js_path = __DIR__ . '/../../attachments/themes' . $theme['path_to_js'];
 
