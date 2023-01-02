@@ -66,8 +66,8 @@ if (isset(Request::get()->data['action']))
 						'error_code' => 1
 					)));
 
-				$_SESSION["first_name"]   = unt\functions\capitalize($first_name);
-				$_SESSION["last_name"]    = unt\functions\capitalize($last_name);
+				$_SESSION["first_name"]   = capitalize($first_name);
+				$_SESSION["last_name"]    = capitalize($last_name);
 
 				die(json_encode(array(
 					"stage" => ($_SESSION["stage"] = 1)

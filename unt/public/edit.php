@@ -85,8 +85,7 @@ if (isset(Request::get()->data['action']))
 			}
 
 			die(json_encode(array('error'=>1, 'message'=>Context::get()->getLanguage()->in_f_2)));
-		break;
-		
+
 		default:
 		break;
 	}

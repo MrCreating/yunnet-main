@@ -178,7 +178,7 @@ function search_users ($connection, $query, $additional_params = [
 {
 	$result = [];
 
-	$query = explode(' ', \unt\functions\capitalize(trim($query)));
+	$query = explode(' ', capitalize(trim($query)));
 	if (count($query) > 20 || count($query) < 1)
 		return $result;
 

@@ -82,7 +82,7 @@ class UserInfoEditor extends InfoEditor
 		if (strlen($firstName) < 2 || strlen($firstName) > 32) return -2;
 		if (preg_match("/[^a-zA-Zа-яА-ЯёЁ'-]/ui", $firstName)) return -1;
 
-		$this->firstName = \unt\functions\capitalize($firstName);
+		$this->firstName = capitalize($firstName);
 
 		return (int) $this->currentConnection->prepare("UPDATE users.info SET first_name = ? WHERE id = ? AND is_deleted = 0 AND is_banned = 0 LIMIT 1;")->execute([$this->firstName, $this->getBoundEntity()->getId()]);
 	}
@@ -95,7 +95,7 @@ class UserInfoEditor extends InfoEditor
 		if (strlen($lastName) < 2 || strlen($lastName) > 32) return -2;
 		if (preg_match("/[^a-zA-Zа-яА-ЯёЁ'-]/ui", $lastName)) return -1;
 
-		$this->lastName = \unt\functions\capitalize($lastName);
+		$this->lastName = capitalize($lastName);
 
 		return (int) $this->currentConnection->prepare("UPDATE users.info SET last_name = ? WHERE id = ? AND is_deleted = 0 AND is_banned = 0 LIMIT 1;")->execute([$this->lastName, $this->getBoundEntity()->getId()]);
 	}
