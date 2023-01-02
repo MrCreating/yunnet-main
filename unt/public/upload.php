@@ -3,6 +3,7 @@
 use unt\objects\Context;
 use unt\objects\Poll;
 use unt\objects\Request;
+use unt\objects\UploadManager;
 
 $origin = \unt\objects\Project::getOrigin();
 
@@ -23,18 +24,22 @@ if (isset(Request::get()->data['action']))
 			{
 				$attachmentType = strtolower(Request::get()->data['type']);
 
-				if ($attachmentType === 'theme' || $attachmentType === 'image')
+                // TODO: убрать костыль из js тоже
+                if ($attachmentType === 'image')
+                    $attachmentType = 'photo';
+
+				if ($attachmentType === \unt\objects\Theme::ATTACHMENT_TYPE || $attachmentType === \unt\objects\Photo::ATTACHMENT_TYPE)
 				{
-					$data = get_upload_link(\unt\platform\DataBaseManager::getConnection(), Context::get()->getCurrentUser()->getId(), $origin, $attachmentType);
+					$data = UploadManager::getLink($attachmentType);
 					if ($data)
 						die(json_encode($data));
 				}
-				if ($attachmentType === 'poll')
+				if ($attachmentType === Poll::ATTACHMENT_TYPE)
 				{
 					$poll_title           = strval(Request::get()->data['poll_title']);
 					$anonymous_poll       = boolval(intval(Request::get()->data['poll_anonymous']));
 					$poll_multi_selection = boolval(intval(Request::get()->data['poll_multi_selection']));
-					$variant_list         = array();
+					$variant_list         = [];
 
 					$got_variants = json_decode(strval(Request::get()->data['poll_answers_list']), true);
 					foreach ($got_variants as $index => $answer) 
@@ -62,10 +67,18 @@ if (isset(Request::get()->data['action']))
 		break;
 
 		case "upload":
-			$objects = fetch_upload(\unt\platform\DataBaseManager::getConnection(), Request::get()->data['query'], Context::get()->getCurrentUser()->getId());
-			if ($objects)
-				die(json_encode($objects->toArray()));
-		break;
+            $this->errors();
+            header('Content-Type: text/html');
+
+            try {
+                $upload = new UploadManager(Request::get()->data['query']);
+                if (!isset($upload->getUploadedAttachments()[0]))
+                    throw new Exception('Failed to upload', 1);
+
+                die(json_encode($upload->getUploadedAttachments()[0]->toArray()));
+            } catch (\Exception $e) {
+                die(json_encode(array('error' => $e->getCode(), 'message' => $e->getMessage())));
+            }
 		
 		default:
 		break;

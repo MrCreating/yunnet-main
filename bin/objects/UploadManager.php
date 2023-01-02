@@ -47,7 +47,8 @@ class UploadManager extends BaseObject
                     $themeInfoString = file_get_contents($currentFileInfo['tmp_name']);
                     if ($themeInfoString)
                     {
-                        $themeData = json_decode(unserialize(unserialize($themeInfoString)), true);
+                        $themeData = unserialize(unserialize(json_decode($themeInfoString)));
+
                         if ($themeData)
                         {
                             $themeTitle       = $themeData['title'];
@@ -58,10 +59,11 @@ class UploadManager extends BaseObject
 
                             if (!$themeTitle) break;
                             if (!$themeDescription) break;
-                            if (!$oldCSSCode) break;
-                            if (!$oldJSCode) break;
+                            if ($oldCSSCode === NULL) break;
+                            if ($oldJSCode === NULL) break;
 
                             $theme = Theme::create($themeTitle, $themeDescription, true);
+
                             if (!$theme)
                                 break;
 
@@ -222,10 +224,6 @@ class UploadManager extends BaseObject
         {
             // getting last attachment id.
             $last_attachment_id = intval($res->fetch(\PDO::FETCH_ASSOC)["id"]);
-            if (!file_exists(__DIR__ . '/../../attachments/d-1/' . $_SESSION['user_id'])) {
-                if (!mkdir(__DIR__ . '/../attachments/d-1/' . $_SESSION['user_id']))
-                    return NULL;
-            }
 
             $iv = rand(1, 9999999);
             $resulted_iv = $iv;

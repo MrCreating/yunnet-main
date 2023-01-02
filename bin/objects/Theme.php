@@ -503,8 +503,7 @@ class Theme extends Attachment
 console.log(`[OK] Theme is working! Fine :)`)
 ");
 				// update that info in DB
-				\unt\platform\DataBaseManager::getConnection()->prepare('UPDATE users.themes SET path_to_css = "/'.intval($owner_id).'/'.intval($new_theme_id).'/theme.css" WHERE id = ?;')->execute([intval($new_theme_id)]);
-				\unt\platform\DataBaseManager::getConnection()->prepare('UPDATE users.themes SET path_to_js = "/'.intval($owner_id).'/'.intval($new_theme_id).'/theme.js" WHERE id = ?;')->execute([intval($new_theme_id)]);
+				\unt\platform\DataBaseManager::getConnection()->prepare('UPDATE users.themes SET path_to_css = "/'.intval($owner_id).'/'. $new_theme_id .'/theme.css", path_to_js = "/'.intval($owner_id).'/'. $new_theme_id .'/theme.js" WHERE id = ?;')->execute([$new_theme_id]);
 
 				$result = new Theme($owner_id, $new_theme_id);
 				if ($result->valid())
