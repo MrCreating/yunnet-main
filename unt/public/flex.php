@@ -96,10 +96,10 @@ if (isset(Request::get()->data['action']))
 			if (Context::get()->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
 
 			$text = strval(Request::get()->data['text']);
-			$atts = strval(Request::get()->data['attachments']);
+			$attachments_list = strval(Request::get()->data['attachments']);
 			$wall = intval(Request::get()->data['wall_id']) !== 0 ? intval(Request::get()->data['wall_id']) : Context::get()->getCurrentUser()->getId();
 
-			$result = \unt\functions\wall\create_post(DataBaseManager::getConnection()->getClient(), Context::get()->getCurrentUser()->getId(), $wall, $text, $atts);
+			$result = \unt\functions\wall\create_post(DataBaseManager::getConnection()->getClient(), Context::get()->getCurrentUser()->getId(), $wall, $text, $attachments_list);
 
 			// if not post created - show this.
 			if (!$result) die(json_encode(array('error'=>1)));
@@ -118,11 +118,11 @@ if (isset(Request::get()->data['action']))
 			if (Context::get()->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
 
 			$text = strval(Request::get()->data['text']);
-			$atts = strval(Request::get()->data['attachments']);
+			$attachments_list = strval(Request::get()->data['attachments']);
 			$wall = intval(Request::get()->data['wall_id']);
 			$post = intval(Request::get()->data['post_id']);
 
-			$result = \unt\functions\wall\update_post_data(DataBaseManager::getConnection(), Context::get()->getCurrentUser()->getId(), $wall, $post, $text, $atts);
+			$result = \unt\functions\wall\update_post_data(DataBaseManager::getConnection(), Context::get()->getCurrentUser()->getId(), $wall, $post, $text, $attachments_list);
 
 			// if not post updated - show this.
 			if (!$result) die(json_encode(array('error' => 1)));

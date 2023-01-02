@@ -4,8 +4,7 @@
  * Attachments server.
 */
 
-// closes the session.
-session_write_close();
+use unt\platform\DataBaseManager;
 
 // sending the headers
 header('Server: YunNet');
@@ -30,7 +29,8 @@ $res->execute([$attachment_query]);
 $attachment_data = $res->fetch(PDO::FETCH_ASSOC);
 
 // if not image registered.
-if (!$attachment_data) return_not_found();
+if (!$attachment_data)
+    return_not_found();
 
 // getting the photo and return it.
 $path = __DIR__ . '/' . $attachment_data['path'];
@@ -41,34 +41,33 @@ if (!file_exists($path))
 
 try {
 	$img = new Imagick($path);
+
+    $len = filesize($path);
+
+    // getting image type and show it.
+    $type = '';
+    switch (explode('.', $path)[count(explode('.', $path))-1]) {
+        case 'jpg':
+            $type = 'jpeg';
+            break;
+        default:
+            $type = explode('.', $path)[count(explode('.', $path))-1];
+            break;
+    }
+
+    // sending content type header.
+    header('Content-Type: image/'.$type.PHP_EOL);
+    header('Content-Length: '.$len);
+    header('Cache-Control: max-age=3600');
+
+    // show an a image
+    switch ($type) {
+        case 'gif':
+        case 'jpeg':
+        case 'jpg':
+        case 'png':
+            die(file_get_contents($path)); break;
+    }
 } catch (Exception $e) {
 	return_not_found();
 }
-$len = filesize($path);
-
-// if image not exists
-if (!$img) return_not_found();
-
-// getting image type and show it.
-$type = '';
-switch (explode('.', $path)[count(explode('.', $path))-1]) {
-	case 'jpg':
-		$type = 'jpeg';
-	default:
-		$type = explode('.', $path)[count(explode('.', $path))-1]; break;
-}
-
-// sending content type header.
-header('Content-Type: image/'.$type.PHP_EOL);
-header('Content-Length: '.$len);
-header('Cache-Control: max-age=3600');
-
-// show an a image
-switch ($type) {
-    case 'gif':
-    case 'jpeg':
-    case 'jpg':
-    case 'png':
-		die(file_get_contents($path)); break;
-}
-?>
