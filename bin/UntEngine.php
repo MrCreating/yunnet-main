@@ -83,8 +83,6 @@ class UntEngine
             case "test":
                 // https://test.yunnet.ru - GitHub WenHook панель управления + обработка событий разработки
                 die(require_once __DIR__ . '/../test/index.php');
-            case 'vd':
-                die(require_once __DIR__ . '/../vd1/index.php');
         }
 
         // https://yunnet.ru все остальное
