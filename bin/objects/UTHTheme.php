@@ -15,7 +15,20 @@ class UTHTheme extends BaseObject
 
     public function build (): string
     {
-        return 'build ok';
+        return json_encode(serialize(serialize([
+            'title'       => $this->theme->getTitle(),
+            'description' => $this->theme->getDescription(),
+
+            'data' => [
+                'css' => $this->theme->getCSSCode(),
+                'js'  => $this->theme->getJSCode()
+            ]
+        ])));
+    }
+
+    public function length (): int
+    {
+        return strlen($this->build());
     }
 
     /**

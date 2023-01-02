@@ -44,7 +44,7 @@ foreach ($params as $index => $item) {
 $mode = strtolower($request["mode"]);
 switch ($mode) {
     case 'export':
-        if ($theme->getOwnerId() !== intval($_SESSION['user_id']))
+        if (Project::isProduction() && $theme->getOwnerId() !== intval($_SESSION['user_id']))
             die(json_encode(array('error' => array('error_code' => 302, 'error_message' => 'You do not have access to import this theme'))));
 
         $fileData = $theme->createUTH();
@@ -62,7 +62,8 @@ switch ($mode) {
         break;
     case 'css':
         $code = $theme->getCSSCode();
-        if (!$code)
+
+        if ($code === NULL)
         {
             header("Content-Type: application/json");
             die(json_encode(array('error' => array('error_code' => 300, 'error_message' => 'Code for this param is not found'))));
@@ -76,7 +77,7 @@ switch ($mode) {
     case 'js':
 
         // checking js code evaluation allowance
-        $allow_state = Context::get()->getCurrentUser()->getSettings()->getSettingsGroup(\unt\objects\Settings::THEMING_GROUP)->isJSAllowed();
+        $allow_state = !Project::isProduction() ? true : Context::get()->getCurrentUser()->getSettings()->getSettingsGroup(\unt\objects\Settings::THEMING_GROUP)->isJSAllowed();
         if (!$allow_state)
         {
             header("Content-Type: application/json");
@@ -85,7 +86,7 @@ switch ($mode) {
 
         // if OK getting js code.
         $code = $theme->getJSCode();
-        if (!$code)
+        if ($code === NULL)
         {
             header("Content-Type: application/json");
             die(json_encode(array('error' => array('error_code' => 300, 'error_message' => 'Code for this param is not found'))));
