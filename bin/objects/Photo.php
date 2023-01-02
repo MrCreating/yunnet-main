@@ -158,9 +158,6 @@ class Photo extends Attachment
 
 		$user_id = (int) $_SESSION['user_id'];
 
-		if (!function_exists('create_notification'))
-			require __DIR__ . '/../functions/notifications.php';
-
 		$result = [
 			'state'     => 0,
 			'new_count' => 0
@@ -179,7 +176,7 @@ class Photo extends Attachment
 				{
 					if ($this->owner_id !== $user_id)
 					{
-						create_notification($this->currentConnection, $this->owner_id, "photo_like", [
+						Notification::create($this->owner_id, "photo_like", [
 							'user_id' => intval($user_id),
 							'data'    => $this->toArray()
 						]);

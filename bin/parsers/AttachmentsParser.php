@@ -9,8 +9,6 @@ use unt\objects\Poll;
 use unt\objects\Post;
 use unt\objects\Theme;
 
-use function unt\functions\is_empty;
-
 /**
  * Parse attachments from credentials
 */
@@ -115,7 +113,7 @@ class AttachmentsParser extends BaseObject
 
 	public function resolveFromQuery (?string $query): ?Photo
 	{
-		if (!$query || \unt\functions\is_empty($query)) return NULL;
+		if (!$query || is_empty($query)) return NULL;
 
 		$query = explode('__', substr($query, 0, strlen($query)))[0];
 

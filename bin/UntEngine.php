@@ -56,7 +56,6 @@ class UntEngine
         define('REQUESTED_PAGE', $requested_page);
         define('PROJECT_ROOT', __DIR__ . '/..');
 
-        require_once __DIR__ . '/../bin/base_functions.php';
         require_once __DIR__ . '/base_functions.php';
 
         // checking domains.

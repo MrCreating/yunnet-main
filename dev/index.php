@@ -4,9 +4,10 @@
  * API docs and JS server
 */
 
+use unt\objects\Project;
 use unt\platform\SourcesManager;
 
-header('Access-Control-Allow-Origin: ' . \unt\functions\get_page_origin());
+header('Access-Control-Allow-Origin: ' . Project::getOrigin());
 
 $requested_path = explode('/', strval(explode('?', $_SERVER['REQUEST_URI'])[0]));
 

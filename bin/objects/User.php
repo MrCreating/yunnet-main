@@ -93,6 +93,16 @@ class User extends Entity
 		}
 	}
 
+    public function updateOnlineTime (): User
+    {
+        $old_time = $this->getOnline()->lastOnlineTime > 0 ? intval($this->getOnline()->lastOnlineTime) : 0;
+
+        if (((time() - $old_time) >= 0) || $old_time <= 0)
+            \unt\platform\DataBaseManager::getConnection()->prepare("UPDATE users.info SET is_online = ? WHERE id = ? LIMIT 1;")->execute([time() + 30, $this->getId()]);
+
+        return $this;
+    }
+
 	public function isFriends (): bool
 	{
 		$user_id = intval($_SESSION['user_id']);

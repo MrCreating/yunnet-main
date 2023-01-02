@@ -4,18 +4,21 @@
  * Here is the themes server.
  */
 
-// handle selected theme
+use unt\objects\Context;
+use unt\objects\Project;
+use unt\parsers\AttachmentsParser;
+use unt\platform\DataBaseManager;
+
 $selected_theme = explode('/', explode('?', strtolower($_SERVER["REQUEST_URI"]))[0])[1];
 if ($selected_theme === "")
 {
-    header("Content-Type: application/json"); http_response_code(404); die('[]');
+    header("Content-Type: application/json");
+    http_response_code(404);
+    die('[]');
 }
 
-// getting database connection and require Theme object file.
-require_once __DIR__ . '/../bin/parsers/AttachmentsParser.php';
-
 // here we will setup headers for CORS
-header('Access-Control-Allow-Origin: ' . unt\functions\get_page_origin());
+header('Access-Control-Allow-Origin: ' . Project::getOrigin());
 header('Access-Control-Allow-Credentials: true');
 
 // getting DB connection and setup theme.
@@ -67,13 +70,13 @@ switch ($mode) {
 
         // send code.
         header("Content-Type: text/css");
-        header("Access-Control-Allow-Origin: ".unt\functions\get_page_origin());
         die($code);
+
         break;
     case 'js':
 
         // checking js code evaluation allowance
-        $allow_state = Context::get()->getCurrentUser()->getSettings()->getSettingsGroup('theming')->isJSAllowed();
+        $allow_state = Context::get()->getCurrentUser()->getSettings()->getSettingsGroup(\unt\objects\Settings::THEMING_GROUP)->isJSAllowed();
         if (!$allow_state)
         {
             header("Content-Type: application/json");
@@ -90,7 +93,6 @@ switch ($mode) {
 
         // send code.
         header("Content-Type: text/javascript");
-        header("Access-Control-Allow-Origin: ".unt\functions\get_page_origin());
         die($code);
         break;
     default:
@@ -99,7 +101,4 @@ switch ($mode) {
         break;
 }
 
-// by default - not found.
-header("Content-Type: application/json");
-die('[]');
 ?>

@@ -190,7 +190,7 @@ class App extends BaseObject
 		$new_title  = $this->getTitle();
 		$current_id = $this->getId();
 
-		if (\unt\functions\is_empty($new_title) || strlen($new_title) > 32)
+		if (is_empty($new_title) || strlen($new_title) > 32)
 			return false;
 
 		$res = $this->currentConnection->prepare("UPDATE apps.info SET title = ? WHERE id = ? LIMIT 1");
@@ -243,7 +243,7 @@ class App extends BaseObject
 		if ($owner_id == 0) return NULL;
 
 		// checking title for empty and long-length.
-		if (\unt\functions\is_empty($title) || strlen($title) > 64) return NULL;
+		if (is_empty($title) || strlen($title) > 64) return NULL;
 
 		// inserting into DB and getting ID for app.
 		$res = \unt\platform\DataBaseManager::getConnection()->prepare("INSERT INTO apps.info (owner_id, title, creation_time) VALUES (?, ?, ?);");

@@ -4,7 +4,11 @@
  * LongPolling getter.
  */
 
-header('Access-Control-Allow-Origin: ' . unt\functions\get_page_origin());
+use unt\objects\Context;
+use unt\objects\Project;
+use unt\platform\Cache;
+
+header('Access-Control-Allow-Origin: ' . Project::getOrigin());
 header("Access-Control-Allow-Credentials: true");
 
 if (!Context::get()->isLogged() || intval(Context::get()->getCurrentUser()->isBanned()))

@@ -31,7 +31,7 @@ class UserInfoEditor extends InfoEditor
 	{
 		if (!$this->getBoundEntity()->valid() || $this->getBoundEntity()->isBanned()) return false;
 
-		if (!$newStatus || \unt\functions\is_empty($newStatus))
+		if (!$newStatus || is_empty($newStatus))
 		{
 			return $this->currentConnection->prepare("UPDATE users.info SET status = NULL WHERE id = ? AND is_deleted = 0 AND is_banned = 0 LIMIT 1")->execute([$this->getBoundEntity()->getId()]);
 		} else
@@ -78,7 +78,7 @@ class UserInfoEditor extends InfoEditor
 	{
 		if (!$this->getBoundEntity()->valid() || $this->getBoundEntity()->isBanned()) return false;
 
-		if (\unt\functions\is_empty($firstName)) return -3;
+		if (is_empty($firstName)) return -3;
 		if (strlen($firstName) < 2 || strlen($firstName) > 32) return -2;
 		if (preg_match("/[^a-zA-Zа-яА-ЯёЁ'-]/ui", $firstName)) return -1;
 
@@ -91,7 +91,7 @@ class UserInfoEditor extends InfoEditor
 	{
 		if (!$this->getBoundEntity()->valid() || $this->getBoundEntity()->isBanned()) return false;
 
-		if (\unt\functions\is_empty($lastName)) return -3;
+		if (is_empty($lastName)) return -3;
 		if (strlen($lastName) < 2 || strlen($lastName) > 32) return -2;
 		if (preg_match("/[^a-zA-Zа-яА-ЯёЁ'-]/ui", $lastName)) return -1;
 
@@ -109,7 +109,7 @@ class UserInfoEditor extends InfoEditor
 			$this->screenName = $screenName;
 		} else
 		{
-			if (\unt\functions\is_empty($screenName) || strlen($screenName) < 6 || strlen($screenName) > 64) return 0;
+			if (is_empty($screenName) || strlen($screenName) < 6 || strlen($screenName) > 64) return 0;
 
 			if (!preg_match("/^[a-z]{1}[a-z_\d\s]*[a-z_\s\d]{1}$/i", $screenName)) return 0;
 

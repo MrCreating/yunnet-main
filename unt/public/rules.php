@@ -1,5 +1,6 @@
 <?php
 
+use unt\objects\Project;
 use unt\objects\Request;
 
 if (isset(Request::get()->data['action']))
@@ -8,9 +9,9 @@ if (isset(Request::get()->data['action']))
 
 	if ($action === "get_rules_text")
 	{
-		$rulesText = unt\functions\get_rules_text();
+		$rulesText = Project::getRulesText();
 
-		die(json_encode(array('rules'=>$rulesText)));
+		die(json_encode(array('rules' => $rulesText)));
 	}
 }
 

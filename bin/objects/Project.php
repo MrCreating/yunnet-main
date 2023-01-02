@@ -25,7 +25,14 @@ class Project extends BaseObject
 
     public static function getConnectionHead(): string
     {
-        return (getenv('UNT_PRODUCTION') === '1' ? 'https://' : 'http://');
+        return (self::isProduction() ? 'https://' : 'http://');
+    }
+
+    public static function getOrigin (): string
+    {
+        $link_without_params = (self::getConnectionHead()) . explode('/', explode('?', $_SERVER['HTTP_REFERER'])[0])[2];
+
+        return substr($link_without_params, 0, strlen($link_without_params));
     }
 
     public static function getProjectDomain(): string
@@ -33,6 +40,20 @@ class Project extends BaseObject
         if (getenv("UNT_PRODUCTION") === '1') return 'yunnet.ru';
 
         return 'localhost';
+    }
+
+    public static function getRulesText (): string
+    {
+        $lang = Context::get()->getLanguage()->id;
+
+        return file_get_contents(__DIR__ . '/../languages/policy/' . $lang . '/rules');
+    }
+
+    public static function getTermsText (): string
+    {
+        $lang = Context::get()->getLanguage()->id;
+
+        return file_get_contents(__DIR__ . '/../languages/policy/' . $lang . '/terms');
     }
 
     public static function getDefaultDomain(): string

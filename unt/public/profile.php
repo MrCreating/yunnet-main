@@ -39,7 +39,6 @@ if (isset(Request::get()->data['action']))
 
 	if (!Context::get()->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
-
 	switch ($action)
 	{
 		case 'set_new_status':
@@ -52,26 +51,22 @@ if (isset(Request::get()->data['action']))
 		case 'add':
 			if ($in_blacklist) die(json_encode(array('error' => 1)));
 
-			$result = create_friendship($connection, (Context::get()->getCurrentUser() !== NULL ? Context::get()->getCurrentUser()->getId() : 0), $selected_user["id"]);
+			$result = create_friendship(\unt\platform\DataBaseManager::getConnection(), (Context::get()->getCurrentUser() !== NULL ? Context::get()->getCurrentUser()->getId() : 0), $selected_user["id"]);
 
 			die(json_encode(array('success' => $result)));
 		break;
 
 		case 'block':
-			$result = block_user($connection, (Context::get()->getCurrentUser() !== NULL ? Context::get()->getCurrentUser()->getId() : 0), $selected_user["id"]);
+			$result = block_user(\unt\platform\DataBaseManager::getConnection(), (Context::get()->getCurrentUser() !== NULL ? Context::get()->getCurrentUser()->getId() : 0), $selected_user["id"]);
 
 			die(json_encode(array('success' => $result)));
 		break;
 
 		case 'delete':
-			$result = delete_friendship($connection, (Context::get()->getCurrentUser() !== NULL ? Context::get()->getCurrentUser()->getId() : 0), $selected_user["id"]);
+			$result = delete_friendship(\unt\platform\DataBaseManager::getConnection(), (Context::get()->getCurrentUser() !== NULL ? Context::get()->getCurrentUser()->getId() : 0), $selected_user["id"]);
 
 			die(json_encode(array('success' => $result)));
 		break;
-
-		case 'toggle_send_access':
-            die(json_encode(array('error' => 1)));
-			break;
 
 		default:
 		break;

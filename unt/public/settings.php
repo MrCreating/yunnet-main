@@ -19,7 +19,7 @@ if (isset(Request::get()->data["action"]))
 
 	switch ($action) {
 		case 'logout':
-			header('Access-Control-Allow-Origin: '.unt\functions\get_page_origin());
+			header('Access-Control-Allow-Origin: ' . \unt\objects\Project::getOrigin());
 			header('Access-Control-Allow-Credentials: true');
 
 			Context::get()->Logout();

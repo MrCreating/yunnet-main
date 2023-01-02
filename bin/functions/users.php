@@ -7,6 +7,7 @@ namespace unt\functions\users;
 use unt\objects\Bot;
 use unt\objects\Context;
 use unt\objects\Entity;
+use unt\objects\Notification;
 use unt\objects\User;
 use unt\platform\DataBaseManager;
 use unt\platform\EventEmitter;
@@ -48,7 +49,7 @@ function create_friendship ($connection, $owner_id, $user_id)
 		{
 			if ($owner_id === $resolver)
 			{
-				create_notification($connection, $user_id, "friendship_accepted", [
+				Notification::create($user_id, "friendship_accepted", [
 					'user_id' => intval($owner_id)
 				]);
 
@@ -71,7 +72,7 @@ function create_friendship ($connection, $owner_id, $user_id)
 			DataBaseManager::getConnection()->prepare("UPDATE users.relationships SET user2 = ? WHERE id = ? LIMIT 1;")->execute([intval($user_id), intval($friendship['id'])]);
 			DataBaseManager::getConnection()->prepare("UPDATE users.relationships SET is_hidden = 0 WHERE id = ? LIMIT 1;")->execute([intval($friendship['id'])]);
 			
-			create_notification($connection, $user_id, "friendship_requested", [
+			Notification::create($user_id, "friendship_requested", [
 				'user_id' => intval($owner_id)
 			]);
 
@@ -79,7 +80,7 @@ function create_friendship ($connection, $owner_id, $user_id)
 		}
 	} else 
 	{
-		create_notification($connection, $user_id, "friendship_requested", [
+		Notification::create($user_id, "friendship_requested", [
 			'user_id' => intval($owner_id)
 		]);
 
@@ -118,7 +119,7 @@ function delete_friendship ($connection, $owner_id, $user_id): bool
 		DataBaseManager::getConnection()->prepare("UPDATE users.relationships SET user2 = ? WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ?;")->execute([intval($owner_id), intval($owner_id), intval($user_id), intval($user_id), intval($owner_id)]);
 		DataBaseManager::getConnection()->prepare("UPDATE users.relationships SET is_hidden = 1 WHERE user1 = ? AND user2 = ? OR user1 = ? AND user2 = ?;")->execute([intval($owner_id), intval($owner_id), intval($user_id), intval($user_id), intval($owner_id)]);
 
-		create_notification($connection, $user_id, "deleted_friend", [
+		Notification::create($user_id, "deleted_friend", [
 			'user_id' => intval($owner_id)
 		]);
 
@@ -186,7 +187,7 @@ function search_users ($connection, $query, $additional_params = [
 		$query_call = "SELECT DISTINCT id FROM bots.info WHERE ";
 
 	foreach ($query as $index => $word) {
-		if (\unt\functions\is_empty($word))
+		if (is_empty($word))
 			continue;
 
 		if (!$additional_params['only_bots'])
@@ -213,7 +214,7 @@ function search_users ($connection, $query, $additional_params = [
 	// preparing requests
 	$res = DataBaseManager::getConnection()->prepare($query_call);
 	foreach ($query as $index => $word) {
-		if (\unt\functions\is_empty($word))
+		if (is_empty($word))
 			continue;
 
 		if (!$additional_params['only_bots'])

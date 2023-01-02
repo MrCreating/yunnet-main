@@ -13,7 +13,7 @@ if (isset(Request::get()->data["action"]))
 	switch ($action) {
 		case 'search':
 			$query = strval(Request::get()->data["query"]);
-			if (unt\functions\is_empty($query) || strlen($query) > 128)
+			if (is_empty($query) || strlen($query) > 128)
 				die('[]');
 
 			$params = [

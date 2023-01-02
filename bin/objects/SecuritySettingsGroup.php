@@ -38,7 +38,7 @@ class SecuritySettingsGroup extends SettingsGroup
 
 	public function isPasswordCorrect (string $password): bool
 	{
-		if (\unt\functions\is_empty($password) || strlen($password) < 6 || strlen($password) > 64) return false;
+		if (is_empty($password) || strlen($password) < 6 || strlen($password) > 64) return false;
 
 		$res = $this->currentConnection->prepare("SELECT password FROM users.info WHERE id = ? LIMIT 1");
 		if ($res->execute([$this->entity->getId()]))

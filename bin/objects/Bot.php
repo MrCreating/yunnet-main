@@ -114,7 +114,7 @@ class Bot extends Entity
 	{
 		$new_name = trim($this->name);
 
-		if (\unt\functions\is_empty($new_name) || strlen($new_name) > 64) return false;
+		if (is_empty($new_name) || strlen($new_name) > 64) return false;
 		if (preg_match("/[^a-zA-Zа-яА-ЯёЁ'-@$*#!%\d ]/ui", $new_name)) return false;
 
 		$res = $this->currentConnection->prepare("UPDATE bots.info SET name = ? WHERE id = ? AND is_deleted = 0 LIMIT 1");
@@ -271,7 +271,7 @@ class Bot extends Entity
 
 		$bot_name = trim($name);
 
-		if (\unt\functions\is_empty($bot_name) || strlen($bot_name) > 64) return NULL;
+		if (is_empty($bot_name) || strlen($bot_name) > 64) return NULL;
 
 		// only allowed letters and digits, space, and some symbols.
 		if (preg_match("/[^a-zA-Zа-яА-ЯёЁ'-@$*#!%\d ]/ui", $bot_name)) return NULL;

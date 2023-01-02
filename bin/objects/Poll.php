@@ -323,7 +323,7 @@ class Poll extends Attachment
 	//////////////////////////////////////////
 	public static function create (string $poll_title, array $variants_list, int $end_time = 0, bool $is_anonymous = false, bool $multi_selection = false, bool $can_revote = true): ?Poll
 	{
-		if (\unt\functions\is_empty($poll_title)) return NULL;
+		if (is_empty($poll_title)) return NULL;
 		if (strlen($poll_title) > 64) return NULL;
 
 		$owner_id = intval($_SESSION['user_id']);

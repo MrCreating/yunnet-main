@@ -13,6 +13,11 @@ class UTHTheme extends BaseObject
         parent::__construct();
     }
 
+    public function build (): string
+    {
+        return 'build ok';
+    }
+
     /**
      * @return Theme
      */

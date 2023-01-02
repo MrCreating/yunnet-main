@@ -61,7 +61,7 @@ if (isset(Request::get()->data['action']))
 			if (Context::get()->getCurrentUser() && Context::get()->getCurrentUser()->isBanned()) 
 				$screen_name = 'id' . Context::get()->getCurrentUser()->getId();
 
-			if (\unt\functions\is_empty($screen_name)) die(json_encode(array("error"=>1)));
+			if (is_empty($screen_name)) die(json_encode(array("error"=>1)));
 
 			$result = Entity::findByScreenName($screen_name);
 			if (!$result) die(json_encode(array("error"=>1)));

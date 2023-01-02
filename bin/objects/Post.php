@@ -61,7 +61,7 @@ class Post extends Attachment
 				$this->is_pinned     = boolval($data['is_pinned']);
 
 				$this->comments_count = intval($res->fetch(\PDO::FETCH_ASSOC)["COUNT(DISTINCT local_id)"]);
-				if (!\unt\functions\is_empty($data['event']))
+				if (!is_empty($data['event']))
 				{
 					$this->event = [];
 
@@ -418,7 +418,7 @@ class Post extends Attachment
 			$attachments_string[] = $attachment->getCredentials();
 		}
 
-		if (\unt\functions\is_empty($text) && count($attachments_string) <= 0) return NULL;
+		if (is_empty($text) && count($attachments_string) <= 0) return NULL;
 		if (strlen($text) > 64000) return NULL;
 
 		$attachments  = implode(',', $attachments_string);
@@ -488,6 +488,11 @@ class Post extends Attachment
 
 		return $result;
 	}
+
+    public static function create (): ?Post
+    {
+
+    }
 }
 
 ?>

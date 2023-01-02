@@ -58,7 +58,7 @@ if (isset(Request::get()->data['action']))
 
 			if (Context::get()->getCurrentUser()->getScreenName() !== Request::get()->data["screen_name"] && isset(Request::get()->data['screen_name']))
 			{
-				$result = Context::get()->getCurrentUser()->edit()->setScreenName(unt\functions\is_empty(Request::get()->data["screen_name"]) ? NULL : Request::get()->data["screen_name"]);
+				$result = Context::get()->getCurrentUser()->edit()->setScreenName(is_empty(Request::get()->data["screen_name"]) ? NULL : Request::get()->data["screen_name"]);
 				if ($result === 0)
 				{
 					die(json_encode(array('error'=>1, 'message'=>Context::get()->getLanguage()->in_f_3)));

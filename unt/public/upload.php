@@ -4,13 +4,11 @@ use unt\objects\Context;
 use unt\objects\Poll;
 use unt\objects\Request;
 
-$origin = unt\functions\get_page_origin();
+$origin = \unt\objects\Project::getOrigin();
 
 header("Content-Type: application/json");
 header('Access-Control-Allow-Origin: ' . $origin);
 header('Access-Control-Allow-Credentials: true');
-
-require_once __DIR__ . '/../../bin/functions/uploads.php';
 
 if (isset(Request::get()->data['action']))
 {
@@ -43,12 +41,12 @@ if (isset(Request::get()->data['action']))
 					{
 						if (intval($index) >= 10) break;
 
-						if (unt\functions\is_empty(strval($answer)) || strlen(strval($answer)) > 128) continue;
+						if (is_empty(strval($answer)) || strlen(strval($answer)) > 128) continue;
 
 						$variant_list[] = strval($answer);
 					}
 
-					if (unt\functions\is_empty($poll_title) || strlen($poll_title) > 64)
+					if (is_empty($poll_title) || strlen($poll_title) > 64)
 						die(json_encode(array('error' => 1)));
 
 					if (count($variant_list) < 1)

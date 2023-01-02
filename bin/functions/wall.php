@@ -66,7 +66,7 @@ function can_write_posts ($connection, $user_id, $check_id): bool
 */
 function create_post ($connection, $owner_id, $wall_id, $text = '', $attachments = '', $event = '')
 {
-	if (!\unt\functions\is_empty($event))
+	if (!is_empty($event))
 	{
 		$allowed_events = ['updated_photo'];
 
@@ -81,7 +81,7 @@ function create_post ($connection, $owner_id, $wall_id, $text = '', $attachments
 	}
 
 	// empty post is not allowed
-	if (\unt\functions\is_empty($text) && count($attachments_string) <= 0) return false;
+	if (is_empty($text) && count($attachments_string) <= 0) return false;
 
 	// too long text is not allowed
 	if (strlen($text) > 128000) return false;
@@ -144,7 +144,7 @@ function update_post_data ($connection, $user_id, $wall_id, $post_id, $text = ''
 	}
 
 	// empty post is not allowed
-	if (\unt\functions\is_empty($text) && count($attachments_list) <= 0) return false;
+	if (is_empty($text) && count($attachments_list) <= 0) return false;
 
 	// too long text is not allowed
 	if (strlen($text) > 128000) return false;

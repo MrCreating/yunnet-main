@@ -26,7 +26,7 @@ class Context extends BaseObject
 
 			if ($this->getCurrentSession()->isLogged())
 			{
-				\unt\functions\update_online_time($this->currentConnection, intval($this->getCurrentUser()->getOnline()->lastOnlineTime), $this->getCurrentUser()->getId());
+				$this->getCurrentUser()->updateOnlineTime($this->currentConnection, intval($this->getCurrentUser()->getOnline()->lastOnlineTime), $this->getCurrentUser()->getId());
 			}
 		} else {
             $this->currentSession = NULL;

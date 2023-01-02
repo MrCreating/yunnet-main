@@ -59,7 +59,7 @@ if (isset(Request::get()->data['action']))
 			if ($currentStage === 0)
 			{
 				$email = strval(Request::get()->data["email"]);
-				if (unt\functions\is_empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 96)
+				if (is_empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 96)
 				{
 					die(json_encode(array(
 						'error_code' => 2
@@ -80,7 +80,7 @@ if (isset(Request::get()->data['action']))
 			if ($currentStage === 1)
 			{
 				$last_name  = Request::get()->data["last_name"];
-				if (unt\functions\is_empty($last_name) || strlen($last_name) > 32 || preg_match("/[^a-zA-Zа-яА-ЯёЁ'-]/ui", $last_name))
+				if (is_empty($last_name) || strlen($last_name) > 32 || preg_match("/[^a-zA-Zа-яА-ЯёЁ'-]/ui", $last_name))
 					die(json_encode(array(
 						'error_code' => 1
 					)));
