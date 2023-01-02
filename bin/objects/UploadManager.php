@@ -114,6 +114,8 @@ class UploadManager extends BaseObject
                         if ($width < 25 || $height < 25) break;
                         if ($width > 7000 || $height > 7000) break;
 
+                        die('b');
+
                         $done_path = $path.$extension;
                         if (!file_exists(__DIR__ . '/../../attachments/d-1/' . $_SESSION['user_id'])) {
                             if (!mkdir(__DIR__ . '/../../attachments/d-1/' . $_SESSION['user_id'])) break;
