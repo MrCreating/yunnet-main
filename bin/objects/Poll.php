@@ -20,7 +20,7 @@ class Poll extends Attachment
 	private bool $can_multi_select = false;
 	private bool $is_anonymous     = false;
 
-	private bool $poll_title;
+	private string $poll_title;
 
 	private int $creation_time;
 	private int $end_time;
@@ -332,13 +332,22 @@ class Poll extends Attachment
 
 		$res = \unt\platform\DataBaseManager::getConnection()->prepare("
 			INSERT INTO 
-				polls.info (owner_id, access_key, title, isAnonymous, endTIme, canMultiSelect, canRevote, creationTime) 
+				polls.info (
+				            owner_id, 
+				            access_key, 
+				            title, 
+				            isAnonymous, 
+				            endTIme, 
+				            canMultiSelect, 
+				            canRevote, 
+				            creationTime
+				            ) 
 			VALUES (?, ?, ?, ?, ?, ?, ?, ?);
 		");
 
 		$new_access_key = substr(str_shuffle('0123456789abcdefghijklmnopqrstuvwxyz'), 0, 10);
 
-		if ($res->execute([$owner_id, $poll_title, $is_anonymous, $end_time, $multi_selection, $can_revote, time()]))
+		if ($res->execute([$owner_id, $new_access_key, $poll_title, intval($is_anonymous), $end_time, intval($multi_selection), intval($can_revote), time()]))
 		{
 			$res = \unt\platform\DataBaseManager::getConnection()->prepare("SELECT LAST_INSERT_ID();");
 			
