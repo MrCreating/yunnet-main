@@ -114,7 +114,6 @@ class UploadManager extends BaseObject
                         if ($width < 25 || $height < 25) break;
                         if ($width > 7000 || $height > 7000) break;
 
-                        die('b');
 
                         $done_path = $path.$extension;
                         if (!file_exists(__DIR__ . '/../../attachments/d-1/' . $_SESSION['user_id'])) {
@@ -125,6 +124,8 @@ class UploadManager extends BaseObject
                             if (!mkdir(__DIR__ . '/../../attachments/d-1/' . $_SESSION['user_id'] . '/documents')) break;
                             if (!mkdir(__DIR__ . '/../../attachments/d-1/' . $_SESSION['user_id'] . '/audios')) break;
                         }
+
+                        die('bb');
 
                         if (move_uploaded_file($currentFileInfo['tmp_name'], __DIR__ . $done_path))
                         {
