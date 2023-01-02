@@ -308,26 +308,16 @@ class Post extends Attachment
 
 	public function apply (): bool
 	{
-        $wallId = $this->getWallId();
-
         if (strlen($this->getText()) > 128000) return false;
+        if (is_empty($this->getText()) && count($this->getAttachmentsList()) === 0) return false;
 
-        $res = $this->currentConnection->prepare("UPDATE wall.posts SET text = ? WHERE to_id = ? AND local_id = ? LIMIT 1;");
+        $res = $this->currentConnection->prepare("UPDATE wall.posts SET text = ?, attachments = ? WHERE to_id = ? AND local_id = ? LIMIT 1;");
 
-		if ($res->execute([$this->getText(), $wallId, $this->getPostId()]))
-		{
-            if (is_empty($this->getText()) && count($this->getAttachmentsList()) === 0) return false;
+        $attachments_string = implode(',', array_map(function ($attachment) {
+            return $attachment->getCredentials();
+        }, $this->getAttachmentsList()));
 
-			$attachments_string = array_map(function ($attachment) {
-                return $attachment->toArray();
-            }, $this->getAttachmentsList());
-
-			$res = $this->currentConnection->prepare("UPDATE wall.posts SET attachments = ? WHERE to_id = ? AND local_id = ? LIMIT 1;");
-
-			return $res->execute([$attachments_string, $wallId, $this->getPostId()]);
-		}
-
-		return false;
+		return $res->execute([$this->getText(), $attachments_string, $this->getWallId(), $this->getPostId()]);
 	}
 
 	public function getComments (int $count = 50, int $offset = 0): array
