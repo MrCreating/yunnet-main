@@ -4,6 +4,7 @@ namespace unt\objects;
 
 use Sabberworm\CSS\Parsing\SourceException;
 use unt\platform\Cache;
+use unt\platform\DataBaseManager;
 use unt\platform\EventEmitter;
 
 /**
@@ -32,16 +33,11 @@ class Theme extends Attachment
 	private EventEmitter $eventManager;
 	private Cache $currentCache;
 
-	////////////////
-	private string $cssPath;
-	private string $jsPath;
-	private string $apiPath;
-
 	function __construct (int $owner_id, int $id)
 	{
         parent::__construct();
 
-		$res = $this->currentConnection->prepare("SELECT id, owner_id, title, description, path_to_css, path_to_js, path_to_api, is_hidden, is_default FROM users.themes WHERE owner_id = ? AND id = ? AND (is_deleted = 0 OR is_default = 1) LIMIT 1;");
+		$res = $this->currentConnection->prepare("SELECT id, owner_id, title, description, path_to_css, path_to_js, path_to_api, js_code, css_code, api_code, is_hidden, is_default FROM users.themes WHERE owner_id = ? AND id = ? AND (is_deleted = 0 OR is_default = 1) LIMIT 1;");
 
 		if ($res->execute([$owner_id, $id]))
 		{
@@ -55,42 +51,14 @@ class Theme extends Attachment
 				$this->defaultTheme = boolval(intval($data['is_default']));
 				$this->privateTheme = boolval(intval($data['is_hidden']));
 
-				$this->cssPath = __DIR__ . "/../../themes/themes" . $data["path_to_css"];
-				$this->jsPath  = __DIR__ . "/../../themes/themes" . $data["path_to_js"];
-
 				$this->isValid = true;
 
 				$this->eventManager = new EventEmitter();
 				$this->currentCache = new Cache('themes');
 
-				$CSSCode = $this->currentCache->getItem($this->getCredentials() . '/css');
-				if (!$CSSCode)
-				{
-					$CSSCode = file_get_contents($this->cssPath);
-
-					if ($CSSCode)
-						$this->currentCache->putItem($this->getCredentials() . '/css', $CSSCode);
-				}
-
-				$JSCode = $this->currentCache->getItem($this->getCredentials() . '/js');
-				if (!$JSCode)
-				{
-					$JSCode = file_get_contents($this->jsPath);
-					if ($JSCode)
-						$this->currentCache->putItem($this->getCredentials() . '/js', $JSCode);
-				}
-
-				/*$JSONCode = $this->currentCache->getItem($this->getCredentials() . '/json');
-				if (!$JSONCode)
-				{
-					$JSONCode = file_get_contents(__DIR__ . "/../../attachments/themes" . $data["path_to_api"]);
-					if ($JSONCode)
-						$this->currentCache->putItem($this->getCredentials() . '/json', $JSONCode);
-				}*/
-
-				$this->CSSCode  = $CSSCode;
-				$this->JSCode   = $JSCode;
-				$this->JSONCode = '';
+				$this->CSSCode  = $data['css_code'] ?: ' ';
+				$this->JSCode   = $data['js_code'] ?: ' ';
+				$this->JSONCode = $data['api_code'] ?: ' ';
 			}
 		}
 	}
@@ -239,12 +207,10 @@ class Theme extends Attachment
 
 			if ($res)
 			{
-				$result = intval(file_put_contents($this->cssPath, $code));
-
-				if ($result) {
-					$this->currentCache->putItem($this->getCredentials() . '/css', $code);
-					return true;
-				}
+				return DataBaseManager::getConnection()
+                    ->prepare('UPDATE users.themes SET css_code = ? WHERE id = ? AND owner_id = ? LIMIT 1;')->execute([
+                        $code, $this->getId(), $this->getOwnerId()
+                    ]);
 			}
 		} catch (\Sabberworm\CSS\Parsing\UnexpectedTokenException|SourceException $e) {
 			return $e->getMessage();
@@ -262,11 +228,10 @@ class Theme extends Attachment
 			$result = \Peast\Peast::latest($code, [])->parse();
 			if ($result)
 			{
-				$res = intval(file_put_contents($this->jsPath, $code));
-				if ($res) {
-					$this->currentCache->putItem($this->getCredentials() . '/js', $code);
-					return true;
-				}
+				return DataBaseManager::getConnection()
+                    ->prepare('UPDATE users.themes SET js_code = ? WHERE id = ? AND owner_id = ? LIMIT 1;')->execute([
+                        $code, $this->getId(), $this->getOwnerId()
+                    ]);
 			}
 		} catch (\Peast\Syntax\Exception $e) {
 			$message = $e->getMessage();
@@ -284,42 +249,41 @@ class Theme extends Attachment
 
 	public function apply (): bool
 	{
-		$theme_id     = $this->getId();
-		$theme_title  = $this->getTitle();
-		$theme_descr  = $this->getDescription();
-		$theme_owner  = $this->getOwnerId();
-		$private_mode = intval($this->isPrivate());
+		$theme_id          = $this->getId();
+		$theme_title       = $this->getTitle();
+		$theme_description = $this->getDescription();
+		$theme_owner       = $this->getOwnerId();
+		$private_mode      = intval($this->isPrivate());
 
 		if ($theme_owner !== intval($_SESSION['user_id'])) return false;
 
 		// checking new title
 		if (is_empty($theme_title) || strlen($theme_title) > 32) return false;
 
-		// checking new descrption
-		if (is_empty($theme_descr) || strlen($theme_descr) > 512) return false;
+		// checking new description
+		if (is_empty($theme_description) || strlen($theme_description) > 512) return false;
 
-		$res_title = $this->currentConnection->prepare("UPDATE users.themes SET title = :new_title WHERE id = :theme_id AND owner_id = :owner_id LIMIT 1;");
-		$res_title->bindParam(":new_title", $theme_title, \PDO::PARAM_STR);
-		$res_title->bindParam(":theme_id",  $theme_id,    \PDO::PARAM_INT);
-		$res_title->bindParam(":owner_id",  $theme_owner, \PDO::PARAM_INT);
-		
-		if (!$res_title->execute()) return false;
+		$res = $this->currentConnection->getClient()->prepare("
+            UPDATE 
+                users.themes 
+            SET 
+                title = :new_title, 
+                `description` = :new_desc, 
+                is_hidden = :is_hidden 
+            WHERE 
+                id = :theme_id 
+              AND 
+                owner_id = :owner_id 
+            LIMIT 1;");
 
-		$res_descr = $this->currentConnection->prepare("UPDATE users.themes SET description = :new_desc WHERE id = :theme_id AND owner_id = :owner_id LIMIT 1;");
-		$res_descr->bindParam(":new_desc", $theme_descr, \PDO::PARAM_STR);
-		$res_descr->bindParam(":theme_id", $theme_id,    \PDO::PARAM_INT);
-		$res_descr->bindParam(":owner_id", $theme_owner, \PDO::PARAM_INT);
+        $res->bindParam(":new_title", $theme_title,       \PDO::PARAM_STR);
+        $res->bindParam(":new_desc",  $theme_description, \PDO::PARAM_STR);
+        $res->bindParam(":is_hidden", $private_mode,      \PDO::PARAM_INT);
 
-		if (!$res_descr->execute()) return false;
+        $res->bindParam(":theme_id",  $theme_id,    \PDO::PARAM_INT);
+        $res->bindParam(":owner_id",  $theme_owner, \PDO::PARAM_INT);
 
-		$res_private = $this->currentConnection->prepare("UPDATE users.themes SET is_hidden = :is_hidden WHERE id = :theme_id AND owner_id = :owner_id AND is_default != 1 LIMIT 1;");
-		$res_private->bindParam(":is_hidden", $private_mode, \PDO::PARAM_INT);
-		$res_private->bindParam(":theme_id",  $theme_id,     \PDO::PARAM_INT);
-		$res_private->bindParam(":owner_id",  $theme_owner,  \PDO::PARAM_INT);
-		
-		if (!$res_private->execute()) return false;
-
-		return true;
+        return $res->execute();
 	}
 
 	public function toArray (): array
@@ -345,6 +309,20 @@ class Theme extends Attachment
 	}
 
 	////////////////////////////////
+    private static function getDefaultCode ($type): string
+    {
+        $code = (new Cache('themes'))->getItem('default_' . $type . '_code');
+        if (!$code)
+        {
+            $code = file_get_contents(__DIR__ . '/../languages/themes/default_' . $type . '_code');
+
+            if ($code)
+                (new Cache('themes'))->putItem('default_' . $type . '_code', $code);
+        }
+
+        return (string) $code;
+    }
+
 	public static function reset (): bool
 	{
 		if (\unt\platform\DataBaseManager::getConnection()->prepare("UPDATE users.info SET settings_theming_current_theme = NULL WHERE id = ? LIMIT 1")->execute([intval($_SESSION['user_id'])]))
@@ -369,21 +347,23 @@ class Theme extends Attachment
 		if (is_empty($title) || strlen($title) > 32) return NULL;
 		if (is_empty($description) || strlen($description) > 128) return NULL;
 
-		// creating new user folder if not created.
-		if (!file_exists(__DIR__ . "/../../themes/themes/" . $owner_id))
-			if (!mkdir(__DIR__ . "/../../themes/themes/" . $owner_id))
-				return NULL;
-
 		// inserting new theme data.
-		$res = \unt\platform\DataBaseManager::getConnection()->prepare("INSERT INTO users.themes (user_id, owner_id, title, description, is_hidden) VALUES (
-			:user_id, :owner_id, :title, :description, :is_hidden
+		$res = \unt\platform\DataBaseManager::getConnection()->prepare("INSERT INTO users.themes (user_id, owner_id, title, description, is_hidden, js_code, css_code, api_code) VALUES (
+			:user_id, :owner_id, :title, :description, :is_hidden, :js_code, :css_code, :api_code
 		);");
+
+        $js_code = self::getDefaultCode('js');
+        $css_code = self::getDefaultCode('css');
+        $api_code = '';
 
 		$res->bindParam(":user_id",     $owner_id,    \PDO::PARAM_INT);
 		$res->bindParam(":owner_id",    $owner_id,    \PDO::PARAM_INT);
 		$res->bindParam(":title",       $title,       \PDO::PARAM_STR);
 		$res->bindParam(":description", $description, \PDO::PARAM_STR);
 		$res->bindParam(":is_hidden",   $is_private,  \PDO::PARAM_INT);
+        $res->bindParam(':js_code',     $js_code,     \PDO::PARAM_STR);
+        $res->bindParam(":css_code",    $css_code,    \PDO::PARAM_STR);
+        $res->bindParam(":api_code",    $api_code,    \PDO::PARAM_STR);
 
 		if ($res->execute())
 		{
@@ -391,119 +371,7 @@ class Theme extends Attachment
 			
 			if ($res->execute())
 			{
-				/**
-				 * All theme code stores in the files. Create it.
-				*/
 				$new_theme_id = intval($res->fetch(\PDO::FETCH_ASSOC)["LAST_INSERT_ID()"]);
-
-				if (!file_exists(__DIR__ . "/../../themes/themes/" . $owner_id . "/" . $new_theme_id))
-					if (!mkdir(__DIR__ . "/../../themes/themes/" . $owner_id . "/" . $new_theme_id))
-						return NULL;
-
-				// CSS code.
-				file_put_contents(__DIR__ . "/../../themes/themes/" . $owner_id . "/" . $new_theme_id . "/theme.css", "/**
- * Welcome to your theme code! 
- * It is an a CSS code. 
- * You can edit it as you want! 
-*/
-
-/* variables can be put here */
-:root {
-	/* Unread messages color */
-    --unreaded-messages-color: initial;
-    
-    /* Body color and 90% text color */
-    --unt-background-color: initial;
-    --unt-background-light-color: initial;
-    --unt-text-color: initial;
-    
-    /* Custom user image and interface opacity */
-    --unt-user-background: initial;
-    --unt-opacity: initial;
-    /* Sidenav user info div coloring */
-    --unt-sidenav-background: initial;
-    
-    /* Collections color (right menu, left menu on PC, etc) */
-    --unt-collection-background-color: initial;
-    --unt-section-item-background-color: initial;
-    --unt-collection-text-color: initial;
-    
-    /* Currently selected items */
-    --unt-collection-active-background: initial;
-    
-    /* In modal buttons text color (flat buttons) */
-    --unt-flat-btn-text-color: initial;
-    
-    /* SVG Icons fill color */
-    --svg-fill-color: initial;
-    
-    /* Subtext (chats members count, online, etc) text color */
-    --unt-subtext-color: initial;
-    
-    /* Right and left active items */
-    --unt-active-item-color: initial;
-    --unt-active-borded-color: initial;
-    
-    /* Hovered collection and collapsible colors */
-    --hovered-collection-items-color: initial;
-    --hovered-collapsible-items-color: initial;
-    
-    /* Default collapsible colors */
-    --unt-collapsible-header-color: initial;
-    --unt-collapsible-body-color: initial;
-    --unt-collapsible-items-color: initial;
-    --unt-collapsible-text-color: initial;
-    
-    /* Navigation panel color */
-    --unt-navigation-panel-color: initial;
-    
-    /* Cards color */
-    --unt-background-card-color: initial;
-    
-    /* Links (href) color */
-    --unt-links-color: initial;
-    
-    /* Text input colors */
-    --unt-input-text-color: initial;
-    
-    /* Unliked icons color */
-    --unt-unlike-color: initial;
-    
-    /* Modals background colors */
-    --unt-modals-background-color: initial;
-    
-    /* Dropdown background and hovered colors */
-    --unt-dropdown-background-color: initial;
-    --unt-dropdown-hovered-color: initial;
-    
-    /* Divider background color */
-    --unt-divider-background-color: initial;
-    
-    /* Messages from me and from another colors */
-    --from-me-messages-background: initial;
-    --from-another-messages-background: initial;
-    --from-me-messages-text-color: initial;
-    --from-another-messages-text-color: initial;
-    
-    /* Notifications background color */
-    --unt-notifications-background-color: initial;
-    
-    /* Counters color (messages, friends, etc) */
-    --unt-counters-color: initial;
-}
-");
-
-				// JS code.
-				file_put_contents(__DIR__ . "/../../themes/themes/" . $owner_id . "/" . $new_theme_id . "/theme.js", "/**
- * Welcome to your theme code! 
- * It is an a JS code. 
- * You can edit it as you want! 
-*/
-
-console.log(`[OK] Theme is working! Fine :)`)
-");
-				// update that info in DB
-				\unt\platform\DataBaseManager::getConnection()->prepare('UPDATE users.themes SET path_to_css = "/'.intval($owner_id).'/'. $new_theme_id .'/theme.css", path_to_js = "/'.intval($owner_id).'/'. $new_theme_id .'/theme.js" WHERE id = ?;')->execute([$new_theme_id]);
 
 				$result = new Theme($owner_id, $new_theme_id);
 				if ($result->valid())
