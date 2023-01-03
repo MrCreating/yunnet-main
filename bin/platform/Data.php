@@ -21,6 +21,8 @@ class Data extends \unt\objects\BaseObject
 
 	public function toArray (): array
 	{
+        unset($this->currentConnection);
+
 		return get_object_vars($this);
 	}
 }

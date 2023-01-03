@@ -288,6 +288,11 @@ class Post extends Attachment
 		if ($check_id < 0) return true;
 
 		$user_object = $check_id > 0 ? User::findById($check_id) : Bot::findById($check_id);
+
+        if (($user_object instanceof User) && $user_object->inBlacklist()) return false;
+        if (($user_object instanceof User) && $user_object->isBlocked()) return false;
+        if (($user_object instanceof User) && $user_object->isBanned()) return false;
+
 		if (!$user_object || $user_object->isBanned()) return false;
 		if ($user_object->getType() === User::ENTITY_TYPE && $user_object->inBlacklist()) return false;
 

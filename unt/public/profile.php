@@ -1,10 +1,12 @@
 <?php
 
 use unt\objects\Context;
+use unt\objects\Entity;
 use unt\objects\Post;
 use unt\objects\Request;
+use unt\objects\User;
 
-$user = \unt\objects\Entity::findByScreenName(substr(REQUESTED_PAGE, 1));
+$user = Entity::findByScreenName(substr(REQUESTED_PAGE, 1));
 
 if ($user->getScreenName() && (substr(REQUESTED_PAGE, 0, 2) == 'id' || substr(REQUESTED_PAGE, 0, 3) == 'bot')) {
 	die(header("Location: /".$user->getScreenName()));
@@ -14,8 +16,8 @@ if (isset(Request::get()->data['action']))
 {
 	$action = strtolower(Request::get()->data['action']);
 
-	$can_access_closed = $user->getType() === \unt\objects\User::ENTITY_TYPE ? $user->canAccessClosed() : true;
-	$in_blacklist      = $user->getType() === \unt\objects\User::ENTITY_TYPE && $user->inBlacklist();
+	$can_access_closed = $user->getType() === User::ENTITY_TYPE ? $user->canAccessClosed() : true;
+	$in_blacklist      = $user->getType() === User::ENTITY_TYPE && $user->inBlacklist();
 
 	switch ($action)
 	{
@@ -31,9 +33,8 @@ if (isset(Request::get()->data['action']))
 			}
 
 			die(json_encode($result));
-		break;
 
-		default:
+        default:
 		break;
 	}
 
@@ -46,29 +47,18 @@ if (isset(Request::get()->data['action']))
 				die(json_encode(array('error' => 1)));
 
 			die(json_encode(array('success' => intval(Context::get()->getCurrentUser()->edit()->setStatus(Request::get()->data['new_status'])))));
-		break;
 
-		case 'add':
+        case 'add':
 			if ($in_blacklist) die(json_encode(array('error' => 1)));
 
-			$result = create_friendship(\unt\platform\DataBaseManager::getConnection(), (Context::get()->getCurrentUser() !== NULL ? Context::get()->getCurrentUser()->getId() : 0), $selected_user["id"]);
+			die(json_encode(array('success' => (int)$user->addToFriends())));
 
-			die(json_encode(array('success' => $result)));
-		break;
+        case 'block':
+			die(json_encode(array('success' => (int) $user->block())));
+        case 'delete':
+			die(json_encode(array('success' => (int) $user->deleteFromFriends())));
 
-		case 'block':
-			$result = block_user(\unt\platform\DataBaseManager::getConnection(), (Context::get()->getCurrentUser() !== NULL ? Context::get()->getCurrentUser()->getId() : 0), $selected_user["id"]);
-
-			die(json_encode(array('success' => $result)));
-		break;
-
-		case 'delete':
-			$result = delete_friendship(\unt\platform\DataBaseManager::getConnection(), (Context::get()->getCurrentUser() !== NULL ? Context::get()->getCurrentUser()->getId() : 0), $selected_user["id"]);
-
-			die(json_encode(array('success' => $result)));
-		break;
-
-		default:
+        default:
 		break;
 	}
 

@@ -3,6 +3,8 @@
 // large actions handle here.
 use unt\objects\Context;
 use unt\objects\Request;
+use unt\objects\User;
+use unt\platform\DataBaseManager;
 
 if (isset(Request::get()->data["action"]))
 {
@@ -25,7 +27,7 @@ if (isset(Request::get()->data["action"]))
 			];
 
 			$done   = [];
-			$result = search_users($connection, $query, $params);
+			$result = search_users(DataBaseManager::getConnection(), $query, $params);
 
 			foreach ($result as $index => $user) {
 				$done[] = $user->toArray();
@@ -37,8 +39,9 @@ if (isset(Request::get()->data["action"]))
 		case 'hide_request':
 			$user_id = intval(Request::get()->data['user_id']);
 
-			$result = hide_friendship_request($connection, Context::get()->getCurrentUser()->getId(), $user_id);
-			if (!$result)
+            $user = User::findById($user_id);
+
+            if (!$user || !$user->hideFriendshipRequest())
 				die(json_encode(array('error' => 1)));
 
 			die(json_encode(array('success' => 1)));
