@@ -136,34 +136,6 @@ function delete_friendship ($connection, $owner_id, $user_id): bool
 	return false;
 }
 
-// getting friends or subscribers or outcoming requests list.
-function get_friends_list ($connection, $user_id, $section = "friends", $extended = 1): array
-{
-	return User::findById($user_id)->getFriendsList($section, $extended);
-}
-
-// get cunters for come user
-function get_counters ($connection, $user_id): array
-{
-	$res = DataBaseManager::getConnection()->prepare("SELECT DISTINCT COUNT(local_id) FROM users.notes WHERE is_read = 0 AND is_hidden = 0 AND owner_id = ?;");
-	$res->execute([$user_id]);
-	$notes_count = intval($res->fetch(PDO::FETCH_ASSOC)["COUNT(local_id)"]);
-	
-	$res = DataBaseManager::getConnection()->prepare("SELECT COUNT(DISTINCT uid) FROM messages.members_chat_list WHERE is_read = 0 AND hidden = 0 AND user_id = ?;");
-	$res->execute([$user_id]);
-	$messages_count = intval($res->fetch(PDO::FETCH_ASSOC)["COUNT(DISTINCT uid)"]);
-
-	$res = DataBaseManager::getConnection()->prepare("SELECT DISTINCT COUNT(id) FROM users.relationships WHERE state = 1 AND is_hidden = 0 AND user2 = ? AND user1 != user2;");
-	$res->execute([$user_id]);
-	$friends_count = intval($res->fetch(PDO::FETCH_ASSOC)["COUNT(id)"]);
-
-    return [
-        'messages'      => $messages_count,
-        'notifications' => $notes_count,
-        'friends'       => $friends_count
-    ];
-}
-
 /** 
  * search users by query
  * returns array of User and Bot objects

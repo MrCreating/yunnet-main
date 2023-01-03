@@ -17,6 +17,7 @@ class UntEngine
     {
         //$this->errors();
         require_once __DIR__ . '/../vendor/autoload.php';
+        require_once __DIR__ . '/../lib/vk_audio/autoloader.php';
 
         if (getenv('UNT_PRODUCTION') !== '1')
         {
@@ -41,7 +42,7 @@ class UntEngine
                     $path = __DIR__ . '/parsers/' . $path_templates[0] . '.php';
             }
 
-            require_once $path;
+            include_once $path;
         });
 
         $to             = explode('.', strtolower($_SERVER['HTTP_HOST']))[0];

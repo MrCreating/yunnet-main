@@ -13,6 +13,7 @@ class Settings extends BaseObject
     const ACCOUNT_GROUP  = 'account';
     const PUSH_GROUP     = 'push';
     const PRIVACY_GROUP  = 'privacy';
+    const SERVICES_GROUP = 'services';
     const SECURITY_GROUP = 'security';
     const THEMING_GROUP  = 'theming';
     ///////////////////////////////
@@ -20,6 +21,7 @@ class Settings extends BaseObject
 	private SettingsGroup $accountSettings;
 	private PushSettingsGroup $pushSettings;
 	private PrivacySettingsGroup $privacySettings;
+    private ServicesSettingsGroup $servicesSettings;
 	private SecuritySettingsGroup $securitySettings;
     private ThemingSettingsGroup $themingSettings;
 
@@ -47,6 +49,8 @@ class Settings extends BaseObject
 				'can_comment_posts'   => intval($user_info['settings_privacy_can_comment_posts']),
 				'can_write_on_wall'   => intval($user_info['settings_privacy_can_write_on_wall'])
 			]);
+
+            $this->servicesSettings = new ServicesSettingsGroup($user, []);
 
 			$this->securitySettings = new SecuritySettingsGroup($user, []);
 
@@ -87,6 +91,9 @@ class Settings extends BaseObject
 
             case self::PRIVACY_GROUP:
 				return $this->privacySettings;
+
+            case self::SERVICES_GROUP:
+                return $this->servicesSettings;
 
             case self::SECURITY_GROUP:
 				return $this->securitySettings;

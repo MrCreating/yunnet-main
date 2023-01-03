@@ -5,7 +5,6 @@ use unt\objects\Request;
 use unt\objects\Session;
 
 require_once __DIR__ . '/../../bin/functions/users.php';
-require_once __DIR__ . '/../../bin/functions/accounts.php';
 
 /**
  * Here we will handle actions with settings.
@@ -25,15 +24,13 @@ if (isset(Request::get()->data["action"]))
 			Context::get()->Logout();
 
 			die(json_encode(array('success' => 1)));
-		break;
-		
-		case 'change_language':
+
+        case 'change_language':
 			$accountSettings = Context::get()->getCurrentUser()->getSettings()->getSettingsGroup('account');
 
 			die(json_encode(array('success' => intval($accountSettings->setLanguageId(Request::get()->data['lang'])->getLanguageId() === strtolower(Request::get()->data['lang'])))));
-		break;
 
-		case 'set_privacy_settings':
+        case 'set_privacy_settings':
 			$privacySettings = Context::get()->getCurrentUser()->getSettings()->getSettingsGroup('privacy');
 
 			$groups = [
@@ -51,15 +48,13 @@ if (isset(Request::get()->data["action"]))
 				die(json_encode(array('error' => 1)));
 
 			die(json_encode(array('success' => 1)));
-		break;
 
-		case 'toggle_profile_state':
+        case 'toggle_profile_state':
 			$accountSettings = Context::get()->getCurrentUser()->getSettings()->getSettingsGroup('account');
 
 			die(json_encode(array('success' => intval($accountSettings->setProfileClosed(!$accountSettings->isProfileClosed())->isProfileClosed()))));
-		break;
 
-		case 'toggle_push_settings':
+        case 'toggle_push_settings':
 			$settingsGroup = strval(Request::get()->data['settings_group']);
 			$groups = ['notifications', 'sound'];
 
@@ -67,7 +62,8 @@ if (isset(Request::get()->data["action"]))
 				die(json_encode(array('error' => 1)));
 
 			$new_value = boolval(intval(Request::get()->data['new_value']));
-			
+
+            $result = NULL;
 			$pushSettings = Context::get()->getCurrentUser()->getSettings()->getSettingsGroup('push');
 			if ($settingsGroup === $groups[0])
 				$result = $pushSettings->setNotificationsEnabled($new_value);
@@ -78,28 +74,25 @@ if (isset(Request::get()->data["action"]))
 				die(json_encode(array('error'=>1)));
 
 			die(json_encode(array('response' => $new_value)));
-		break;
 
-		case 'get_blacklisted':
-			$users  = Context::get()->getCurrentUser()->getBlacklist();//get_blacklist($connection, Context::get()->getCurrentUser()->getId(), intval(Request::get()->data['count']), intval(Request::get()->data['offset']));
-			$result = [];
+        case 'get_blacklisted':
+			$users  = Context::get()->getCurrentUser()->getBlacklist();
+            $result = [];
 
 			foreach ($users as $value) {
 				$result[] = $value->toArray();
 			}
 
 			die(json_encode($result));
-		break;
 
-		case 'verify_password':
+        case 'verify_password':
 			$password = strval(Request::get()->data['password']);
 
 			$result = Context::get()->getCurrentUser()->getSettings()->getSettingsGroup('security')->isPasswordCorrect($password);
 
 			die(json_encode(array('state' => intval($result))));
-		break;
 
-		case 'change_password':
+        case 'change_password':
 			$oldPassword = strval(Request::get()->data['old_password']);
 			$newPassword = strval(Request::get()->data['new_password']);
 
@@ -116,15 +109,17 @@ if (isset(Request::get()->data["action"]))
 			}
 
 			die(json_encode(array('state' => 1)));
-		break;
 
-		case 'get_accounts':
-			$accounts_list = get_accounts($connection, Context::get()->getCurrentUser()->getId());
+        case 'get_accounts':
+			die(json_encode(array('response' =>
+                    Context::get()
+                        ->getCurrentUser()
+                        ->getSettings()
+                        ->getSettingsGroup(\unt\objects\Settings::SERVICES_GROUP)
+                        ->getServicesList()
+            )));
 
-			die(json_encode(array('response' => $accounts_list)));
-		break;
-
-		case 'update_menu_items':
+        case 'update_menu_items':
 			$items  = explode(',', strval(Request::get()->data['items']));
 
 			$themingSettings = Context::get()->getCurrentUser()->getSettings()->getSettingsGroup('theming');
@@ -134,17 +129,15 @@ if (isset(Request::get()->data["action"]))
 				die(json_encode(array('error' => 1)));
 
 			die(json_encode(array('success' => 1)));
-		break;
 
-		case 'toggle_js_state':
+        case 'toggle_js_state':
 			$themingSettings = Context::get()->getCurrentUser()->getSettings()->getSettingsGroup('theming');
 
 			$result = intval($themingSettings->setJSAllowance(!$themingSettings->isJSAllowed())->isJSAllowed());
 
 			die(json_encode(array('success' => $result)));
-		break;
 
-		case 'get_sessions_list':
+        case 'get_sessions_list':
 			$sessions_list = Session::getList();
 
 			$sessions = [];
@@ -154,9 +147,8 @@ if (isset(Request::get()->data["action"]))
 			}
 
 			die(json_encode($sessions));
-		break;
 
-		case 'end_session':
+        case 'end_session':
 			$session = new Session(strval(Request::get()->data['session_id']));
 			if (!$session->valid() || !$session->isCloseable())
 				die(json_encode(array('error' => 1)));
@@ -164,25 +156,22 @@ if (isset(Request::get()->data["action"]))
 			$session->end();
 
 			die(json_encode(array('success' => 1)));
-		break;
 
-		case 'set_gender':
+        case 'set_gender':
 			$result = Context::get()->getCurrentUser()->edit()->setGender(intval(Request::get()->data['gender']));
 			if (!$result)
 				die(json_encode(array('error' => 1)));
 
 			die(json_encode(array('success' => 1)));
-		break;
 
-		case 'toggle_new_design':
+        case 'toggle_new_design':
 			$themingSettings = Context::get()->getCurrentUser()->getSettings()->getSettingsGroup('theming');
 
 			$result = intval($themingSettings->useNewDesign(!$themingSettings->isNewDesignUsed())->isNewDesignUsed());
 
 			die(json_encode(array('success' => $result)));
-		break;
 
-		default:
+        default:
 		break;
 	}
 

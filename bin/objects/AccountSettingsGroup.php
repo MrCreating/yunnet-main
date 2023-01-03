@@ -2,8 +2,6 @@
 
 namespace unt\objects;
 
-use Cassandra\Set;
-
 /**
  * Class for Account settings
 */
