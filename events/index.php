@@ -1,6 +1,7 @@
 <?php
 
 use PhpAmqpLib\Connection\AMQPStreamConnection;
+use PhpAmqpLib\Exception\AMQPTimeoutException;
 use unt\objects\Project;
 use unt\objects\Request;
 use unt\platform\EventManager;
@@ -10,6 +11,12 @@ header('Access-Control-Allow-Credentials: true');
 header('Access-Control-Allow-Origin: ' . Project::getOrigin());
 
 $key = trim(Request::get()->data['key']);
+$wait_time = intval(Request::get()->data['timeout']);
+
+if ($wait_time < 0) $wait_time = 1;
+if ($wait_time >= 50) $wait_time = 50;
+if ($wait_time === 0) $wait_time = 50;
+
 if (!$key)
 {
     die(json_encode(array(
@@ -54,10 +61,21 @@ $channel->basic_consume($queue_name, '', true, true, false, false, function ($me
 
 while ($channel->is_open)
 {
-    $channel->wait();
+    try {
+        $channel->wait(null, false, $wait_time);
+    } catch (AMQPTimeoutException $e)
+    {
+        die(json_encode(array(
+            'event' => 'timeout'
+        )));
+    }
 }
 
 $channel->close();
 $connection->close();
+
+die(json_encode(array(
+    'event' => 'closed'
+)));
 
 ?>

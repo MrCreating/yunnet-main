@@ -1,8 +1,10 @@
 <?php
 
 use unt\objects\Context;
+use unt\objects\Project;
 use unt\objects\Request;
 use unt\objects\Session;
+use unt\platform\EventManager;
 
 require_once __DIR__ . '/../../bin/functions/users.php';
 
@@ -17,12 +19,19 @@ if (isset(Request::get()->data["action"]))
 	if (!Context::get()->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
 	switch ($action) {
-        case 'get_events_data':
-            die('a');
-            break;
+        case 'get_events_link':
+            $link_key = EventManager::findByEntityId($_SESSION['user_id'])->createAuthKey();
 
-		case 'logout':
-			header('Access-Control-Allow-Origin: ' . \unt\objects\Project::getOrigin());
+            die(json_encode(array(
+                'response' => [
+                    'url' => Project::getEventServerDomain() . '/?key=' . $link_key,
+                    'key' => $link_key,
+                    'user_id' => intval($_SESSION['user_id'])
+                ]
+            )));
+
+        case 'logout':
+			header('Access-Control-Allow-Origin: ' . Project::getOrigin());
 			header('Access-Control-Allow-Credentials: true');
 
 			Context::get()->Logout();

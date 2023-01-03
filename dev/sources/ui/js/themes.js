@@ -564,24 +564,24 @@ const themes = {
 			let thUrl = window.location.host.match(/localhost/) ? 'http://themes.localhost' : 'https://themes.yunnet.ru';
 
 			if (!saveOnAccount && credentials === 'theme1_1') {
-				return realtime.handler({event: 'interface_event', data: {action: 'theme_changed', theme: {
-					owner_id: 1,
-					id: 1,
-					data: {
-						title: "Dark theme",
-						description: "yunNet dark theme",
-						url: thUrl + "/theme1_1"
-					},
-					params: {
-						has_api: false,
-						has_css: true,
-						has_js: true
-					},
-					settings: {
-						is_default: 1,
-						is_private: 0
-					}
-				}}, last_event_id: realtime.lastEventId}, realtime.handler);
+				return; // return realtime.handler({event: 'interface_event', data: {action: 'theme_changed', theme: {
+				// 	owner_id: 1,
+				// 	id: 1,
+				// 	data: {
+				// 		title: "Dark theme",
+				// 		description: "yunNet dark theme",
+				// 		url: thUrl + "/theme1_1"
+				// 	},
+				// 	params: {
+				// 		has_api: false,
+				// 		has_css: true,
+				// 		has_js: true
+				// 	},
+				// 	settings: {
+				// 		is_default: 1,
+				// 		is_private: 0
+				// 	}
+				// }}, last_event_id: realtime.lastEventId}, realtime.handler);
 			} else if (!saveOnAccount && credentials === null) {
 				return window.location.reload();
 			}

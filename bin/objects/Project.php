@@ -81,6 +81,11 @@ class Project extends BaseObject
         return self::getConnectionHead() . "themes." . self::getProjectDomain();
     }
 
+    public static function getEventServerDomain(): string
+    {
+        return self::getConnectionHead() . "events." . self::getProjectDomain();
+    }
+
     public static function toggleClose(): bool
     {
         $result = self::isClosed();
