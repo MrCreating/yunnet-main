@@ -23,7 +23,12 @@ const realtime = {
 					}
 				}
 
-				callback(response);
+				try {
+					callback(response);
+				} catch (e) {
+					console.error(e);
+				}
+
 				return realtime.listen(callback);
 			} catch (e) {
 				console.log('[!] Incorrect data. Retry after 5 secs');
