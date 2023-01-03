@@ -37,7 +37,6 @@ services:
             - $PWD/config/php/www.conf:/usr/local/etc/php-fpm.d/www.conf
         links:
             - memcached
-            - text_engine
             - mail
         hostname: yunnet_php
         tty: true
@@ -76,40 +75,6 @@ services:
         tty: true
         ports:
             - "25:25"
-
-    text_engine:
-        build:
-            context: $PWD/docker/context/text_engine
-            dockerfile: $PWD/docker/build/text_engine
-        volumes:
-            - $PWD/../:/home/unt
-        restart: unless-stopped
-        hostname: yunnet_text_engine
-        tty: true
-        env_file:
-            - $PWD/configs.env
-        links:
-            - memcached
-        networks:
-            - unt_1_database
-
-    poll_engine:
-        restart: unless-stopped
-        hostname: yunnet_poll_engine
-        tty: true
-        env_file:
-            - $PWD/configs.env
-        volumes:
-            - $PWD/../:/home/unt
-        links:
-            - memcached
-        ports:
-            - "8080:80"
-        build:
-            context: $PWD/docker/context/poll_engine
-            dockerfile: $PWD/docker/build/poll_engine
-        networks:
-            - unt_1_database
 
     rabbit_mq:
         restart: unless-stopped
