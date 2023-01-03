@@ -111,6 +111,35 @@ services:
         networks:
             - unt_1_database
 
+    rabbit_mq:
+        restart: unless-stopped
+        hostname: yunnet_realtime
+        tty: true
+        volumes:
+            - $PWD/../:/home/unt
+        build:
+            context: $PWD/docker/context/rabbit_mq
+            dockerfile: $PWD/docker/build/rabbit_mq
+        networks:
+            - unt_1_database
+
+    sphinx:
+        restart: unless-stopped
+        hostname: yunnet_sphinx
+        tty: true
+        volumes:
+            - sphinx_indexes:/opt/sphinx/users.sph
+            - $PWD/config/sphinx/sphinx.conf:/opt/sphinx/conf/sphinx.conf
+        build:
+            context: $PWD/docker/context/sphinx
+            dockerfile: $PWD/docker/build/sphinx
+        networks:
+            - unt_1_database
+
+volumes:
+    sphinx_indexes:
+        driver: local
+
 networks:
     unt_1_database:
         external: true

@@ -15,7 +15,6 @@ function search_users ($connection, $query, $additional_params = [
 	"offset"      => 0,
 	"count"       => 50
 ]): array
-
 {
 	$result = [];
 
