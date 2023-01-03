@@ -31,7 +31,7 @@ const realtime = {
 
 				return realtime.listen(callback);
 			} catch (e) {
-				console.log(e);
+				console.log(x.responseText);
 				console.log('[!] Incorrect data. Retry after 5 secs');
 
 				setTimeout(function () {
