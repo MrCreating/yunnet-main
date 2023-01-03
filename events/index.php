@@ -6,8 +6,6 @@ use unt\objects\Project;
 use unt\objects\Request;
 use unt\platform\EventManager;
 
-$this->errors();
-
 header('Content-Type: application/json');
 header('Access-Control-Allow-Credentials: true');
 header('Access-Control-Allow-Origin: ' . Project::getOrigin());
