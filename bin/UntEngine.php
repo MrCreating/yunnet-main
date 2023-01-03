@@ -10,14 +10,14 @@ use unt\objects\Request;
 class UntEngine
 {
     protected array $subdomains = [
-        'm', 'api', 'dev', 'd-1', 'yunnet', 'lp', 'themes', 'auth', 'test', 'vd'
+        'm', 'api', 'dev', 'd-1', 'yunnet', 'events', 'themes', 'auth', 'test', 'vd'
     ];
 
     public function __construct ()
     {
-        //$this->errors();
         require_once __DIR__ . '/../vendor/autoload.php';
         require_once __DIR__ . '/../lib/vk_audio/autoloader.php';
+        require_once __DIR__ . '/base_functions.php';
 
         if (getenv('UNT_PRODUCTION') !== '1')
         {
@@ -57,8 +57,6 @@ class UntEngine
         define('REQUESTED_PAGE', $requested_page);
         define('PROJECT_ROOT', __DIR__ . '/..');
 
-        require_once __DIR__ . '/base_functions.php';
-
         // checking domains.
         switch ($to)
         {
@@ -71,9 +69,9 @@ class UntEngine
             case "d-1":
                 // https://d-1.yunnet.ru - сервер вложений
                 die(require_once __DIR__ . '/../attachments/index.php');
-            case "lp":
-                // https://lp.yunnet.ru - сервер реального времени, скоро будет удален.
-                die(require_once __DIR__ . '/../realtime/index.php');
+            case 'events':
+                // https://events.yunnet.ru - сервер событий
+                die(require_once __DIR__ . '/../events/index.php');
             case "themes":
                 // https://themes.yunnet.ru - сервер тем
                 die(require_once __DIR__ . '/../themes/index.php');

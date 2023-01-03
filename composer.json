@@ -13,6 +13,7 @@
       "ext-memcached": "*",
       "ext-mbstring": "*",
       "ext-gd": "*",
+      "php-amqplib/php-amqplib": "^2.0",
       "matthiasmullie/minify": "dev-master"
     },
     "license": "ISC",

@@ -17,6 +17,10 @@ if (isset(Request::get()->data["action"]))
 	if (!Context::get()->allowToUseUnt()) die(json_encode(array('error' => 1)));
 
 	switch ($action) {
+        case 'get_events_data':
+            die('a');
+            break;
+
 		case 'logout':
 			header('Access-Control-Allow-Origin: ' . \unt\objects\Project::getOrigin());
 			header('Access-Control-Allow-Credentials: true');
