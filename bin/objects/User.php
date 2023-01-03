@@ -6,7 +6,7 @@ use unt\parsers\AttachmentsParser;
 use unt\parsers\Name;
 use unt\platform\Data;
 use unt\platform\DataBaseManager;
-use unt\platform\EventEmitter;
+use unt\platform\EventManager;
 
 /**
  * Default user entity.
@@ -561,8 +561,7 @@ class User extends Entity
                                 'user_id' => $owner_id
                             ]);
 
-                            $emitter = new EventEmitter();
-                            $emitter->sendEvent([$owner_id], [0], [
+                            EventManager::event([$owner_id], [
                                 'event' => 'friendship_by_me_accepted',
                                 'user_id' => $user_id
                             ]);
@@ -742,8 +741,7 @@ class User extends Entity
 
         if (DataBaseManager::getConnection()->prepare("UPDATE users.relationships SET is_hidden = 1 WHERE (user1 = ? AND user2 = ?) OR (user1 = ? AND user2 = ?) LIMIT 1;")->execute([$user_id, $hide_id, $hide_id, $user_id]))
         {
-            $emitter = new EventEmitter();
-            $emitter->sendEvent([$user_id], [0], [
+            EventManager::event([$user_id], [
                 'event'   => 'request_hide',
                 'user_id' => $hide_id
             ]);

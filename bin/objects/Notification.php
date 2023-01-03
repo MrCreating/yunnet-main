@@ -2,7 +2,7 @@
 
 namespace unt\objects;
 
-use unt\platform\EventEmitter;
+use unt\platform\EventManager;
 
 /**
  * Notification class
@@ -102,13 +102,11 @@ class Notification extends BaseObject
 		{
 			$this->isNotificationRead = true;
 			$this->isNotificationHidden = true;
-			
-			(new EventEmitter())->sendEvent([$this->getOwnerId()], [0], [
-				'event' => 'notification_read',
-				'data'  => $this->toArray()
-			]);
 
-			return true;
+			return EventManager::event([$this->getOwnerId()], [
+                'event' => 'notification_read',
+                'data'  => $this->toArray()
+            ]);
 		}
 
 		return false;
@@ -122,12 +120,10 @@ class Notification extends BaseObject
 		{
 			$this->isNotificationHidden = true;
 
-            (new EventEmitter())->sendEvent([$this->getOwnerId()], [0], [
-				'event' => 'notification_hide',
-				'data'  => $this->toArray()
-			]);
-
-			return true;
+			return EventManager::event([$this->getOwnerId()], [
+                'event' => 'notification_hide',
+                'data'  => $this->toArray()
+            ]);
 		}
 
 		return false;
@@ -173,10 +169,10 @@ class Notification extends BaseObject
 				{
 					if ($entity->getSettings()->getSettingsGroup(Settings::PUSH_GROUP)->isNotificationsEnabled())
 					{
-                        (new EventEmitter())->sendEvent([$to_id], [0], [
-							'event'        => 'new_notification',
-							'notification' => $result->toArray()
-						]);
+                        EventManager::event([$to_id], [
+                            'event'        => 'new_notification',
+                            'notification' => $result->toArray()
+                        ]);
 					}
 				}
 

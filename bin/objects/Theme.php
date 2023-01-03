@@ -5,7 +5,7 @@ namespace unt\objects;
 use Sabberworm\CSS\Parsing\SourceException;
 use unt\platform\Cache;
 use unt\platform\DataBaseManager;
-use unt\platform\EventEmitter;
+use unt\platform\EventManager;
 
 /**
  * Theme class
@@ -30,7 +30,6 @@ class Theme extends Attachment
 	private string $CSSCode;
     private string $JSONCode;
 
-	private EventEmitter $eventManager;
 	private Cache $currentCache;
 
 	function __construct (int $owner_id, int $id)
@@ -53,7 +52,6 @@ class Theme extends Attachment
 
 				$this->isValid = true;
 
-				$this->eventManager = new EventEmitter();
 				$this->currentCache = new Cache('themes');
 
 				$this->CSSCode  = $data['css_code'] ?: ' ';
@@ -71,13 +69,13 @@ class Theme extends Attachment
 		$res = $this->currentConnection->prepare("UPDATE users.info SET settings_theming_current_theme = ? WHERE id = ? LIMIT 1;");
 		if ($res->execute([$this->getCredentials(), intval($_SESSION['user_id'])]))
 		{
-			return $this->eventManager->sendEvent([intval($_SESSION['user_id'])], [0], [
-				'event' => 'interface_event',
-				'data'  => [
-					'action' => 'theme_changed',
-					'theme'  => $this->toArray()
-				]
-			]);
+			return EventManager::event([intval($_SESSION['user_id'])], [
+                'event' => 'interface_event',
+                'data'  => [
+                    'action' => 'theme_changed',
+                    'theme'  => $this->toArray()
+                ]
+            ]);
 		}
 
 		return false;
@@ -325,14 +323,14 @@ class Theme extends Attachment
 
 	public static function reset (): bool
 	{
-		if (\unt\platform\DataBaseManager::getConnection()->prepare("UPDATE users.info SET settings_theming_current_theme = NULL WHERE id = ? LIMIT 1")->execute([intval($_SESSION['user_id'])]))
+		if (DataBaseManager::getConnection()->prepare("UPDATE users.info SET settings_theming_current_theme = NULL WHERE id = ? LIMIT 1")->execute([intval($_SESSION['user_id'])]))
 		{
-			return (new EventEmitter())->sendEvent([intval($_SESSION['user_id'])], [0], [
-				'event' => 'interface_event',
-				'data'  => [
-					'action' => 'theme_changed'
-				]
-			]);
+			return EventManager::event([intval($_SESSION['user_id'])], [
+                'event' => 'interface_event',
+                'data'  => [
+                    'action' => 'theme_changed'
+                ]
+            ]);
 		}
 
 		return false;
@@ -348,7 +346,7 @@ class Theme extends Attachment
 		if (is_empty($description) || strlen($description) > 128) return NULL;
 
 		// inserting new theme data.
-		$res = \unt\platform\DataBaseManager::getConnection()->prepare("INSERT INTO users.themes (user_id, owner_id, title, description, is_hidden, js_code, css_code, api_code) VALUES (
+		$res = DataBaseManager::getConnection()->prepare("INSERT INTO users.themes (user_id, owner_id, title, description, is_hidden, js_code, css_code, api_code) VALUES (
 			:user_id, :owner_id, :title, :description, :is_hidden, :js_code, :css_code, :api_code
 		);");
 
@@ -367,7 +365,7 @@ class Theme extends Attachment
 
 		if ($res->execute())
 		{
-			$res = \unt\platform\DataBaseManager::getConnection()->prepare("SELECT LAST_INSERT_ID();");
+			$res = DataBaseManager::getConnection()->prepare("SELECT LAST_INSERT_ID();");
 			
 			if ($res->execute())
 			{
@@ -390,7 +388,7 @@ class Theme extends Attachment
 		$result = [];
 
 		// get themes for user_id and that not deleted
-		$res = \unt\platform\DataBaseManager::getConnection()->prepare("SELECT DISTINCT id, owner_id FROM users.themes WHERE (user_id = ? OR is_default = 1) AND (is_deleted = 0 OR is_default = 1) LIMIT ".intval($offset).",".intval($count).";");
+		$res = DataBaseManager::getConnection()->prepare("SELECT DISTINCT id, owner_id FROM users.themes WHERE (user_id = ? OR is_default = 1) AND (is_deleted = 0 OR is_default = 1) LIMIT ".intval($offset).",".intval($count).";");
 
 		if ($res->execute([intval($_SESSION['user_id'])]))
 		{

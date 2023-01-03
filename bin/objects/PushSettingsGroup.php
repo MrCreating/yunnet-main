@@ -2,7 +2,7 @@
 
 namespace unt\objects;
 
-use unt\platform\EventEmitter;
+use unt\platform\EventManager;
 
 /**
  * Class for Push settings
@@ -10,16 +10,12 @@ use unt\platform\EventEmitter;
 
 class PushSettingsGroup extends SettingsGroup
 {
-	protected EventEmitter $eventEmitter;
-
 	private bool $notificationsEnabled;
 	private bool $soundEnabled;
 
 	public function __construct (Entity $user, array $params = [])
 	{
 		parent::__construct($user, Settings::PUSH_GROUP, $params);
-
-		$this->eventEmitter = new EventEmitter();
 
 		$this->notificationsEnabled = $params['notifications'];
 		$this->soundEnabled         = $params['sound'];
@@ -44,7 +40,7 @@ class PushSettingsGroup extends SettingsGroup
 				]
 			];
 
-			$this->eventEmitter->sendEvent([intval($_SESSION['user_id'])], [0], $event);
+            EventManager::event([intval($_SESSION['user_id'])], $event);
 		}
 
 		return $this;
@@ -69,7 +65,7 @@ class PushSettingsGroup extends SettingsGroup
 				]
 			];
 
-			$this->eventEmitter->sendEvent([intval($_SESSION['user_id'])], [0], $event);
+            EventManager::event([intval($_SESSION['user_id'])], $event);
 		}
 
 		return $this;
