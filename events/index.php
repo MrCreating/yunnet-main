@@ -6,12 +6,14 @@ use unt\objects\Project;
 use unt\objects\Request;
 use unt\platform\EventManager;
 
-header('Content-Type: application/json');
+//header('Content-Type: application/json');
 header('Access-Control-Allow-Credentials: true');
 header('Access-Control-Allow-Origin: ' . Project::getOrigin());
 
 $key = trim(Request::get()->data['key']);
 $wait_time = intval(Request::get()->data['timeout']);
+
+$this->errors();
 
 if ($wait_time < 0) $wait_time = 1;
 if ($wait_time >= 50) $wait_time = 50;
