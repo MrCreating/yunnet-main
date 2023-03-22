@@ -364,7 +364,9 @@ class Post extends Attachment
 			'text'      => $this->getText(),
 			'is_pinned' => $this->isPinned(),
 
-			'comments'  => [
+            'attachments' => [],
+
+            'comments'  => [
 				'count' => $this->getCommentsCount()
 			],
 

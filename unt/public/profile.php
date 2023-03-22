@@ -8,13 +8,20 @@ use unt\objects\User;
 
 $user = Entity::findByScreenName(substr(REQUESTED_PAGE, 1));
 
-if ($user->getScreenName() && (substr(REQUESTED_PAGE, 0, 2) == 'id' || substr(REQUESTED_PAGE, 0, 3) == 'bot')) {
+if ($user && $user->getScreenName() && (substr(REQUESTED_PAGE, 0, 2) == 'id' || substr(REQUESTED_PAGE, 0, 3) == 'bot')) {
 	die(header("Location: /".$user->getScreenName()));
 }
 
 if (isset(Request::get()->data['action']))
 {
 	$action = strtolower(Request::get()->data['action']);
+    if ($action === 'get_page')
+    {
+        die(\unt\design\Template::get('profile')->show());
+    }
+
+    if (!$user)
+        die(json_encode(array('error' => 1)));
 
 	$can_access_closed = $user->getType() === User::ENTITY_TYPE ? $user->canAccessClosed() : true;
 	$in_blacklist      = $user->getType() === User::ENTITY_TYPE && $user->inBlacklist();

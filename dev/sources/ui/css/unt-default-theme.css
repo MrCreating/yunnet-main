@@ -1,0 +1,34 @@
+:root {
+    /**
+     * BACKGROUND COLORS
+    */
+
+    /* loader background color */
+    --unt-loader-color: white;
+
+    /* background color for default */
+    --background-color: #eeeeee;
+
+    /* SVG fill color */
+    --svg-fill-color: black;
+
+
+    /**
+     * SIDENAV SETTINGS
+    */
+
+    /* Background color */
+    --unt-sidenav-background: #37474f;
+
+    /* Items text color */
+    --unt-sidenav-text-color: rgba(0, 0, 0, .87);
+
+    /* User name color */
+    --unt-sidenav-username-color: white;
+
+    /* Links color */
+    --unt-links-color: black;
+
+    /* User status color */
+    --unt-sidenav-status-color: white;
+}

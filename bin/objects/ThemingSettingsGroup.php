@@ -24,32 +24,7 @@ class ThemingSettingsGroup extends SettingsGroup
 		$this->JSAllowed     = $params['js_allowed'];
 		$this->currentTheme  = (new AttachmentsParser())->getObject($params['theme']);
 
-		$default_item_ids = [
-			1, 2, 3, 4, 5, 6, 7, 8
-		];
-
-		$item_ids = array();
-		
-		$menu_ids = $params["menu_items"];
-		foreach ($default_item_ids as $index => $menu_id)
-		{
-			$item = intval($menu_ids[$index]);
-			if (!$item)
-				$item = $menu_id;
-
-			if (!in_array($item, $item_ids))
-				$item_ids[] = $item;
-		}
-
-		if (count($menu_ids) != count($default_item_ids))
-		{
-			foreach ($default_item_ids as $menu_id) {
-				if (!in_array($menu_id, $item_ids))
-					$item_ids[] = $menu_id;
-			}
-		}
-
-		$this->menuItemIds = $item_ids;
+        $this->setMenuItemIds($params['menu_items']);
 	}
 
 	public function getCurrentTheme (): ?Theme
@@ -73,8 +48,74 @@ class ThemingSettingsGroup extends SettingsGroup
 	}
 
 	public function getMenuItemIds (): array
-	{
-		return $this->menuItemIds;
+    {
+        $menu_indexes = [
+            [
+                'lang_name' => 'news',
+                'url' => '/',
+                'shown' => true,
+                'disabled' => false,
+                'icon' => 'news'
+            ],
+            [
+                'lang_name' => 'notifications',
+                'url' => '/notifications',
+                'shown' => true,
+                'disabled' => false,
+                'icon' => 'notifications'
+            ],
+            [
+                'lang_name' => 'friends',
+                'url' => '/friends',
+                'shown' => true,
+                'disabled' => false,
+                'icon' => 'friends'
+            ],
+            [
+                'lang_name' => 'messages',
+                'url' => '/messages',
+                'shown' => true,
+                'disabled' => true,
+                'icon' => 'messages'
+            ],
+            [
+                'lang_name' => 'groups',
+                'url' => '/groups',
+                'shown' => true,
+                'disabled' => false,
+                'icon' => 'groups'
+            ],
+            [
+                'lang_name' => 'faves',
+                'url' => '/faves',
+                'shown' => true,
+                'disabled' => false,
+                'icon' => 'faves'
+            ],
+            [
+                'lang_name' => 'audios',
+                'url' => '/audios',
+                'shown' => true,
+                'disabled' => false,
+                'icon' => 'audios'
+            ],
+            [
+                'lang_name' => 'settings',
+                'url' => '/settings',
+                'shown' => Context::get()->isMobile(),
+                'disabled' => false,
+                'icon' => 'settings'
+            ]
+        ];
+
+        $result = [];
+
+        foreach ($this->menuItemIds as $menu_item_id)
+        {
+            $result[] = $menu_indexes[$menu_item_id - 1];
+        }
+
+		return $result;
 	}
 
 	public function setMenuItemIds (array $menuItemIds): bool

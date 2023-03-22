@@ -13,9 +13,11 @@ if (isset(Request::get()->data['action']))
 		case 'get_posts':
 			$posts = Context::get()->getCurrentUser()->getNewsList();
 			die(json_encode($posts));
-		break;
-		
-		default:
+
+        case 'get_page':
+            die(\unt\design\Template::get('news')->show());
+
+        default:
 		break;
 	}
 

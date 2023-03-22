@@ -1755,7 +1755,7 @@ const subPages = {
 							return unt.toast({html: settings.lang.getValue('enable_themes_js')});
 						}
 
-						return themes.data.getCode(internalData.theme.owner_id, internalData.theme.id, 'js').then(function (code) {
+						return themes.data.getCode(internalData.theme.owner_id, internalData.theme.id, 'js_1').then(function (code) {
 							pages.elements.loadingMode().getInstance().close();
 
 							let codeEditor = themes.codeEditor.build();
@@ -1772,7 +1772,7 @@ const subPages = {
 								button.setLoading(true);
 
 								let currentCode = codeEditor.getCurrentCode();
-								return themes.data.code.update(internalData.theme.owner_id, internalData.theme.id, 'js', currentCode).then(function (response) {
+								return themes.data.code.update(internalData.theme.owner_id, internalData.theme.id, 'js_1', currentCode).then(function (response) {
 									button.setLoading(false);
 
 									return unt.toast({html: settings.lang.getValue('saved')});

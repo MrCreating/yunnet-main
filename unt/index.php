@@ -3,8 +3,6 @@
 use unt\objects\Context;
 use unt\objects\Project;
 
-require_once PROJECT_ROOT . '/pages/page_templates.php';
-
 if (Context::get()->isMobile() && explode('.', strtolower($_SERVER['HTTP_HOST']))[0] !== 'm')
 {
     die(header("Location: ". Project::getMobileDomain() . $_SERVER['REQUEST_URI']));
@@ -14,21 +12,19 @@ if (Context::get()->isMobile() && explode('.', strtolower($_SERVER['HTTP_HOST'])
 if (!Context::get()->isLogged() && strtoupper($_SERVER['REQUEST_METHOD']) === "GET" && isset($_SESSION['stage']) && intval($_SESSION['stage']) > 2 && REQUESTED_PAGE !== "/register")
     die(header("Location: ". Project::getDefaultDomain() ."/register"));
 
+$is_default_page = Project::isDefaultLink(REQUESTED_PAGE);
+$selected_section = strtolower(basename(trim(substr(REQUESTED_PAGE, 1))));
+if ($selected_section === '')
+    $selected_section = Context::get()->isLogged() ? 'news' : 'login';
+
 if (strtoupper($_SERVER['REQUEST_METHOD']) === "POST")
 {
-    if (Project::isDefaultLink(REQUESTED_PAGE))
+    session_write_close();
+
+    if ($is_default_page)
     {
-        session_write_close();
-        $page = explode('/', REQUESTED_PAGE);
-
-        if ($page[1] === "" && $page[0] === "") {
-            $page[1] = 'news';
-        }
-
-        if (file_exists(PROJECT_ROOT . '/unt/public/'.$page[1].'.php'))
-            require_once PROJECT_ROOT . '/unt/public/'.$page[1].'.php';
-        else
-            die(json_encode(array('error' => 1)));
+        if (file_exists(PROJECT_ROOT . '/unt/public/' . $selected_section . '.php'))
+            require_once PROJECT_ROOT . '/unt/public/' . $selected_section . '.php';
     }
 
     if (substr(strtolower(REQUESTED_PAGE), 0, 5) === "/wall")
@@ -51,5 +47,8 @@ if (strtoupper($_SERVER['REQUEST_METHOD']) === "POST")
     die(json_encode(array('error' => 1)));
 }
 
-die(default_page_template(Context::get()->isMobile(), Context::get()->getLanguage()->id, Context::get()->getCurrentUser()));
+\unt\design\Template::get('head')->variables([
+    'module'     => $selected_section,
+    'is_default' => $is_default_page
+])->show();
 ?>

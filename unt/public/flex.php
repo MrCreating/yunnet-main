@@ -8,7 +8,6 @@ use unt\objects\Project;
 use unt\objects\Request;
 use unt\objects\User;
 use unt\parsers\AttachmentsParser;
-use unt\platform\DataBaseManager;
 
 if (isset(Request::get()->data['action']))
 {
@@ -24,9 +23,8 @@ if (isset(Request::get()->data['action']))
 				$result = 0;
 
 			die(json_encode(array('blocked' => $result)));
-		break;
 
-		case 'get_language_value':
+        case 'get_language_value':
 			$value         = strtolower(Request::get()->data["value"]);
 			$languageValue = Context::get()->getLanguage()->{$value};
 			if ($value === '*')
@@ -37,9 +35,8 @@ if (isset(Request::get()->data['action']))
 			if (!$languageValue) die(json_encode(array('error' => 1)));
 
 			die(json_encode(array('response' => $languageValue)));
-		break;
-		
-		case 'get_user_data':
+
+        case 'get_user_data':
             $entity_id = intval(Request::get()->data["id"]);
 			$fields    = strval(Request::get()->data["fields"]);
 
@@ -54,9 +51,8 @@ if (isset(Request::get()->data['action']))
 			if (!$user) die(json_encode(array("error" => 1)));
 
 			die(json_encode(array("response" => $user->toArray($fields))));
-		break;
 
-		case 'get_user_data_by_link':
+        case 'get_user_data_by_link':
 			$screen_name = substr(strtolower(Request::get()->data["screen_name"]), 1);
 			if (Context::get()->getCurrentUser() && Context::get()->getCurrentUser()->isBanned()) 
 				$screen_name = 'id' . Context::get()->getCurrentUser()->getId();
@@ -67,9 +63,8 @@ if (isset(Request::get()->data['action']))
 			if (!$result) die(json_encode(array("error"=>1)));
 
 			die(json_encode(array("id"=>intval($result->getId() > 0 ? $result->getId() : ($result->getId() * -1)))));
-		break;
 
-		case 'get_attachment_info':
+        case 'get_attachment_info':
 			$attachmentCredentials = trim(Request::get()->data['credentials']);
 
 			$resultedAttachment = (new AttachmentsParser())->getObject($attachmentCredentials);
@@ -77,9 +72,8 @@ if (isset(Request::get()->data['action']))
 				die(json_encode(array('error' => 1)));
 
 			die(json_encode(array('attachment' => $resultedAttachment->toArray())));
-		break;
 
-		default:
+        default:
 		break;
 	}
 
@@ -91,9 +85,8 @@ if (isset(Request::get()->data['action']))
 			$settings = Context::get()->getCurrentUser()->getSettings()->toArray();
 
 			die(json_encode($settings));
-		break;
 
-		case 'publish_post':
+        case 'publish_post':
 			if (Context::get()->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
 
 			$text = strval(Request::get()->data['text']);

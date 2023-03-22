@@ -7888,7 +7888,7 @@ try {
   if('serviceWorker' in navigator) {
    navigator.serviceWorker.getRegistrations().then(function (registrations) {
     if (!registrations[0]) {
-      navigator.serviceWorker.register('/internal/sw.js', {scope: '/'})
+      navigator.serviceWorker.register('/internal/sw.js_1', {scope: '/'})
     }
    });
   }

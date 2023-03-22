@@ -4,7 +4,8 @@ namespace unt\platform;
 
 class Data extends \unt\objects\BaseObject
 {
-	function __construct (array $fields = [])
+
+    function __construct (array $fields = [])
 	{
         parent::__construct();
 

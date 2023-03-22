@@ -93,14 +93,19 @@ class Context extends BaseObject
 			}
 		}
 
-		$cache = Cache::getCacheServer();
-		$lang  = json_decode($cache->get('lang_' . $languageCode), true);
+        $lang = NULL;
+        if (Project::isProduction()) {
+            $cache = Cache::getCacheServer();
+            $lang  = json_decode($cache->get('lang_' . $languageCode), true);
+        }
 
 		if (!$lang)
 		{
 			$language_json = file_get_contents(PROJECT_ROOT . '/bin/languages/' . $languageCode);
 
-			$cache->set('lang_' . $languageCode, $language_json);
+            if (Project::isProduction()) {
+                $cache->set('lang_' . $languageCode, $language_json);
+            }
 			$lang = json_decode($language_json, true);
 		}
 

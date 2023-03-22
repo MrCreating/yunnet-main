@@ -12,6 +12,10 @@ session_start();
 if (isset(Request::get()->data['action']))
 {
 	$action = strtolower(Request::get()->data['action']);
+    if ($action === 'get_page')
+    {
+        die(\unt\design\Template::get('restore')->show());
+    }
 
 	if (Context::get()->allowToUseUnt()) die(json_encode(array('error' => 1)));
 

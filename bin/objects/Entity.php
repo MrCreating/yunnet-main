@@ -60,7 +60,7 @@ abstract class Entity extends BaseObject
 	///////////////////////////////////////////////////
 	public static function findById (int $user_id): ?Entity
     {
-		$entity = $user_id > 0 ? new User($user_id) : new Bot($user_id);
+		$entity = $user_id > 0 ? new User($user_id) : new Bot($user_id * -1);
 
 		return $entity->valid() ? $entity : NULL;
 	}

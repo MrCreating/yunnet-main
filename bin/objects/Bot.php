@@ -18,7 +18,8 @@ class Bot extends Entity
 
 	private string $name;
 	private int $owner_id;
-	private ?Photo $photo;
+
+	private ?Photo $photo = NULL;
 
 	function __construct (int $bot_id)
 	{
@@ -68,6 +69,11 @@ class Bot extends Entity
 
 		return false;
 	}
+
+    public function isBlocked (): bool
+    {
+        return false;
+    }
 
 	public function getCurrentPhoto (): ?Photo
     {

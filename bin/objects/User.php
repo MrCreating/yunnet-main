@@ -31,7 +31,7 @@ class User extends Entity
     private string $firstName;
     private string $lastName;
     private ?string $status;
-    private ?string $screenName;
+    private ?string $screenName = '';
     private ?int $gender;
 
     private ?int $accountType;

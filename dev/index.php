@@ -25,6 +25,7 @@ if ($content['data'] == '') {
     die('[]');
 }
 
+
 if ($content['extension'] == 'js') {
     header('Content-Type: text/javascript;charset=utf8');
 } else if ($content['extension'] == 'css') {

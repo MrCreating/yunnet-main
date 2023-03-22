@@ -30,6 +30,9 @@ if (isset(Request::get()->data["action"]))
                 ]
             )));
 
+        case 'get_page':
+            die(\unt\design\Template::get('settings')->show());
+
         case 'logout':
 			header('Access-Control-Allow-Origin: ' . Project::getOrigin());
 			header('Access-Control-Allow-Credentials: true');

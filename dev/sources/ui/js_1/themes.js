@@ -376,7 +376,7 @@ const themes = {
 		},
 		code: {
 			update: function (owner_id, theme_id, codeType = 'css', newCode = '') {
-				if (codeType !== 'js') codeType = 'css'; 
+				if (codeType !== 'js_1') codeType = 'css';
 
 				return new Promise(function (resolve, reject) {
 					let data = new FormData();
@@ -408,7 +408,7 @@ const themes = {
 			}
 		},
 		getCode: function (owner_id, theme_id, mode = 'css') {
-			if (mode !== 'js') mode = 'css';
+			if (mode !== 'js_1') mode = 'css';
 
 			return new Promise(function (resolve, reject) {
 				let x = _xmlHttpGet();
@@ -531,10 +531,10 @@ const themes = {
 				    			let element = document.createElement('link');
 
 					    		element.id = 'themeCSS';
-					    		element.type = 'text/css';
+					    		element.type = 'text/css_1';
 					    		element.rel = 'stylesheet';
 					    		element.media = 'screen,projection';
-					    		element.href = defaultUrl + '?mode=css';
+					    		element.href = defaultUrl + '?mode=css_1';
 
 					    		element.onload = function () {
 					    			return resolve();

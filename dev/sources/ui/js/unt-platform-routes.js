@@ -1,0 +1,5 @@
+(function () {
+    unt.routes = {
+
+    };
+})(unt);
