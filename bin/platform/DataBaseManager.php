@@ -29,7 +29,7 @@ class DataBaseManager
 		return $this->getClient()->prepare($query);
 	}
 
-    public function query ($query, $params): ?array
+    public function query (string $query, array $params = [], bool $one = false): ?array
     {
         $res = $this->dbClient->prepare($query);
 
@@ -40,7 +40,14 @@ class DataBaseManager
 
         if ($res->execute())
         {
-            return $res->fetchAll(PDO::FETCH_ASSOC);
+            if ($one) {
+                $result = $res->fetch(PDO::FETCH_ASSOC);
+
+                if ($result === false)
+                    return NULL;
+                else return $result;
+            }
+            else return $res->fetchAll(PDO::FETCH_ASSOC);
         }
 
         return NULL;

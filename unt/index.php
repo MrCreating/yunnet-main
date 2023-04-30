@@ -41,6 +41,11 @@ if (strtoupper($_SERVER['REQUEST_METHOD']) === "POST")
         require_once PROJECT_ROOT . '/unt/public/photo.php';
     }
 
+    if (substr(strtolower(REQUESTED_PAGE), 0, 6) === "/group")
+    {
+        require_once PROJECT_ROOT . '/unt/public/group.php';
+    }
+
     if (substr(strtolower(REQUESTED_PAGE), 0, 5) === "/poll")
     {
         require_once PROJECT_ROOT . '/unt/public/poll.php';

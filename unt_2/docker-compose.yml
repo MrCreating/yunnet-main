@@ -21,7 +21,7 @@ services:
             - php
         command: bash /home/unt/unt_2/scripts/nginx.sh
         networks:
-            - unt_1_database
+            - unt_database
     # PHP 7.4
     php:
         build:
@@ -32,7 +32,7 @@ services:
         volumes:
             - $PWD/../:/home/unt
             # связь с внутренними файлами
-            - $PWD/config/php/php$UNT_PRODUCTION.ini:/usr/local/etc/php/php.ini
+            - $PWD/config/php/php.ini:/usr/local/etc/php/php.ini
             - $PWD/config/php/php-fpm.conf:/usr/local/etc/php-fpm.conf
             - $PWD/config/php/www.conf:/usr/local/etc/php-fpm.d/www.conf
         links:
@@ -41,7 +41,7 @@ services:
         hostname: yunnet_php
         tty: true
         networks:
-            - unt_1_database
+            - unt_database
 
     memcached:
         build:
@@ -52,7 +52,7 @@ services:
         volumes:
             - $PWD/../:/home/unt
         networks:
-            - unt_1_database
+            - unt_database
         restart: unless-stopped
         hostname: yunnet_memcached
         tty: true
@@ -71,7 +71,7 @@ services:
         restart: unless-stopped
         hostname: yunnet_mailer
         networks:
-            - unt_1_database
+            - unt_database
         tty: true
         ports:
             - "25:25"
@@ -86,7 +86,7 @@ services:
             context: $PWD/docker/context/rabbit_mq
             dockerfile: $PWD/docker/build/rabbit_mq
         networks:
-            - unt_1_database
+            - unt_database
 
     sphinx:
         restart: unless-stopped
@@ -94,17 +94,17 @@ services:
         tty: true
         volumes:
             - sphinx_indexes:/opt/sphinx/users.sph
-            - $PWD/config/sphinx/sphinx.conf:/opt/sphinx/conf/sphinx.conf
+            - $PWD/config/sphinx/:/opt/sphinx/conf/
         build:
             context: $PWD/docker/context/sphinx
             dockerfile: $PWD/docker/build/sphinx
         networks:
-            - unt_1_database
+            - unt_database
 
 volumes:
     sphinx_indexes:
         driver: local
 
 networks:
-    unt_1_database:
+    unt_database:
         external: true

@@ -3887,6 +3887,100 @@ const pages = {
 
 		let menuBody = pages.elements.menuBody().clear();
 		ui.isMobile() ? nav_header_title.innerText = settings.lang.getValue("groups") : null;
+		document.title = 'yunNet. - ' + settings.lang.getValue('groups');
+
+		let loader = pages.elements.getLoader();
+		loader.style.marginTop = '15px';
+		menuBody.appendChild(loader);
+
+		let groupsDiv = document.createElement('div');
+		menuBody.appendChild(groupsDiv);
+		groupsDiv.style.display = 'none';
+
+		unt.groups.get(0, 30).then(function (response) {
+			loader.hide();
+			return response;
+		}).catch(function (err) {
+			loader.hide();
+			unt.toast({html: settings.lang.getValue('upload_error')});
+			return [];
+		}).then(function (groups) {
+			if (groups.length <= 0) {
+				let noGroups = pages.elements.alertWindow(unt.Icon.CLEAR, (settings.lang.getValue("no_groups")), (settings.lang.getValue("no_groups_text")));
+				noGroups.id = 'no_groups';
+
+				menuBody.appendChild(noGroups);
+			} else {
+				groups.forEach(function (group) {
+					groupsDiv.appendChild(unt.groups.group(group));
+				});
+				groupsDiv.style.display = '';
+			}
+		});
+
+		let fab = pages.elements.createFAB(unt.Icon.EDIT, function () {}, [
+			[
+				unt.Icon.ADD,
+				function () {
+					let win = pages.elements.createWindow();
+					let content = win.getContent();
+
+					let textDiv = document.createElement('div');
+					content.appendChild(textDiv);
+					textDiv.innerText = settings.lang.getValue('create_group');
+
+					let titleField = pages.elements.createInputField(settings.lang.getValue('group_title'));
+					let descriptionField = pages.elements.createInputField(settings.lang.getValue('group_description'));
+
+					let button = document.createElement('a');
+					button.classList = ['btn btn-flat'];
+					button.innerText = settings.lang.getValue('continue');
+					content.appendChild(titleField);
+					content.appendChild(descriptionField);
+					win.getFooter().appendChild(button);
+
+					button.addEventListener('click', function () {
+						if (titleField.getInput().value.isEmpty() || titleField.getInput().value.length > 64) {
+							return titleField.getInput().classList.add('wrong');
+						} else {
+							titleField.getInput().classList.remove('wrong');
+						}
+
+						if (descriptionField.getInput().value.length > 256) {
+							return descriptionField.getInput().classList.add('wrong');
+						} else {
+							descriptionField.getInput().classList.remove('wrong');
+						}
+
+						button.innerText = settings.lang.getValue('loading');
+						button.setAttribute('disabled', 'true');
+
+						unt.groups.create(titleField.getInput().value, descriptionField.getInput().value).then(function (response) {
+							button.innerText = settings.lang.getValue('continue');
+							button.removeAttribute('disabled');
+							return response;
+						}).then(function (group) {
+							if (group.id)
+								return window.location.href = '/group' + group.id;
+							else
+								return unt.toast({html: settings.lang.getValue('upload_error')});
+						}).catch(function (err) {
+							button.innerText = settings.lang.getValue('continue');
+							button.removeAttribute('disabled');
+							return unt.toast({html: settings.lang.getValue('upload_error')});
+						});
+					});
+				}
+			]
+		]);
+		menuBody.appendChild(fab);
+	},
+	group: function () {
+		if (!settings.users.current) return pages.unauth.authPage();
+		if (settings.users.current.is_banned) return pages.unauth.banned();
+
+		let menuBody = pages.elements.menuBody().clear();
+		document.title = 'yunNet. - ' + settings.lang.getValue('group');
 	},
 	settings: function () {
 		if (!settings.users.current) return pages.unauth.authPage();

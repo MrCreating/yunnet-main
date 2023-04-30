@@ -113,6 +113,7 @@ function default_page_template ($is_mobile, $lang = "en", $user): string
 		$scripts_list = '
 <script src="'.Project::getDevDomain().'/js/ui.js"></script>
 <script src="'.Project::getDevDomain().'/js/poster.js"></script>
+<script src="'.Project::getDevDomain().'/js/groups.js"></script>
 <script src="'.Project::getDevDomain().'/js/caches.js"></script>
 <script src="'.Project::getDevDomain().'/js/settings.js"></script>
 <script src="'.Project::getDevDomain().'/js/pages.js"></script>

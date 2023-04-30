@@ -524,6 +524,8 @@ unt.pages = new Object({
 			return this.banned(internalData);
 
 		document.title = unt.settings.lang.getValue('groups');
+
+		let menu = unt.components.menuElement;
 	},
 	group: function (internalData) {
 		if (unt.settings.users.current.is_banned)

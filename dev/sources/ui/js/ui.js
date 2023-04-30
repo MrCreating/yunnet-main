@@ -7786,6 +7786,7 @@ const ui = {
     } else {
       if (url.substr(1, 4) === "wall") pages.wall(internalData);
       else if (url.substr(1, 5) === "photo") pages.photo(internalData);
+      else if (url.substr(1, 5) === "group") pages.group(internalData);
       else if (url.substr(1, 4) === "poll") pages.poll(internalData);
       else pages.profile(internalData);
     }
