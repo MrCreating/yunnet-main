@@ -6,10 +6,7 @@ use unt\objects\Request;
 use unt\objects\User;
 use unt\platform\DataBaseManager;
 
-require_once './bin/functions/users.php';
-
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
+require_once __DIR__ . '/../../bin/functions/users.php';
 
 if (isset(Request::get()->data["action"]))
 {
