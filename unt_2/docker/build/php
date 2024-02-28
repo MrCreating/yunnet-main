@@ -64,7 +64,6 @@ RUN php -r "unlink('composer-setup.php');"
 RUN mv /bin/composer /usr/local/bin/composer
 
 USER unt
-
 WORKDIR /home/unt
 
-ENTRYPOINT ['composer install && php-fpm']
+RUN composer install
