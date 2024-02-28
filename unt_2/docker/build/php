@@ -63,5 +63,4 @@ RUN php composer-setup.php --install-dir=/bin --filename=composer
 RUN php -r "unlink('composer-setup.php');"
 RUN mv /bin/composer /usr/local/bin/composer
 
-USER unt
 WORKDIR /home/unt
