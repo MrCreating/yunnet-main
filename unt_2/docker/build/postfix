@@ -20,7 +20,6 @@ RUN dos2unix /bin/entrypoint.sh
 RUN dos2unix /bin/set-exim4-update-conf
 
 RUN useradd -s /bin/bash -d /home/unt -m -G sudo unt
-USER unt
 
 ENTRYPOINT ["/bin/entrypoint.sh"]
 CMD ["exim", "-bd", "-q15m", "-v"]
