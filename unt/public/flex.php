@@ -1,7 +1,9 @@
 <?php
 
 use unt\objects\Bot;
+use unt\objects\Chat;
 use unt\objects\Context;
+use unt\objects\Conversation;
 use unt\objects\Entity;
 use unt\objects\Post;
 use unt\objects\Project;
@@ -128,9 +130,27 @@ if (isset(Request::get()->data['action']))
 			die(json_encode(array('response' => $result->toArray())));
 
         case 'get_chat_permissions':
+            if (Context::get()->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
+
+            $chat = new Conversation(Request::get()->data['peer_id']);
+
+            if (!$chat->valid() || $chat->isKicked())
+                die(json_encode(array('error' => 1)));
+
+            die(json_encode($chat->getPermissions()->toArray()));
         case 'get_my_permissions_level':
+            $chat = new Conversation(Request::get()->data['peer_id']);
+
+            if (!$chat->valid() || $chat->isKicked())
+                die(json_encode(array('error' => 1)));
+
+            die(json_encode(array('level' => $chat->getAccessLevel())));
         case 'get_chat_by_peer':
-            die(json_encode(array('error' => 1)));
+            $dialog = Chat::findById(Request::get()->data['peer_id']);
+
+            if (!$dialog) die(json_encode(array('error' => 1)));
+
+            die(json_encode($dialog->toArray()));
 
         case 'get_friends':
             if (Context::get()->getCurrentUser()->isBanned()) die(json_encode(array('error' => 1)));
