@@ -1,1 +1,5 @@
 FROM macbre/sphinxsearch:3.4.1
+
+RUN useradd -s /bin/bash -d /home/unt -m -G sudo unt
+USER unt
+WORKDIR /home/unt

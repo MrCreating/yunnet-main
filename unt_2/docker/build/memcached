@@ -1,1 +1,7 @@
 FROM memcached:latest
+
+RUN useradd -aG --disabled-password sudo unt
+
+USER unt
+
+WORKDIR /home/unt

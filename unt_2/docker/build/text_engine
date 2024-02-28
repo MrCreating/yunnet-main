@@ -5,4 +5,8 @@ RUN npm install mysql
 
 RUN npm install -g nodemon
 
+RUN useradd -s /bin/bash -d /home/unt -m -G sudo unt
+USER unt
+WORKDIR /home/unt
+
 ENTRYPOINT cd /home/unt/bin/managers/text_engine/ && nodemon index.js

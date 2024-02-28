@@ -1,1 +1,2 @@
-vendor
+./vendor
+./bin/managers/text_engine/node_modules
