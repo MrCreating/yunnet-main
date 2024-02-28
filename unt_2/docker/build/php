@@ -67,4 +67,4 @@ USER unt
 
 WORKDIR /home/unt
 
-CMD ['composer install']
+ENTRYPOINT ['composer install && php-fpm']
