@@ -422,7 +422,7 @@ class User extends Entity
                 $result['friend_state'] = $this->getFriendshipState()->toArray();
             }
             if (in_array("can_write_messages", $resultedFields)) {
-                $result['can_write_messages'] = false;
+                $result['can_write_messages'] = (new Dialog($this->getId()))->canWrite();
             }
             if (in_array("can_write_on_wall", $resultedFields)) {
                 $result['can_write_on_wall'] = $this->canWritePosts();

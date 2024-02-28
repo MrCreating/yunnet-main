@@ -197,9 +197,9 @@ class Bot extends Entity
 
 		if (in_array("can_write_messages", $resultedFields)) 
 		{
-			//$dialog = new Dialog('b' . $this->getId());
+			$dialog = new Dialog('b' . $this->getId());
 
-			$result['can_write_messages'] = false;
+			$result['can_write_messages'] = $dialog->canWrite();
 		}
 		if (in_array("can_write_on_wall", $resultedFields))
 		{
