@@ -8,6 +8,9 @@ use unt\platform\DataBaseManager;
 
 require_once './bin/functions/users.php';
 
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
 if (isset(Request::get()->data["action"]))
 {
 	$action = strtolower(Request::get()->data["action"]);
