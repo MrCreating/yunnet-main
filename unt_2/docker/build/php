@@ -66,4 +66,4 @@ RUN mv /bin/composer /usr/local/bin/composer
 USER unt
 WORKDIR /home/unt
 
-RUN composer install
+CMD ['/usr/local/bin/composer install && php-fpm']
