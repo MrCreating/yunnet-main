@@ -5,9 +5,6 @@ use unt\objects\Context;
 use unt\objects\Request;
 use unt\parsers\AttachmentsParser;
 
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
-
 if (isset(Request::get()->data['action']))
 {
     $action = strtolower(Request::get()->data['action']);
