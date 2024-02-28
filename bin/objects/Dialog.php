@@ -2,6 +2,8 @@
 
 namespace unt\objects;
 
+use PDO;
+
 /**
  * one-by-one chat class
  * Have positive id.

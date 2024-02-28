@@ -2,7 +2,7 @@
 
 namespace unt\objects;
 
-use unt\objects\Dialog;
+use PDO;
 use unt\parsers\AttachmentsParser;
 use unt\platform\DataBaseManager;
 use unt\platform\EventManager;

@@ -2,6 +2,10 @@
 
 namespace unt\objects;
 
+use PDO;
+use unt\parsers\AttachmentsParser;
+use unt\platform\DataBaseManager;
+
 /**
  * This class is not extended by Message
  * because this is a different functionality.

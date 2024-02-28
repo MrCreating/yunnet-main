@@ -145,7 +145,7 @@ class Message
 
     public function setForwarded (array $fwd = []): bool
     {
-        if (count($attachmentsList) > 1000) return false;
+        if (count($fwd) > 1000) return false;
 
         foreach ($fwd as $index => $message) {
             if (!($message instanceof ForwardedMessage)) return false;
