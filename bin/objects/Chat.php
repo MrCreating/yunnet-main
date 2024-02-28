@@ -221,10 +221,6 @@ abstract class Chat extends BaseObject
 
 		if ($can_write_messages === 0) return -1;
 		if ($can_write_messages === -1) return -2;
-		if ($this->getType() === 'conversation' && $can_write_messages === -2)
-		{
-			if (!$this->addUser(intval($_SESSION['user_id']))) return -1;
-		}
 
 		$attachments_list = (new AttachmentsParser())->getObjects($attachments);
 
@@ -248,6 +244,11 @@ abstract class Chat extends BaseObject
 		$current_time = time();
 		$done_atts    = '';
 
+		if ($this->getType() === 'conversation' && $can_write_messages === -2)
+		{
+			if (!$this->addUser(intval($_SESSION['user_id']))) return -1;
+		}
+
 		foreach ($attachments_list as $key => $value) {
 			$done_atts .= $value->getCredentials();
 		}
@@ -255,7 +256,7 @@ abstract class Chat extends BaseObject
 		if (!$this->uid && $this->getType() === 'dialog')
 		{
 			$this->uid = get_last_uid() + 1;
-			if (!$this->uid)return -6;
+			if (!$this->uid) return -6;
 
 			$companion_id = $this->getCompanion()->getId();
 

@@ -58,7 +58,7 @@ let q = {
 					});
 				}
 
-				q.connection.query('SELECT IFNULL(MAX(lid), 0) AS local_chat_id FROM messages.members_chat_list WHERE uid = ' + uid, function (err, row, data) {
+				q.connection.query('SELECT IFNULL(MAX(local_chat_id), 0) AS local_chat_id FROM messages.chat_engine_1 WHERE uid = ' + uid, function (err, row, data) {
 					let mid = row;
 					
 					try {
