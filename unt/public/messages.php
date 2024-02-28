@@ -2,11 +2,11 @@
 
 use unt\objects\Chat;
 use unt\objects\Context;
+use unt\objects\Message;
+use unt\objects\Photo;
 use unt\objects\Request;
 use unt\parsers\AttachmentsParser;
-
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
+use unt\platform\Data;
 
 if (isset(Request::get()->data['action']))
 {
@@ -15,7 +15,6 @@ if (isset(Request::get()->data['action']))
     switch ($action) {
         case 'get_chat_info_by_link':
             die(json_encode(array('error' => 3)));
-            break;
 
         default:
             break;
@@ -25,7 +24,7 @@ if (isset(Request::get()->data['action']))
 
     if (isset(Request::get()->data['peer_id']) || isset(Request::get()->data['chat_id']))
     {
-        $peer_id = strval(trim(strtolower(isset(Request::get()->data['chat_id']) ? strval(Request::get()->data['chat_id']) : strval(Request::get()->data['peer_id']))));
+        $peer_id = trim(strtolower(isset(Request::get()->data['chat_id']) ? strval(Request::get()->data['chat_id']) : strval(Request::get()->data['peer_id'])));
         $chat    = Chat::findById($peer_id);
 
         if (!$chat || !$chat->valid())
@@ -38,7 +37,6 @@ if (isset(Request::get()->data['action']))
                     die(json_encode(array('error' => 1)));
 
                 die(json_encode(array('id' => $result)));
-                break;
 
             case 'toggle_my_state':
                 if ($chat->getType() !== 'conversation')
@@ -49,17 +47,14 @@ if (isset(Request::get()->data['action']))
                     die(json_encode(array('error' => 1)));
 
                 die(json_encode(array('result' => 1)));
-                break;
 
             case 'read_chat':
                 die(json_encode(array('success' => intval($chat->read()))));
-                break;
 
             case 'clear':
                 $chat->clear();
 
                 die(json_encode(array()));
-                break;
 
             case 'set_user_level':
                 if ($chat->getType() !== 'conversation')
@@ -96,22 +91,18 @@ if (isset(Request::get()->data['action']))
 
                     return $object;
                 }, $chat->getMembers(true))));
-                break;
 
             case 'get_messages':
                 die(json_encode(array('list' => array_map(function (Message $message) { return $message->toArray(); }, $chat->getMessages(intval(Request::get()->data['count']) !== 0 ? intval(Request::get()->data['count']) : 100, intval(Request::get()->data['offset']) !== 0 ? intval(Request::get()->data['offset']) : 0)))));
-                break;
 
             case 'toggle_notifications':
                 die(json_encode(array('response' => intval($chat->setNotificationsEnabled()))));
-                break;
 
             case 'toggle_pinned_messages':
                 if ($chat->getType() !== 'conversation')
                     die(json_encode(array('error' => 1)));
 
                 die(json_encode(array('response' => intval($chat->setPinnedMessageShown()))));
-                break;
 
             case 'set_chat_title':
                 if ($chat->getType() !== 'conversation')
@@ -122,12 +113,12 @@ if (isset(Request::get()->data['action']))
                     die(json_encode(array('error' => 1)));
 
                 die(json_encode(array('response' => 1)));
-                break;
 
             case 'update_chat_photo':
                 if ($chat->getType() !== 'conversation')
                     die(json_encode(array('error' => 1)));
 
+                /** @var Photo $photo */
                 $photo = (new AttachmentsParser())->getObject(Request::get()->data['photo']);
                 if (!$photo)
                     die(json_encode(array('error' => 1)));
@@ -137,7 +128,6 @@ if (isset(Request::get()->data['action']))
                     die(json_encode(array('error' => 1)));
 
                 die(json_encode(array('response' => 1)));
-                break;
 
             case 'delete_chat_photo':
                 if ($chat->getType() !== 'conversation')
@@ -148,7 +138,6 @@ if (isset(Request::get()->data['action']))
                     die(json_encode(array('error' => 1)));
 
                 die(json_encode(array('response' => 1)));
-                break;
 
             case 'get_chat_link':
                 if ($chat->getType() !== 'conversation')
@@ -157,7 +146,6 @@ if (isset(Request::get()->data['action']))
                     die(json_encode(array('error' => 1)));
 
                 die(json_encode(array('response' => $chat->getInviteLink())));
-                break;
 
             case 'update_chat_link':
                 if ($chat->getType() !== 'conversation')
@@ -180,7 +168,6 @@ if (isset(Request::get()->data['action']))
                     die(json_encode(array('error' => 1)));
 
                 die(json_encode(array('response' => $chat->findMemberById($user_id)->is_muted)));
-                break;
 
             case 'add_user':
                 if ($chat->getType() !== 'conversation')
@@ -212,7 +199,6 @@ if (isset(Request::get()->data['action']))
                 }
 
                 die(json_encode(array('response' => 1)));
-                break;
 
             case 'remove_user':
                 if ($chat->getType() !== 'conversation')
@@ -225,7 +211,6 @@ if (isset(Request::get()->data['action']))
                     die(json_encode(array('error' => 1)));
 
                 die(json_encode(array('response' => 1)));
-                break;
 
             case 'update_chat_permissions':
                 if ($chat->getType() !== 'conversation')
@@ -239,7 +224,6 @@ if (isset(Request::get()->data['action']))
                     die(json_encode(array('error' => 1)));
 
                 die(json_encode(array('response' => 1)));
-                break;
 
             case 'save_message':
                 if ($chat->canWrite() !== 1)
@@ -266,7 +250,6 @@ if (isset(Request::get()->data['action']))
         switch ($action) {
             case 'get_chats':
                 die(json_encode(array_map(function (Chat $item) { return $item->toArray(); }, Chat::getList(intval(Request::get()->data['count']), intval(Request::get()->data['offset']), intval(Request::get()->data['only_chats']) ? 1 : 0))));
-                break;
 
             case 'chat_create':
                 $permissions = [
@@ -303,7 +286,6 @@ if (isset(Request::get()->data['action']))
                     die(json_encode(array('error' => 1)));
 
                 die(json_encode(array('response' => $result * -1)));
-                break;
 
             default:
                 break;
