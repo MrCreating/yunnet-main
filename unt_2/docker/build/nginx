@@ -6,6 +6,5 @@ RUN apt-get update --allow-unauthenticated
 RUN apt-get install dos2unix
 
 RUN useradd -s /bin/bash -d /home/unt -m -G sudo unt
-USER unt
 
 ENTRYPOINT cd /home/unt/unt_2/scripts/ && dos2unix nginx.sh && bash -c /home/unt/unt_2/scripts/nginx.sh
