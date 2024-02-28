@@ -10,7 +10,7 @@ use unt\platform\DataBaseManager;
  * returns array of User and Bot objects
  * or empty array
  */
-function search_users ($connection, $query, $additional_params = [
+function search_users ($query, $additional_params = [
 	"search_bots" => false,
 	"offset"      => 0,
 	"count"       => 50

@@ -6,6 +6,8 @@ use unt\objects\Request;
 use unt\objects\User;
 use unt\platform\DataBaseManager;
 
+require_once './bin/functions/users.php';
+
 if (isset(Request::get()->data["action"]))
 {
 	$action = strtolower(Request::get()->data["action"]);
@@ -27,7 +29,7 @@ if (isset(Request::get()->data["action"]))
 			];
 
 			$done   = [];
-			$result = search_users(DataBaseManager::getConnection(), $query, $params);
+			$result = search_users($query, $params);
 
 			foreach ($result as $index => $user) {
 				$done[] = $user->toArray();
