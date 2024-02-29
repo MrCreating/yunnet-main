@@ -71,7 +71,7 @@ abstract class Chat extends BaseObject
 
                 $this->peer_id = intval($local_chat_id);
                 $this->is_read = intval($result['is_read']);
-                $this->lastReadMsgId = intval($result['last_read_id']);
+                $this->lastReadMsgId = intval($result['last_read_message_id']);
                 $this->notifications_enabled = intval($result['notifications']);
             } else {
                 $this->uid = 0;
