@@ -2,6 +2,8 @@
 
 namespace unt\objects;
 
+use unt\platform\DataBaseManager;
+
 /**
  * Bot entity object
  */
@@ -79,6 +81,12 @@ class Bot extends Entity
 		return $this->screenName;
 	}
 
+	public function setScreenName (string $newScreenName): Bot
+	{
+		$this->screenName = $newScreenName;
+		return $this;
+	}
+
 	public function getOwnerId (): int
 	{
 		return $this->owner_id;
@@ -124,7 +132,7 @@ class Bot extends Entity
 			if ($this->photo && !$this->photo->valid()) return false;
 
 			$query = $this->photo->getQuery();
-			$res = \unt\platform\DataBaseManager::getConnection()->prepare("UPDATE bots.info SET photo_path = ? WHERE id = ? AND is_deleted = 0 LIMIT 1;");
+			$res = DataBaseManager::getConnection()->prepare("UPDATE bots.info SET photo_path = ? WHERE id = ? AND is_deleted = 0 LIMIT 1;");
 
 			if ($res->execute([$query, $this->getId()])) return true;
 		}
@@ -257,9 +265,9 @@ class Bot extends Entity
 	{
 		$result = [];
 
-		$connection = \unt\platform\DataBaseManager::getConnection();
+		$connection = DataBaseManager::getConnection();
 
-		$res = \unt\platform\DataBaseManager::getConnection()->prepare("SELECT DISTINCT id FROM bots.info WHERE owner_id = ? AND is_deleted = 0 LIMIT 30");
+		$res = DataBaseManager::getConnection()->prepare("SELECT DISTINCT id FROM bots.info WHERE owner_id = ? AND is_deleted = 0 LIMIT 30");
 		if ($res->execute([intval($_SESSION['user_id'])]))
 		{
 			$data = $res->fetchAll(\PDO::FETCH_ASSOC);
@@ -295,11 +303,11 @@ class Bot extends Entity
 			]
 		];
 
-		$res = \unt\platform\DataBaseManager::getConnection()->prepare("INSERT INTO bots.info (name, owner_id, creation_time, settings) VALUES (?, ?, ?, ?)");
+		$res = DataBaseManager::getConnection()->prepare("INSERT INTO bots.info (name, owner_id, creation_time, settings) VALUES (?, ?, ?, ?)");
 
 		if ($res->execute([$bot_name, intval($_SESSION['user_id']), time(), json_encode($settings)]))
 		{
-			$res = \unt\platform\DataBaseManager::getConnection()->prepare("SELECT LAST_INSERT_ID()");
+			$res = DataBaseManager::getConnection()->prepare("SELECT LAST_INSERT_ID()");
 
 			if ($res->execute())
 			{

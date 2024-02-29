@@ -11,6 +11,8 @@ require_once __DIR__ . '/../../bin/functions/dev_functions.php';
 $is_logged = Context::get()->isLogged();
 $is_mobile = Context::get()->isMobile();
 
+$requested_page = explode('?', strtolower($_SERVER['REQUEST_URI']))[0];
+
 if (strtoupper($_SERVER['REQUEST_METHOD']) === "POST")
 {
 	$requested_page = explode('/', $requested_page)[1];

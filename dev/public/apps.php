@@ -3,13 +3,15 @@
 /**
  * Apps system design,
 */
+
+use unt\objects\App;
+use unt\objects\Bot;
+use unt\objects\Context;
+use unt\objects\Request;
+use unt\parsers\AttachmentsParser;
+
 if (!Context::get()->isLogged())
 	die(header("Location: /"));
-
-if (!class_exists('App'))
-	require __DIR__ . '/../../bin/objects/App.php';
-if (!class_exists('Entity'))
-	require __DIR__ . '/../../bin/objects/entities.php';
 
 if (isset(Request::get()->data['action']))
 {
@@ -18,9 +20,6 @@ if (isset(Request::get()->data['action']))
 	switch ($action) 
 	{
 		case 'create_token':
-			if (!function_exists('create_token'))
-				require __DIR__ . "/../../bin/functions/auth.php";
-
 			$app_id   = intval(Request::get()->data['app_id']);
 			$owner_id = intval(Request::get()->data['bot_id']) > 0 ? (intval(Request::get()->data['bot_id']) * -1) : Context::get()->getCurrentUser()->getId();
 			$perms    = explode(',', strval(Request::get()->data['permissions']));
@@ -34,7 +33,7 @@ if (isset(Request::get()->data['action']))
 				$permissions[] = strval($id);
 			}
 
-			$result = create_token($connection, $owner_id, $app_id, $permissions);
+			$result = false; //create_token($connection, $owner_id, $app_id, $permissions);
 
 			if (!$result) 
 				die(json_encode(array('error'=>1)));
@@ -43,9 +42,6 @@ if (isset(Request::get()->data['action']))
 		break;
 
 		case 'update_token':
-			if (!function_exists('update_token'))
-				require __DIR__ . "/../../bin/functions/auth.php";
-
 			$perms = explode(',', Request::get()->data["permissions"]);
 			$token_id = intval(Request::get()->data['token_id']);
 
@@ -63,7 +59,7 @@ if (isset(Request::get()->data['action']))
 
 			$perms = implode(',', $permissions);
 
-			$token_info = get_token_by_id($connection, $token_id);
+			$token_info = false; //get_token_by_id($connection, $token_id);
 			if (!$token_info)
 				die(json_encode(array('error'=>1)));
 
@@ -77,7 +73,7 @@ if (isset(Request::get()->data['action']))
 				die(json_encode(array('error'=>1)));
 			}
 
-			$result = update_token($connection, $token_id, $perms);
+			$result = false; //update_token($connection, $token_id, $perms);
 			if (!$result)
 				die(json_encode(array('error'=>1)));
 
@@ -87,10 +83,7 @@ if (isset(Request::get()->data['action']))
 		case 'delete_token':
 			$token_id = intval(Request::get()->data['token_id']);
 
-			if (!function_exists('get_token_by_id'))
-				require __DIR__ . "/../../bin/functions/auth.php";
-
-			$token_info = get_token_by_id($connection, $token_id);
+			$token_info = false; //get_token_by_id($connection, $token_id);
 			if (!$token_info)
 				die(json_encode(array('error'=>1)));
 
@@ -104,7 +97,7 @@ if (isset(Request::get()->data['action']))
 				die(json_encode(array('error'=>1)));
 			}
 
-			$result = delete_token($connection, $token_info['id']);
+			$result = false; // delete_token($connection, $token_info['id']);
 			if (!$result)
 				die(json_encode(array('error'=>1)));
 
@@ -114,10 +107,7 @@ if (isset(Request::get()->data['action']))
 		case 'create_app':
 			$app_title = strval(Request::get()->data['app_title']);
 
-			if (!function_exists('create_app'))
-				require __DIR__ . "/../../bin/functions/auth.php";
-
-			$app = create_app($connection, Context::get()->getCurrentUser()->getId(), Request::get()->data["app_title"]);
+			$app = false; //create_app($connection, Context::get()->getCurrentUser()->getId(), Request::get()->data["app_title"]);
 			if (!$app)
 				die(json_encode(array('error'=>1)));
 
@@ -129,10 +119,7 @@ if (isset(Request::get()->data['action']))
 			if (!$app->valid() || ($app->getOwnerId() !== Context::get()->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
 
-			if (!function_exists('get_tokens_list'))
-				require __DIR__ . '/../../bin/functions/auth.php';
-
-			$tokens_list = get_tokens_list($connection, Context::get()->getCurrentUser()->getId(), $app->getId());
+			$tokens_list = $app->getTokensList();
 
 			$result = [];
 			foreach ($tokens_list as $index => $token) {
@@ -149,9 +136,6 @@ if (isset(Request::get()->data['action']))
 		break;
 
 		case 'set_title':
-			if (!class_exists('App'))
-				require __DIR__ . '/../../bin/objects/apps.php';
-			
 			$app = new App(intval(Request::get()->data['app_id']));
 			if (!$app->valid() || ($app->getOwnerId() !== Context::get()->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
@@ -163,9 +147,6 @@ if (isset(Request::get()->data['action']))
 		break;
 
 		case 'delete_app':
-			if (!class_exists('App'))
-				require __DIR__ . '/../../bin/objects/apps.php';
-			
 			$app = new App(intval(Request::get()->data['app_id']));
 			if (!$app->valid() || ($app->getOwnerId() !== Context::get()->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));
@@ -175,11 +156,6 @@ if (isset(Request::get()->data['action']))
 
 		case 'set_photo':
 			$photo = strval(Request::get()->data["photo"]);
-
-			if (!class_exists('AttachmentsParser'))
-				require __DIR__ . "/../../bin/objects/Attachment.php";
-			if (!class_exists('App'))
-				require __DIR__ . '/../../bin/objects/apps.php';
 
 			$app = new App(intval(Request::get()->data['app_id']));
 			if (!$app->valid() || ($app->getOwnerId() !== Context::get()->getCurrentUser()->getId()))
@@ -197,9 +173,6 @@ if (isset(Request::get()->data['action']))
 		break;
 
 		case 'delete_photo':
-			if (!class_exists('App'))
-				require __DIR__ . '/../../bin/objects/apps.php';
-
 			$app = new App(intval(Request::get()->data['app_id']));
 			if (!$app->valid() || ($app->getOwnerId() !== Context::get()->getCurrentUser()->getId()))
 				die(json_encode(array('error'=>1)));

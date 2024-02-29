@@ -5,9 +5,17 @@
 */
 
 // non-die param
+use unt\objects\Bot;
+use unt\objects\Context;
+use unt\objects\Request;
+
 $dev = true;
 
-require __DIR__ . "/../../pages/public/flex.php";
+require __DIR__ . "/../../unt/public/flex.php";
+
+/**
+ * @var string $action
+ */
 
 /**
  * Getting current bots list.
@@ -17,13 +25,12 @@ if ($action === 'get_bots_list')
 {
 	if (!Context::get()->isLogged()) die(json_encode(array('unauth'=>1)));
 
-	if (!function_exists('get_bots_list'))
-		require __DIR__ . '/../../bin/functions/bots.php';
-
-	$result = get_bots_list($connection, Context::get()->getCurrentUser()->getId(), true);
+	$result = Bot::getList();
 
 	// ok!
-	die(json_encode($result));
+	die(json_encode(array_map(function (Bot $bot) {
+        return $bot->toArray();
+    }, $result)));
 }
 
 /**
@@ -33,8 +40,8 @@ if ($action === 'get_apps_list')
 {
 	if (!Context::get()->isLogged()) die(json_encode(array('unauth'=>1)));
 
-	if (!function_exists('get_apps_list'))
-		require __DIR__ . '/../../bin/functions/auth.php';
+    $offset = intval(Request::get()->data['offset']);
+    $count = intval(Request::get()->data['count']);
 
 	$apps_list = get_apps_list($connection, Context::get()->getCurrentUser()->getId(), intval(Request::get()->data['offset']), intval(Request::get()->data['count']));
 

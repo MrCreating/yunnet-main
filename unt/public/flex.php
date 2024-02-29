@@ -10,7 +10,6 @@ use unt\objects\Project;
 use unt\objects\Request;
 use unt\objects\User;
 use unt\parsers\AttachmentsParser;
-use unt\platform\DataBaseManager;
 
 if (isset(Request::get()->data['action']))
 {

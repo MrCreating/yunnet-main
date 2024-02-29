@@ -4,6 +4,8 @@
  * API methods list.
 */
 
+use unt\objects\Request;
+
 if (isset(Request::get()->data['action']))
 {
 	$action = strtolower(Request::get()->data['action']);
@@ -16,7 +18,7 @@ if (isset(Request::get()->data['action']))
 	}
 	if ($action === 'get_method_info')
 	{
-		$dev_language = get_dev_language($connection);
+		$dev_language = []; //get_dev_language($connection);
 
 		$params_list = get_params_list(Request::get()->data['method_name']);
 		if ($params_list === false)
