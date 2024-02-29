@@ -192,7 +192,7 @@ abstract class Chat extends BaseObject
             }
         }
 
-        return $result;
+        return array_reverse($result);
     }
 
     abstract protected function getMessagesQuery(int $count = 100, int $offset = 0): string;

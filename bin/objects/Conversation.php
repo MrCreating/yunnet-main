@@ -565,19 +565,19 @@ class Conversation extends Chat
 
 	protected function getMessagesQuery(int $count = 100, int $offset = 0): string
 	{
-		$query = 'SELECT local_chat_id FROM messages.chat_engine_1 WHERE deleted_for_all != 1 AND local_chat_id > ".$cleared_message_id." AND (deleted_for NOT LIKE "%'.intval($_SESSION['user_id']).',%" OR deleted_for IS NULL) AND uid = '.$this->uid.' ORDER BY local_chat_id LIMIT '.$offset.','.$count.';';
+		$query = 'SELECT local_chat_id FROM messages.chat_engine_1 WHERE deleted_for_all != 1 AND local_chat_id > ".$cleared_message_id." AND (deleted_for NOT LIKE "%'.intval($_SESSION['user_id']).',%" OR deleted_for IS NULL) AND uid = '.$this->uid.' ORDER BY local_chat_id DESC LIMIT '.$offset.','.$count.';';
 
 		if ($this->isKicked() || $this->isLeaved())
 		{
-			$query = 'SELECT local_chat_id FROM messages.chat_engine_1 WHERE deleted_for_all != 1 AND local_chat_id > (SELECT cleared_message_id FROM messages.members_chat_list WHERE user_id = '.intval($_SESSION['user_id']).' AND uid = '.$this->uid.' LIMIT 1) AND (deleted_for NOT LIKE "%'.intval($_SESSION['user_id']).',%" OR deleted_for IS NULL) AND uid = '.$this->uid.' AND time <= '.$this->leavedTime.' ORDER BY local_chat_id LIMIT '.$offset.','.$count.';';
+			$query = 'SELECT local_chat_id FROM messages.chat_engine_1 WHERE deleted_for_all != 1 AND local_chat_id > (SELECT cleared_message_id FROM messages.members_chat_list WHERE user_id = '.intval($_SESSION['user_id']).' AND uid = '.$this->uid.' LIMIT 1) AND (deleted_for NOT LIKE "%'.intval($_SESSION['user_id']).',%" OR deleted_for IS NULL) AND uid = '.$this->uid.' AND time <= '.$this->leavedTime.' ORDER BY local_chat_id DESC LIMIT '.$offset.','.$count.';';
 		} else {
 			if (!$this->isKicked() && $this->returnedTime !== 0)
 			{
-				$query = 'SELECT local_chat_id FROM messages.chat_engine_1 WHERE deleted_for_all != 1 AND local_chat_id > (SELECT cleared_message_id FROM messages.members_chat_list WHERE user_id = '.intval($_SESSION['user_id']).' AND uid = '.$this->uid.' LIMIT 1) AND uid = '.$this->uid.' AND (deleted_for NOT LIKE "%'.intval($_SESSION['user_id']).',%" OR deleted_for IS NULL) AND (time <= '.$this->leavedTime.' OR time >= '.$this->returnedTime.') ORDER BY local_chat_id LIMIT '.$offset.','.$count.';';
+				$query = 'SELECT local_chat_id FROM messages.chat_engine_1 WHERE deleted_for_all != 1 AND local_chat_id > (SELECT cleared_message_id FROM messages.members_chat_list WHERE user_id = '.intval($_SESSION['user_id']).' AND uid = '.$this->uid.' LIMIT 1) AND uid = '.$this->uid.' AND (deleted_for NOT LIKE "%'.intval($_SESSION['user_id']).',%" OR deleted_for IS NULL) AND (time <= '.$this->leavedTime.' OR time >= '.$this->returnedTime.') ORDER BY local_chat_id DESC LIMIT '.$offset.','.$count.';';
 
 				if ($this->leavedTime === 0)
 				{
-					$query = 'SELECT local_chat_id FROM messages.chat_engine_1 WHERE (deleted_for NOT LIKE "%'.intval($_SESSION['user_id']).',%" OR deleted_for IS NULL) AND deleted_for_all != 1 AND local_chat_id > (SELECT cleared_message_id FROM messages.members_chat_list WHERE user_id = '.intval($_SESSION['user_id']).' AND uid = '.$this->uid.' LIMIT 1) AND uid = '.$this->uid.' OR uid = '.$this->uid.' AND time >= '.$this->returnedTime.' AND (deleted_for NOT LIKE "%'.intval($_SESSION['user_id']).',%" OR deleted_for IS NULL) ORDER BY local_chat_id LIMIT '.$offset.','.$count.';';
+					$query = 'SELECT local_chat_id FROM messages.chat_engine_1 WHERE (deleted_for NOT LIKE "%'.intval($_SESSION['user_id']).',%" OR deleted_for IS NULL) AND deleted_for_all != 1 AND local_chat_id > (SELECT cleared_message_id FROM messages.members_chat_list WHERE user_id = '.intval($_SESSION['user_id']).' AND uid = '.$this->uid.' LIMIT 1) AND uid = '.$this->uid.' OR uid = '.$this->uid.' AND time >= '.$this->returnedTime.' AND (deleted_for NOT LIKE "%'.intval($_SESSION['user_id']).',%" OR deleted_for IS NULL) ORDER BY local_chat_id DESC LIMIT '.$offset.','.$count.';';
 				}
 			}
 		}

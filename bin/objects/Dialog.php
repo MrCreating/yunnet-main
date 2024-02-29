@@ -83,7 +83,7 @@ class Dialog extends Chat
 
 	protected function getMessagesQuery(int $count = 100, int $offset = 0): string
 	{
-		return 'SELECT local_chat_id FROM messages.chat_engine_1 WHERE deleted_for_all != 1 AND uid = '.$this->uid.' AND local_chat_id > (SELECT cleared_message_id FROM messages.members_chat_list WHERE user_id = '.intval($_SESSION['user_id']).' AND uid = '.$this->uid.' LIMIT 1) AND (deleted_for NOT LIKE "%'.intval($_SESSION['user_id']).',%" OR deleted_for IS NULL) ORDER BY local_chat_id LIMIT '.$offset.','.$count;
+		return 'SELECT local_chat_id FROM messages.chat_engine_1 WHERE deleted_for_all != 1 AND uid = '.$this->uid.' AND local_chat_id > (SELECT cleared_message_id FROM messages.members_chat_list WHERE user_id = '.intval($_SESSION['user_id']).' AND uid = '.$this->uid.' LIMIT 1) AND (deleted_for NOT LIKE "%'.intval($_SESSION['user_id']).',%" OR deleted_for IS NULL) ORDER BY local_chat_id DESC LIMIT '.$offset.','.$count;
 	}
 
 	// creating new chat if not exists
