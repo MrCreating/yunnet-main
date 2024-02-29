@@ -18,7 +18,7 @@ class Token extends BaseObject
 
 	private bool $isValid = false;
 
-	function __construct (?\unt\objects\App $bound_app, int $id)
+	function __construct (?App $bound_app, int $id)
 	{
         parent::__construct();
 

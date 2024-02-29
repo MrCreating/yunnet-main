@@ -1,5 +1,8 @@
 <?php
 
+use unt\objects\API;
+use unt\objects\Entity;
+
 $method_permissions_group = 0;
 
 $method_params = [
@@ -17,7 +20,7 @@ $method_params = [
 	]
 ];
 
-function call (API $api, array $params)
+function call (API $api, array $params): APIResponse
 {
 	$result = [];
 
