@@ -5,8 +5,7 @@
 
 use unt\objects\Context;
 
-if (!function_exists('get_registered_methods'))
-	require __DIR__ . '/../../bin/functions/dev_functions.php';
+require_once __DIR__ . '/../../bin/functions/dev_functions.php';
 
 // variables
 $is_logged = Context::get()->isLogged();
@@ -24,5 +23,5 @@ if (strtoupper($_SERVER['REQUEST_METHOD']) === "POST")
 }
 
 require __DIR__ . '/../../pages/page_templates.php';
+
 die(default_page_template($is_mobile, Context::get()->getLanguage()->id, Context::get()->getCurrentUser()));
-?>
