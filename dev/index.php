@@ -20,9 +20,7 @@ $path = '/dev/sources/ui/' . basename($folder_name) . '/' . basename($file_name)
 $content = SourcesManager::load($path);
 
 if ($content['data'] == '') {
-    // TODO: вернуть документацию и работу с ботами
-    http_response_code(404);
-    die('[]');
+    die(require_once __DIR__ . '/public/index.php');
 }
 
 if ($content['extension'] == 'js') {
