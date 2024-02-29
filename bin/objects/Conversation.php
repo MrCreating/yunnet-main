@@ -119,12 +119,12 @@ class Conversation extends Chat
 				$this->currentConnection->prepare("UPDATE messages.members_chat_list SET leaved_time = ? WHERE user_id = ? AND uid = ? LIMIT 1")->execute([time(), $entity_id, $this->uid]);
 			}
 
-//			if ($this->sendServiceMessage('kicked_user', $entity_id) >= 0)
-//			{
-//				return 1;
-//			}
+			if ($this->sendServiceMessage('kicked_user', $entity_id) >= 0)
+			{
+				return 1;
+			}
 
-			return 1;
+			return 0;
 		}
 	}
 
@@ -139,8 +139,8 @@ class Conversation extends Chat
 			{
 				if (
 					$this->currentConnection->prepare("UPDATE messages.members_chat_list SET is_leaved = 0 WHERE user_id = ? AND uid = ? LIMIT 1")->execute([intval($_SESSION['user_id']), $this->uid]) &&
-					$this->currentConnection->prepare("UPDATE messages.members_chat_list SET return_time = ? WHERE user_id = ? AND uid = ? LIMIT 1")->execute([time(), intval($_SESSION['user_id']), $this->uid])// &&
-					//$this->sendServiceMessage("returned_to_chat") >= 0
+					$this->currentConnection->prepare("UPDATE messages.members_chat_list SET return_time = ? WHERE user_id = ? AND uid = ? LIMIT 1")->execute([time(), intval($_SESSION['user_id']), $this->uid]) &&
+					$this->sendServiceMessage("returned_to_chat") >= 0
 				) {
 					$this->is_kicked = false;
 					$this->is_leaved = false;
@@ -191,13 +191,12 @@ class Conversation extends Chat
 				}
 			}
 
-			//if ($this->sendServiceMessage('invited_user', $entity_id) > 0)
-			//{
-			//	return 1;
-			//}
-			return 1;
+			if ($this->sendServiceMessage('invited_user', $entity_id) > 0)
+			{
+				return 1;
+			}
 
-			//return 0;
+			return 0;
 		}
 	}
 
@@ -665,8 +664,8 @@ class Conversation extends Chat
 			$chat = Chat::findById($my_local_chat_id);
 			if (!$chat || !$chat->valid()) return -8;
 
-			//if ($chat->sendServiceMessage("chat_create", $creator_id, NULL, $title) >= 0)
-			return $my_local_chat_id * -1;
+			if ($chat->sendServiceMessage("chat_create", $creator_id, NULL, $title) >= 0)
+				return $my_local_chat_id * -1;
 		}
 
 		return -7;
