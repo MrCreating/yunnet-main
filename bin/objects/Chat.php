@@ -109,7 +109,7 @@ abstract class Chat extends BaseObject
 			}
 		}
 
-		return array_reverse($result);
+		return $result;
 	}
 
     public function getLocalChatId(int $uid): int
@@ -373,8 +373,6 @@ abstract class Chat extends BaseObject
 
 	public function getLastMessage (): ?Message
 	{
-		if (!method_exists($this, 'getMessages')) return NULL;
-
 		$message = $this->getMessages(1)[0];
 
 		return $message ? $message : NULL;
