@@ -5,6 +5,7 @@ namespace unt\objects;
 use PDO;
 use unt\parsers\AttachmentsParser;
 use unt\platform\Data;
+use unt\platform\DataBaseManager;
 
 /**
  * Multi-dialog chat class
@@ -118,12 +119,12 @@ class Conversation extends Chat
 				$this->currentConnection->prepare("UPDATE messages.members_chat_list SET leaved_time = ? WHERE user_id = ? AND uid = ? LIMIT 1")->execute([time(), $entity_id, $this->uid]);
 			}
 
-			if ($this->sendServiceMessage('kicked_user', $entity_id) >= 0)
-			{
-				return 1;
-			}
+//			if ($this->sendServiceMessage('kicked_user', $entity_id) >= 0)
+//			{
+//				return 1;
+//			}
 
-			return 0;
+			return 1;
 		}
 	}
 
@@ -138,8 +139,8 @@ class Conversation extends Chat
 			{
 				if (
 					$this->currentConnection->prepare("UPDATE messages.members_chat_list SET is_leaved = 0 WHERE user_id = ? AND uid = ? LIMIT 1")->execute([intval($_SESSION['user_id']), $this->uid]) &&
-					$this->currentConnection->prepare("UPDATE messages.members_chat_list SET return_time = ? WHERE user_id = ? AND uid = ? LIMIT 1")->execute([time(), intval($_SESSION['user_id']), $this->uid]) &&
-					$this->sendServiceMessage("returned_to_chat") >= 0
+					$this->currentConnection->prepare("UPDATE messages.members_chat_list SET return_time = ? WHERE user_id = ? AND uid = ? LIMIT 1")->execute([time(), intval($_SESSION['user_id']), $this->uid])// &&
+					//$this->sendServiceMessage("returned_to_chat") >= 0
 				) {
 					$this->is_kicked = false;
 					$this->is_leaved = false;
@@ -190,12 +191,13 @@ class Conversation extends Chat
 				}
 			}
 
-			if ($this->sendServiceMessage('invited_user', $entity_id) > 0)
-			{
-				return 1;
-			}
+			//if ($this->sendServiceMessage('invited_user', $entity_id) > 0)
+			//{
+			//	return 1;
+			//}
+			return 1;
 
-			return 0;
+			//return 0;
 		}
 	}
 
@@ -221,15 +223,16 @@ class Conversation extends Chat
 				$local_ids[] = $member_info->local_id;
 			}
 
-			if ($this->sendEvent($user_ids, $local_ids, [
-				'event' => 'chat_event',
-				'type'  => 'updated_user_permissions_level',
-				'data'  => [
-					'updater_id' => intval($_SESSION['user_id']),
-					'entity_id'  => $entity_id,
-					'new_level'  => 9
-				]
-			])) return true;
+//			if ($this->sendEvent($user_ids, $local_ids, [
+//				'event' => 'chat_event',
+//				'type'  => 'updated_user_permissions_level',
+//				'data'  => [
+//					'updater_id' => intval($_SESSION['user_id']),
+//					'entity_id'  => $entity_id,
+//					'new_level'  => 9
+//				]
+//			])) return true;
+			return true;
 		}
 
 		return false;
@@ -549,50 +552,6 @@ class Conversation extends Chat
 		return $result;
 	}
 
-	public function getMessages (int $count = 100, int $offset = 0): array
-	{
-		$result = [];
-
-		if ($this->uid === 0) return $result;
-
-		if ($count < 1) $count = 1;
-		if ($count > 1000) $count = 1000;
-		if ($offset < 0) $offset = 0;
-
-		$query = 'SELECT local_chat_id FROM messages.chat_engine_1 WHERE deleted_for_all != 1 AND local_chat_id > ".$cleared_message_id." AND (deleted_for NOT LIKE "%'.intval($_SESSION['user_id']).',%" OR deleted_for IS NULL) AND uid = '.$this->uid.' ORDER BY local_chat_id DESC LIMIT '.$offset.','.$count.';';
-
-		if ($this->isKicked() || $this->isLeaved())
-		{
-			$query = 'SELECT local_chat_id FROM messages.chat_engine_1 WHERE deleted_for_all != 1 AND local_chat_id > (SELECT cleared_message_id FROM messages.members_chat_list WHERE user_id = '.intval($_SESSION['user_id']).' AND uid = '.$this->uid.' LIMIT 1) AND (deleted_for NOT LIKE "%'.intval($_SESSION['user_id']).',%" OR deleted_for IS NULL) AND uid = '.$this->uid.' AND time <= '.$this->leavedTime.' ORDER BY local_chat_id DESC LIMIT '.$offset.','.$count.';';
-		} else {
-			if (!$this->isKicked() && $this->returnedTime !== 0) 
-			{
-				$query = 'SELECT local_chat_id FROM messages.chat_engine_1 WHERE deleted_for_all != 1 AND local_chat_id > (SELECT cleared_message_id FROM messages.members_chat_list WHERE user_id = '.intval($_SESSION['user_id']).' AND uid = '.$this->uid.' LIMIT 1) AND uid = '.$this->uid.' AND (deleted_for NOT LIKE "%'.intval($_SESSION['user_id']).',%" OR deleted_for IS NULL) AND (time <= '.$this->leavedTime.' OR time >= '.$this->returnedTime.') ORDER BY local_chat_id DESC LIMIT '.$offset.','.$count.';';
-							
-				if ($this->leavedTime === 0)
-				{
-					$query = 'SELECT local_chat_id FROM messages.chat_engine_1 WHERE (deleted_for NOT LIKE "%'.intval($_SESSION['user_id']).',%" OR deleted_for IS NULL) AND deleted_for_all != 1 AND local_chat_id > (SELECT cleared_message_id FROM messages.members_chat_list WHERE user_id = '.intval($_SESSION['user_id']).' AND uid = '.$this->uid.' LIMIT 1) AND uid = '.$this->uid.' OR uid = '.$this->uid.' AND time >= '.$this->returnedTime.' AND (deleted_for NOT LIKE "%'.intval($_SESSION['user_id']).',%" OR deleted_for IS NULL) ORDER BY local_chat_id DESC LIMIT '.$offset.','.$count.';';
-				}
-			}
-		}
-
-		$res = $this->currentConnection->prepare($query);
-		if ($res->execute())
-		{
-			$local_chat_ids = $res->fetchAll(PDO::FETCH_ASSOC);
-
-			foreach ($local_chat_ids as $index => $local_info) {
-				$message_id = intval($local_info['local_chat_id']);
-
-				$message = new Message($this, $message_id);
-				if ($message->valid() && !$message->isDeleted())
-					$result[] = $message;
-			}
-		}
-
-		return array_reverse($result);
-	}
-
 	public function canWrite (): int
 	{
 		if (!Context::get()->isLogged()) return 0;
@@ -603,6 +562,138 @@ class Conversation extends Chat
 		if ($this->isLeaved()) return -2;
 
 		return 1;
+	}
+
+	protected function getMessagesQuery(int $count = 100, int $offset = 0): string
+	{
+		$query = 'SELECT local_chat_id FROM messages.chat_engine_1 WHERE deleted_for_all != 1 AND local_chat_id > ".$cleared_message_id." AND (deleted_for NOT LIKE "%'.intval($_SESSION['user_id']).',%" OR deleted_for IS NULL) AND uid = '.$this->uid.' ORDER BY local_chat_id LIMIT '.$offset.','.$count.';';
+
+		if ($this->isKicked() || $this->isLeaved())
+		{
+			$query = 'SELECT local_chat_id FROM messages.chat_engine_1 WHERE deleted_for_all != 1 AND local_chat_id > (SELECT cleared_message_id FROM messages.members_chat_list WHERE user_id = '.intval($_SESSION['user_id']).' AND uid = '.$this->uid.' LIMIT 1) AND (deleted_for NOT LIKE "%'.intval($_SESSION['user_id']).',%" OR deleted_for IS NULL) AND uid = '.$this->uid.' AND time <= '.$this->leavedTime.' ORDER BY local_chat_id LIMIT '.$offset.','.$count.';';
+		} else {
+			if (!$this->isKicked() && $this->returnedTime !== 0)
+			{
+				$query = 'SELECT local_chat_id FROM messages.chat_engine_1 WHERE deleted_for_all != 1 AND local_chat_id > (SELECT cleared_message_id FROM messages.members_chat_list WHERE user_id = '.intval($_SESSION['user_id']).' AND uid = '.$this->uid.' LIMIT 1) AND uid = '.$this->uid.' AND (deleted_for NOT LIKE "%'.intval($_SESSION['user_id']).',%" OR deleted_for IS NULL) AND (time <= '.$this->leavedTime.' OR time >= '.$this->returnedTime.') ORDER BY local_chat_id LIMIT '.$offset.','.$count.';';
+
+				if ($this->leavedTime === 0)
+				{
+					$query = 'SELECT local_chat_id FROM messages.chat_engine_1 WHERE (deleted_for NOT LIKE "%'.intval($_SESSION['user_id']).',%" OR deleted_for IS NULL) AND deleted_for_all != 1 AND local_chat_id > (SELECT cleared_message_id FROM messages.members_chat_list WHERE user_id = '.intval($_SESSION['user_id']).' AND uid = '.$this->uid.' LIMIT 1) AND uid = '.$this->uid.' OR uid = '.$this->uid.' AND time >= '.$this->returnedTime.' AND (deleted_for NOT LIKE "%'.intval($_SESSION['user_id']).',%" OR deleted_for IS NULL) ORDER BY local_chat_id LIMIT '.$offset.','.$count.';';
+				}
+			}
+		}
+
+		return $query;
+	}
+
+	public static function create (string $title, array $users_list, ?Photo $photo, ?array $permissions_list = []): int
+	{
+		$title = trim($title);
+		if (is_empty($title) || strlen($title) > 64) return -1;
+
+		$creator_id = intval($_SESSION['user_id']);
+		if ($creator_id <= 0) return -3;
+
+		$resulted_users = [$creator_id];
+		foreach ($users_list as $index => $user_id)
+		{
+			if ($index > 500) break;
+
+			if (!in_array($user_id, $resulted_users))
+				$resulted_users[] = intval($user_id);
+		}
+
+		$url = $photo && $photo->valid() ? $photo->getQuery() : '';
+
+		if (count($resulted_users) < 2 || count($resulted_users) > 1000)
+			return -2;
+
+		$permissions = [
+			'can_change_title'  => 4,
+			'can_change_photo'  => 4,
+			'can_kick'          => 7,
+			'can_invite'        => 7,
+			'can_invite_bots'   => 8,
+			'can_mute'          => 5,
+			'can_pin_message'   => 4,
+			'delete_messages_2' => 7,
+			'can_change_levels' => 9,
+			'can_link_join'     => 0
+		];
+
+		foreach ($permissions as $permissionName => $value)
+		{
+			if (isset($permissions_list[$permissionName]))
+			{
+				if (intval($permissions_list[$permissionName]) >= 0 && intval($permissions_list[$permissionName]) <= 9)
+					$permissions[$permissionName] = intval($permissions_list[$permissionName]);
+			}
+		}
+
+		$uid = get_last_uid(false);
+		if (!$uid) return -4;
+
+		$connection = DataBaseManager::getConnection();
+		if (DataBaseManager::getConnection()->prepare("INSERT INTO messages.members_engine_1 (uid, title, permissions, photo) VALUES (?, ?, ?, ?)")->execute([
+			$uid,
+			$title,
+			serialize($permissions),
+			$url
+		]))
+		{
+			$my_local_chat_id = 0;
+
+			foreach ($resulted_users as $index => $user_id)
+			{
+				$entity = Entity::findById($user_id);
+				if (!$entity || $entity->isBanned()) continue;
+				if (!$entity->canInviteToChat()) continue;
+
+				$user_permissions_level = $user_id === $creator_id ? 9 : 0;
+
+				$res = DataBaseManager::getConnection()->prepare('SELECT lid FROM messages.members_chat_list WHERE user_id = ? ORDER BY lid LIMIT 1');
+				if ($res->execute([$user_id]))
+				{
+					$lid = intval($res->fetch(PDO::FETCH_ASSOC)["lid"]) - 1;
+					if ($user_id === intval($_SESSION['user_id']))
+						$my_local_chat_id = $lid;
+
+					DataBaseManager::getConnection()->prepare('INSERT INTO messages.members_chat_list (user_id, lid, uid, cleared_message_id, invited_by, permissions_level, last_time) VALUES (?, ?, ?, 0, ?, ?, ?)')->execute([$user_id, $lid, $uid, $creator_id, $user_permissions_level, time()]);
+				}
+			}
+
+			$chat = Chat::findById($my_local_chat_id);
+			if (!$chat || !$chat->valid()) return -8;
+
+			//if ($chat->sendServiceMessage("chat_create", $creator_id, NULL, $title) >= 0)
+			return $my_local_chat_id * -1;
+		}
+
+		return -7;
+	}
+
+	protected function init(): bool
+	{
+		if ($this->uid) {
+			return true;
+		}
+
+		// cannot create new chat if not exists.
+		return false;
+	}
+
+	protected function getCompanionId(): int
+	{
+		return 0;
+	}
+
+	protected function afterSendMessage(Message $message): bool
+	{
+		parent::afterSendMessage($message);
+
+		$this->currentConnection->prepare("UPDATE messages.members_chat_list SET hidden = 0, is_read = 0, last_time = ? WHERE uid = ? AND is_leaved = 0 AND is_kicked = 0")->execute([time(), $this->uid]);
+
+		return $this->read();
 	}
 }
 

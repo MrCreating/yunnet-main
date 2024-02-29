@@ -237,6 +237,21 @@ class Bot extends Entity
 		return $this->settings;
 	}
 
+	public function inBlacklist (): bool
+	{
+		return false;
+	}
+
+	public function isFriends (): int
+	{
+		return 0;
+	}
+
+	public function getAccountType (): int
+	{
+		return 0;
+	}
+
 	/////////////////////////////////////////
 	public static function getList (): array
 	{

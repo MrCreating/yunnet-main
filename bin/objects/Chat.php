@@ -30,6 +30,10 @@ abstract class Chat extends BaseObject
 
     abstract public function canWrite(): int;
 
+	abstract protected function getMessagesQuery (int $count = 100, int $offset = 0): string;
+
+	abstract protected function getCompanionId (): int;
+
     public function __construct(string $localId)
     {
         parent::__construct();
@@ -79,15 +83,37 @@ abstract class Chat extends BaseObject
         }
     }
 
+	public function getMessages (int $count = 100, int $offset = 0): array
+	{
+		$result = [];
+
+		if ($this->uid === 0) return $result;
+
+		if ($count < 1) $count = 1;
+		if ($count > 1000) $count = 1000;
+		if ($offset < 0) $offset = 0;
+
+		$query = $this->getMessagesQuery($count, $offset);
+
+		$res = $this->currentConnection->prepare($query);
+		if ($res->execute())
+		{
+			$local_chat_ids = $res->fetchAll(PDO::FETCH_ASSOC);
+
+			foreach ($local_chat_ids as $index => $local_info) {
+				$message_id = intval($local_info['local_chat_id']);
+
+				$message = new Message($this, $message_id);
+				if ($message->valid() && !$message->isDeleted())
+					$result[] = $message;
+			}
+		}
+
+		return array_reverse($result);
+	}
+
     public function getLocalChatId(int $uid): int
     {
-        $text_engine_init = curl_init("text_engine");
-
-        $data = json_encode([
-            'operation' => 'get_lid',
-            'uid'       => $uid
-        ]);
-
         $text_engine_init = curl_init("text_engine");
 
         $data = json_encode([
@@ -183,15 +209,7 @@ abstract class Chat extends BaseObject
 
 		if (
 			$this->currentConnection->prepare("
-                UPDATE 
-                    messages.chats 
-                SET 
-                    last_read_id = ? 
-                WHERE 
-                    user_id = ? 
-                AND 
-                    uid = ?
-                LIMIT 1000
+                UPDATE messages.members_chat_list SET last_read_message_id = ? WHERE user_id = ? AND uid = ? LIMIT 1
             ")->execute([$last_read_message_id, intval($_SESSION['user_id']), $this->uid]))
 		{
 			if (intval($_SESSION['user_id']) < 0)
@@ -215,145 +233,44 @@ abstract class Chat extends BaseObject
 		return false;
 	}
 
+	abstract protected function init (): bool;
+
+	protected function afterSendMessage (Message $message): bool
+	{
+		return true;
+	}
+
 	public function sendMessage (string $text = '', string $attachments = '', string $fwd = '', string $payload = ''): int
 	{
-		$can_write_messages = $this->canWrite();
+		if (($validationResult = $this->isMessageDataValid($text, $attachments)) !== 1) {
+			return $validationResult;
+		}
 
+		$can_write_messages = $this->canWrite();
 		if ($can_write_messages === 0) return -1;
-		if ($can_write_messages === -1) return -2;
+		if ($can_write_messages === -1 || $can_write_messages === -2) return -2;
 
 		$attachments_list = (new AttachmentsParser())->getObjects($attachments);
-
-		if (is_empty($text) && count($attachments_list) === 0) return -3;
-
-		if (strlen($text) > 4096)
-		{
-			$text_list = explode_length($text, 4096);
-			foreach ($text_list as $index => $text_part) {
-				if ($index >= 10) break;
-
-				if ($index === (count($text_list) - 1))
-					return $this->sendMessage($text_part, $attachments, $fwd, $payload);
-				else
-					$this->sendMessage($text_part);
-			}
-		}
-		if (count($attachments_list) > 10) return -5;
-
 		$done_text    = trim($text);
-		$current_time = time();
 		$done_atts    = '';
 
-		if ($this->getType() === 'conversation' && $can_write_messages === -2)
-		{
-			if (!$this->addUser(intval($_SESSION['user_id']))) return -1;
-		}
-
-		foreach ($attachments_list as $key => $value) {
+		foreach ($attachments_list as $value) {
 			$done_atts .= $value->getCredentials();
 		}
 
-		if (!$this->uid && $this->getType() === 'dialog')
-		{
-			$this->uid = get_last_uid() + 1;
-			if (!$this->uid) return -6;
-
-			$companion_id = $this->getCompanion()->getId();
-
-			if (!$this->currentConnection->prepare("INSERT INTO messages.members_chat_list (user_id, lid, uid, cleared_message_id, last_time) VALUES (?, ?, ?, 0, ?)")->execute([intval($_SESSION['user_id']), $companion_id, $this->uid, $current_time]) || 
-				!$this->currentConnection->prepare("INSERT INTO messages.members_chat_list (user_id, lid, uid, cleared_message_id, last_time) VALUES (?, ?, ?, 0, ?)")->execute([$companion_id, intval($_SESSION['user_id']), $this->uid, $current_time])
-			) return -7;
-		} else if (!$this->uid && $this->getType() === 'conversation')
-		{
+		if (!$this->init()) {
 			return -10;
 		}
 
-		$companion_id = $this->getType() === 'dialog' ? ($this->getCompanion()->getType() === 'bot' ? $this->getCompanion()->getId() * -1 : $this->getCompanion()->getId()) : 0;
-
-		$local_message_id = intval($this->getLocalChatId($this->uid));
-		if (!$local_message_id) return -8;
-
-		$res = $this->currentConnection->prepare("INSERT INTO messages.chat_engine_1 (
-			uid, owner_id, local_chat_id, text, attachments, reply, time, flags, to_id
-		) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)");
-
-		if (!$res->execute([
-			$this->uid,
-			intval($_SESSION['user_id']),
-			$local_message_id,
-			$done_text,
-			'',
-			$done_atts,
-			$current_time,
-			$companion_id
-		])) return -9;
-
-        // TODO: ПЕРЕПИСАТЬ НА НОВЫЙ ОБРАБОТЧИК СОБЫТИЙ
-//		$atts_array = [];
-//		foreach ($attachments_list as $index => $attachment)
-//		{
-//			$atts_array[] = $attachment->toArray();
-//		}
-//
-//		$event = [
-//			'event' => 'new_message',
-//			'message' => [
-//				'from_id'     => intval($_SESSION['user_id']),
-//				'id'          => $local_message_id,
-//				'type'        => 'message',
-//				'text'        => $done_text,
-//				'time'        => $current_time,
-//				'attachments' => $atts_array,
-//				'fwd'         => []
-//			],
-//			'uid' => $this->uid
-//		];
-//
-//		if (!unt\functions\is_empty($payload) && strlen($payload) < 1024)
-//			$event['payload'] = $payload;
-//
-//		$user_ids  = [];
-//		$local_ids = [];
-//
-//		if ($this->getType() === 'dialog')
-//		{
-//			if (intval($_SESSION['user_id']) === $this->getCompanion()->getId())
-//			{
-//				$user_ids  = [intval($_SESSION['user_id'])];
-//				$local_ids = [intval($_SESSION['user_id'])];
-//			} else
-//			{
-//				$user_ids  = [intval($_SESSION['user_id']), $companion_id];
-//				$local_ids = [$companion_id, intval($_SESSION['user_id'])];
-//			}
-//
-//			if ($this->getType() === 'dialog' && $this->getCompanion()->getType() === 'bot')
-//			{
-//				if (intval($_SESSION['user_id']) < 0)
-//					$event['bot_peer_id'] = intval($_SESSION['user_id']);
-//				if ($companion_id < 0)
-//					$event['bot_peer_id'] = $companion_id;
-//			}
-//		} else
-//		{
-//			$member_ids = $this->getMembers();
-//
-//			foreach ($member_ids as $index => $user_info) {
-//				$user_ids[]  = $user_info->user_id;
-//				$local_ids[] = $user_info->local_id;
-//			}
-//		}
-//
-//        //EventManager::event($user_ids, $local_ids, $event);
-
-		$this->currentConnection->prepare("UPDATE messages.members_chat_list SET hidden = 0, is_read = 0, last_time = ? WHERE uid = ? AND is_leaved = 0 AND is_kicked = 0")->execute([$current_time, $this->uid]);
-
-		if (intval($_SESSION['user_id']) > 0 && $this->getType() === 'dialog' && $this->getCompanion()->getType() === 'bot')
-		{
-			toggle_send_access($this->currentConnection, intval($_SESSION['user_id']), $companion_id);
+		if (($resultSend = $this->saveMessage($done_text, $done_atts)) <= 0) {
+			return $resultSend;
 		}
 
-		return $this->read() ? $local_message_id : $local_message_id;
+		if ($this->emitEventToAllMembers()) {
+			$this->afterSendMessage(new Message($this, $resultSend));
+		}
+
+		return $resultSend;
 	}
 
 	public function sendServiceMessage (string $event, ?int $entity_id = NULL, ?string $new_src = NULL, ?string $new_title = NULL): int
@@ -369,101 +286,19 @@ abstract class Chat extends BaseObject
 
 		if (!in_array($event, $allowed_events)) return -15;
 
-		if (!$this->uid && $this->getType() === 'dialog')
-		{
-			$this->uid = get_last_uid() + 1;
-			if (!$this->uid)return -6;
-
-			$companion_id = $this->getCompanion()->getId();
-
-			if (!$this->currentConnection->prepare("INSERT INTO messages.members_chat_list (user_id, lid, uid, cleared_message_id, last_time) VALUES (?, ?, ?, 0, ?)")->execute([intval($_SESSION['user_id']), $companion_id, $this->uid, $current_time]) || 
-				!$this->currentConnection->prepare("INSERT INTO messages.members_chat_list (user_id, lid, uid, cleared_message_id, last_time) VALUES (?, ?, ?, 0, ?)")->execute([$companion_id, intval($_SESSION['user_id']), $this->uid, $current_time])
-			) return -7;
-		} else if (!$this->uid && $this->getType() === 'conversation')
-		{
+		if (!$this->init()) {
 			return -10;
 		}
 
-		$companion_id = $this->getType() === 'dialog' ? ($this->getCompanion()->getType() === 'bot' ? $this->getCompanion()->getId() * -1 : $this->getCompanion()->getId()) : 0;
+		if (($resultSend = $this->saveMessage('', '', $event, $new_src, $new_title)) <= 0) {
+			return $resultSend;
+		}
 
-		$local_message_id = intval($this->getLocalChatId($this->uid));
-		if (!$local_message_id) return -8;
+		if ($this->emitEventToAllMembers()) {
+			$this->afterSendMessage(new Message($this, $resultSend));
+		}
 
-		$res = $this->currentConnection->prepare("INSERT INTO messages.chat_engine_1 (
-			uid, owner_id, local_chat_id, text, attachments, reply, time, flags, to_id, event, new_src, new_title
-		) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)");
-
-		if (!$res->execute([
-			$this->uid,
-			intval($_SESSION['user_id']),
-			$local_message_id,
-			'',
-			'',
-			'',
-			$current_time,
-			$entity_id,
-			$event,
-			$new_src ? $new_src : '',
-			$new_title ? $new_title : ''
-		])) return -9;
-
-//		$event = [
-//			'event' => 'new_message',
-//			'message' => [
-//				'from_id' => intval($_SESSION['user_id']),
-//				'id'      => $local_message_id,
-//				'type'    => 'service_message',
-//				'time'    => $current_time,
-//				'action' => [
-//					'type' => strtolower($event),
-//				]
-//			]
-//		];
-//
-//		if ($entity_id)
-//			$event['message']['action']['to_id'] = $entity_id;
-//		if ($new_src)
-//			$event["message"]["action"]["new_photo_url"] = $new_src;
-//		if ($new_title)
-//			$event["message"]["action"]["new_title"] = $new_title;
-//
-//		$user_ids  = [];
-//		$local_ids = [];
-//
-//		if ($this->getType() === 'dialog')
-//		{
-//			if (intval($_SESSION['user_id']) === $this->getCompanion()->getId())
-//			{
-//				$user_ids  = [intval($_SESSION['user_id'])];
-//				$local_ids = [intval($_SESSION['user_id'])];
-//			} else
-//			{
-//				$user_ids  = [intval($_SESSION['user_id']), $companion_id];
-//				$local_ids = [$companion_id, intval($_SESSION['user_id'])];
-//			}
-//
-//			if ($this->getType() === 'dialog' && $this->getCompanion()->getType() === 'bot')
-//			{
-//				if (intval($_SESSION['user_id']) < 0)
-//					$event['bot_peer_id'] = intval($_SESSION['user_id']);
-//				if ($companion_id < 0)
-//					$event['bot_peer_id'] = $companion_id;
-//			}
-//		} else
-//		{
-//			$member_ids = $this->getMembers();
-//
-//			foreach ($member_ids as $index => $user_info) {
-//				$user_ids[]  = $user_info->user_id;
-//				$local_ids[] = $user_info->local_id;
-//			}
-//		}
-//
-//		$this->sendEvent($user_ids, $local_ids, $event, intval($_SESSION['user_id']));
-
-		$this->currentConnection->prepare("UPDATE messages.members_chat_list SET hidden = 0, is_read = 0, last_time = ? WHERE uid = ? AND is_leaved = 0 AND is_kicked = 0")->execute([$current_time, $this->uid]);
-
-		return $local_message_id;
+		return $resultSend;
 	}
 
 	public function findMessageById (int $messageId): ?Message
@@ -591,92 +426,6 @@ abstract class Chat extends BaseObject
 		return $result;
 	}
 
-	public static function create (string $title, array $users_list, ?Photo $photo, ?array $permissions_list = []): int
-	{
-		$title = trim($title);
-		if (is_empty($title) || strlen($title) > 64) return -1;
-
-		$creator_id = intval($_SESSION['user_id']);
-		if ($creator_id <= 0) return -3;
-
-		$resulted_users = [$creator_id];
-		foreach ($users_list as $index => $user_id) 
-		{
-			if ($index > 500) break;
-
-			if (!in_array($user_id, $resulted_users))
-				$resulted_users[] = intval($user_id);
-		}
-
-		$url = $photo && $photo->valid() ? $photo->getQuery() : '';
-
-		if (count($resulted_users) < 2 || count($resulted_users) > 1000)
-			return -2;
-
-		$permissions = [
-			'can_change_title'  => 4,
-			'can_change_photo'  => 4,
-			'can_kick'          => 7,
-			'can_invite'        => 7,
-			'can_invite_bots'   => 8,
-			'can_mute'          => 5,
-			'can_pin_message'   => 4,
-			'delete_messages_2' => 7,
-			'can_change_levels' => 9,
-			'can_link_join'     => 0
-		];
-
-		foreach ($permissions as $permissionName => $value)
-		{
-			if (isset($permissions_list[$permissionName]))
-			{
-				if (intval($permissions_list[$permissionName]) >= 0 && intval($permissions_list[$permissionName]) <= 9) 
-					$permissions[$permissionName] = intval($permissions_list[$permissionName]);
-			}
-		}
-
-		$uid = get_last_uid(false);
-		if (!$uid) return -4;
-
-		$connection = DataBaseManager::getConnection();
-		if (DataBaseManager::getConnection()->prepare("INSERT INTO messages.members_engine_1 (uid, title, permissions, photo) VALUES (?, ?, ?, ?)")->execute([
-			$uid,
-			$title,
-			serialize($permissions),
-			$url
-		]))
-		{
-			$my_local_chat_id = 0;
-
-			foreach ($resulted_users as $index => $user_id) 
-			{
-				$entity = Entity::findById($user_id);
-				if (!$entity || $entity->isBanned()) continue;
-				if (!$entity->canInviteToChat()) continue;
-
-				$user_permissions_level = $user_id === $creator_id ? 9 : 0;
-
-				$res = DataBaseManager::getConnection()->prepare('SELECT lid FROM messages.members_chat_list WHERE user_id = ? ORDER BY lid LIMIT 1');
-				if ($res->execute([$user_id]))
-				{
-					$lid = intval($res->fetch(PDO::FETCH_ASSOC)["lid"]) - 1;
-					if ($user_id === intval($_SESSION['user_id']))
-						$my_local_chat_id = $lid;
-
-					DataBaseManager::getConnection()->prepare('INSERT INTO messages.members_chat_list (user_id, lid, uid, cleared_message_id, invited_by, permissions_level, last_time) VALUES (?, ?, ?, 0, ?, ?, ?)')->execute([$user_id, $lid, $uid, $creator_id, $user_permissions_level, time()]);
-				}
-			}
-
-			$chat = Chat::findById($my_local_chat_id);
-			if (!$chat || !$chat->valid()) return -8;
-
-			if ($chat->sendServiceMessage("chat_create", $creator_id, NULL, $title) >= 0)
-				return $my_local_chat_id * -1;
-		}
-
-		return -7;
-	}
-
 	public static function findById (string $localId): ?Chat
 	{
 		$dialog = intval($localId) < 0 ? new Conversation($localId) : new Dialog($localId);
@@ -685,6 +434,123 @@ abstract class Chat extends BaseObject
 			return $dialog;
 
 		return NULL;
+	}
+
+	//////////////////////////////////////////////////////////////
+	private function saveMessage(string $done_text, string $done_atts, string $event = NULL, string $new_src = NULL, string $new_title = NULL): int
+	{
+		$current_time = time();
+		$companion_id = $this->getCompanionId();
+
+		$local_message_id = $this->getLocalChatId($this->uid);
+		if (!$local_message_id) return -8;
+
+		$params = [
+			$this->uid,
+			intval($_SESSION['user_id']),
+			$local_message_id,
+			$done_text,
+			'',
+			$done_atts,
+			$current_time,
+			$companion_id
+		];
+
+		if ($event === NULL) {
+			$query = "INSERT INTO messages.chat_engine_1 (
+				uid, owner_id, local_chat_id, text, attachments, reply, time, flags, to_id
+			) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)";
+		} else {
+			$query = "INSERT INTO messages.chat_engine_1 (
+				uid, owner_id, local_chat_id, text, attachments, reply, time, flags, to_id, event, new_src, new_title
+			) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)";
+
+			$params[] = $event;
+			$params[] = $new_src;
+			$params[] = $new_title;
+		}
+
+		$res = $this->currentConnection->prepare($query);
+
+		if (!$res->execute($params)) return -9;
+
+		return $local_message_id;
+	}
+
+	private function emitEventToAllMembers (): int
+	{
+		// TODO: ПЕРЕПИСАТЬ НА НОВЫЙ ОБРАБОТЧИК СОБЫТИЙ
+//		$atts_array = [];
+//		foreach ($attachments_list as $index => $attachment)
+//		{
+//			$atts_array[] = $attachment->toArray();
+//		}
+//
+//		$event = [
+//			'event' => 'new_message',
+//			'message' => [
+//				'from_id'     => intval($_SESSION['user_id']),
+//				'id'          => $local_message_id,
+//				'type'        => 'message',
+//				'text'        => $done_text,
+//				'time'        => $current_time,
+//				'attachments' => $atts_array,
+//				'fwd'         => []
+//			],
+//			'uid' => $this->uid
+//		];
+//
+//		if (!unt\functions\is_empty($payload) && strlen($payload) < 1024)
+//			$event['payload'] = $payload;
+//
+//		$user_ids  = [];
+//		$local_ids = [];
+//
+//		if ($this->getType() === 'dialog')
+//		{
+//			if (intval($_SESSION['user_id']) === $this->getCompanion()->getId())
+//			{
+//				$user_ids  = [intval($_SESSION['user_id'])];
+//				$local_ids = [intval($_SESSION['user_id'])];
+//			} else
+//			{
+//				$user_ids  = [intval($_SESSION['user_id']), $companion_id];
+//				$local_ids = [$companion_id, intval($_SESSION['user_id'])];
+//			}
+//
+//			if ($this->getType() === 'dialog' && $this->getCompanion()->getType() === 'bot')
+//			{
+//				if (intval($_SESSION['user_id']) < 0)
+//					$event['bot_peer_id'] = intval($_SESSION['user_id']);
+//				if ($companion_id < 0)
+//					$event['bot_peer_id'] = $companion_id;
+//			}
+//		} else
+//		{
+//			$member_ids = $this->getMembers();
+//
+//			foreach ($member_ids as $index => $user_info) {
+//				$user_ids[]  = $user_info->user_id;
+//				$local_ids[] = $user_info->local_id;
+//			}
+//		}
+//
+//        //EventManager::event($user_ids, $local_ids, $event);
+
+		return 1;
+	}
+
+	private function isMessageDataValid (string $text, string $attachments): int
+	{
+		$attachments_list = (new AttachmentsParser())->getObjects($attachments);
+
+		if (is_empty($text) && count($attachments_list) === 0) return -3;
+
+		if (strlen($text) > 4096) return -3;
+
+		if (count($attachments_list) > 10) return -5;
+
+		return 1;
 	}
 }
 

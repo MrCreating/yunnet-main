@@ -2,6 +2,7 @@
 
 use unt\objects\Chat;
 use unt\objects\Context;
+use unt\objects\Conversation;
 use unt\objects\Message;
 use unt\objects\Photo;
 use unt\objects\Request;
@@ -273,7 +274,7 @@ if (isset(Request::get()->data['action']))
                     }
                 }
 
-                $result = Chat::create(strval(Request::get()->data['title']),
+                $result = Conversation::create(strval(Request::get()->data['title']),
                     array_map(function ($user_id) {
                         return intval($user_id);
                     },

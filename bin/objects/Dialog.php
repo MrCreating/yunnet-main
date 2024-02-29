@@ -48,33 +48,6 @@ class Dialog extends Chat
 		}
 	}
 
-	public function getMessages (int $count = 100, int $offset = 0): array
-	{
-		$result = [];
-
-		if ($this->uid === 0) return $result;
-
-		if ($count < 1) $count = 1;
-		if ($count > 1000) $count = 1000;
-		if ($offset < 0) $offset = 0;
-
-		$res = $this->currentConnection->prepare('SELECT local_chat_id FROM messages.chat_engine_1 WHERE deleted_for_all != 1 AND uid = '.$this->uid.' AND local_chat_id > (SELECT cleared_message_id FROM messages.members_chat_list WHERE user_id = '.intval($_SESSION['user_id']).' AND uid = '.$this->uid.' LIMIT 1) AND (deleted_for NOT LIKE "%'.intval($_SESSION['user_id']).',%" OR deleted_for IS NULL) ORDER BY local_chat_id DESC LIMIT '.$offset.','.$count);
-
-		if ($res->execute())
-		{
-			$local_chat_ids = $res->fetchAll(PDO::FETCH_ASSOC);
-			foreach ($local_chat_ids as $index => $local_info) {
-				$message_id = intval($local_info['local_chat_id']);
-
-				$message = new Message($this, $message_id);
-				if ($message->valid() && !$message->isDeleted())
-					$result[] = $message;
-			}
-		}
-
-		return array_reverse($result);
-	}
-
 	public function getCompanion (): ?Entity
 	{
 		return $this->companion;
@@ -107,6 +80,55 @@ class Dialog extends Chat
 
 		return 0;
 	}
-}
 
-?>
+	protected function getMessagesQuery(int $count = 100, int $offset = 0): string
+	{
+		return 'SELECT local_chat_id FROM messages.chat_engine_1 WHERE deleted_for_all != 1 AND uid = '.$this->uid.' AND local_chat_id > (SELECT cleared_message_id FROM messages.members_chat_list WHERE user_id = '.intval($_SESSION['user_id']).' AND uid = '.$this->uid.' LIMIT 1) AND (deleted_for NOT LIKE "%'.intval($_SESSION['user_id']).',%" OR deleted_for IS NULL) ORDER BY local_chat_id LIMIT '.$offset.','.$count;
+	}
+
+	// creating new chat if not exists
+	protected function init(): bool
+	{
+		if (!$this->uid)
+		{
+			$current_time = time();
+			$this->uid = get_last_uid() + 1;
+
+			if (!$this->uid) return false;
+
+			$companion_id = $this->getCompanion()->getId();
+
+			$this->currentConnection->getClient()->beginTransaction();
+
+			if (!$this->currentConnection->prepare("INSERT INTO messages.members_chat_list (user_id, lid, uid, cleared_message_id, last_time) VALUES (?, ?, ?, 0, ?)")->execute([intval($_SESSION['user_id']), $companion_id, $this->uid, $current_time]) ||
+				!$this->currentConnection->prepare("INSERT INTO messages.members_chat_list (user_id, lid, uid, cleared_message_id, last_time) VALUES (?, ?, ?, 0, ?)")->execute([$companion_id, intval($_SESSION['user_id']), $this->uid, $current_time])
+			) {
+				$this->currentConnection->getClient()->rollBack();
+				return false;
+			} else {
+				$this->currentConnection->getClient()->commit();
+			}
+		}
+
+		return true;
+	}
+
+	protected function afterSendMessage(Message $message): bool
+	{
+		parent::afterSendMessage($message);
+
+		$this->currentConnection->prepare("UPDATE messages.members_chat_list SET hidden = 0, is_read = 0, last_time = ? WHERE uid = ? AND is_leaved = 0 AND is_kicked = 0")->execute([time(), $this->uid]);
+
+		if (intval($_SESSION['user_id']) > 0 && $this->getType() === 'dialog' && $this->getCompanion()->getType() === 'bot')
+		{
+			toggle_send_access($this->currentConnection, intval($_SESSION['user_id']), $this->getCompanionId());
+		}
+
+		return $this->read();
+	}
+
+	protected function getCompanionId(): int
+	{
+		return ($this->getCompanion()->getType() === 'bot' ? $this->getCompanion()->getId() * -1 : $this->getCompanion()->getId());
+	}
+}
