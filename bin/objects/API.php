@@ -2,6 +2,7 @@
 
 namespace unt\objects;
 
+use Exception;
 use PDO;
 use unt\exceptions\APIException;
 
